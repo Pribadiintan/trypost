@@ -17,6 +17,7 @@ concurrency:
 jobs:
   deploy:
     name: Build and Deploy
+    environment: production
     uses: nestorzamili/gha-workflows/.github/workflows/deploy-compose.yml@v1.6.0
     with:
       image-name: trypost
