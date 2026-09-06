@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Requests\App\Ai;
 
 use App\Enums\Ai\ContentStyle;
+use App\Enums\Media\BrandReferenceKind;
 use App\Enums\PostPlatform\ContentType;
 use App\Support\AiPromptRules;
 use Illuminate\Foundation\Http\FormRequest;
@@ -39,6 +40,9 @@ class StartPostCreationRequest extends FormRequest
             'date' => ['nullable', 'date_format:Y-m-d'],
             'template' => ['sometimes', 'string', Rule::enum(ContentStyle::class)],
             'apply_brand_visuals' => ['sometimes', 'boolean'],
+            'reference_media_ids' => ['sometimes', 'array', 'max:'.BrandReferenceKind::MAX_REFERENCES],
+            'reference_media_ids.*' => ['uuid'],
+            'use_brand_references' => ['sometimes', 'boolean'],
         ];
     }
 

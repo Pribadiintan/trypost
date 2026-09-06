@@ -2,6 +2,14 @@ import type { MediaType } from '@/lib/mediaType';
 
 export type MediaSource = 'ai' | 'unsplash' | 'giphy';
 
+export type BrandReferenceKind =
+    | 'face_closeup'
+    | 'full_body'
+    | 'logo'
+    | 'product'
+    | 'style'
+    | 'other';
+
 export interface MediaItem {
     id: string;
     url: string;
@@ -17,5 +25,7 @@ export interface MediaItem {
         height?: number;
         duration?: number;
         alt_text?: string;
+        label?: string;
+        kind?: BrandReferenceKind;
     };
 }

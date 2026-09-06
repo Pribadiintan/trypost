@@ -22,6 +22,7 @@ import {
 } from 'vue';
 import { toast } from 'vue-sonner';
 
+import BrandReferencesTab from '@/components/assets/BrandReferencesTab.vue';
 import ConfirmDeleteModal from '@/components/ConfirmDeleteModal.vue';
 import EmptyState from '@/components/EmptyState.vue';
 import ImagePreviewDialog from '@/components/ImagePreviewDialog.vue';
@@ -118,11 +119,22 @@ interface PickedMedia {
 
 const props = defineProps<{
     mode: 'standalone' | 'picker';
+    canManageBrandReferences?: boolean;
 }>();
 
 const selected = defineModel<PickedMedia[]>('selected', { default: () => [] });
 
 const isPicker = computed(() => props.mode === 'picker');
+
+const galleryTab = ref('uploads');
+
+const resolveGalleryTab = () => {
+    const tab = new URLSearchParams(window.location.search).get('tab');
+    galleryTab.value =
+        tab === 'references' || tab === 'stock' || tab === 'gifs'
+            ? tab
+            : 'uploads';
+};
 
 // The upload file picker accepts everything the backend's Media\Type allow-list does.
 const acceptedUploadTypes = acceptAttribute();
@@ -728,6 +740,7 @@ const onGiphyTabMounted = async () => {
 defineExpose({ initialize, refreshUploads: loadUploadsFirstPage });
 
 onMounted(() => {
+    resolveGalleryTab();
     void initialize();
 });
 
@@ -741,7 +754,7 @@ onUnmounted(() => {
 
 <template>
     <div>
-        <Tabs default-value="uploads">
+        <Tabs v-model="galleryTab">
             <TabsList>
                 <TabsTrigger value="uploads">{{
                     trans('assets.tabs.my_uploads')
@@ -751,6 +764,9 @@ onUnmounted(() => {
                 }}</TabsTrigger>
                 <TabsTrigger value="gifs">{{
                     trans('assets.tabs.gifs')
+                }}</TabsTrigger>
+                <TabsTrigger v-if="!isPicker" value="references">{{
+                    trans('assets.tabs.references')
                 }}</TabsTrigger>
             </TabsList>
 
@@ -1273,6 +1289,12 @@ onUnmounted(() => {
                         {{ trans('assets.giphy.powered_by') }}
                     </a>
                 </div>
+            </TabsContent>
+
+            <TabsContent v-if="!isPicker" value="references">
+                <BrandReferencesTab
+                    :can-manage="props.canManageBrandReferences ?? false"
+                />
             </TabsContent>
         </Tabs>
 

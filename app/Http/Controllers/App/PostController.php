@@ -19,6 +19,7 @@ use App\Enums\SocialAccount\Platform;
 use App\Http\Requests\App\Post\StorePostRequest;
 use App\Http\Requests\App\Post\UpdatePostRequest;
 use App\Http\Resources\Api\PostResource;
+use App\Http\Resources\App\MediaResource;
 use App\Http\Resources\App\PlatformConfigResource;
 use App\Http\Resources\App\SocialAccountResource;
 use App\Models\Post;
@@ -167,6 +168,10 @@ class PostController extends Controller
                 $workspace->socialAccounts()->active()->get()
             ),
             'templates' => $templates,
+            'brandReferences' => MediaResource::collection(
+                $workspace->getMedia('brand_references')->latest()->get()
+            ),
+            'canManageBrandReferences' => $request->user()->can('update', $workspace),
         ]);
     }
 

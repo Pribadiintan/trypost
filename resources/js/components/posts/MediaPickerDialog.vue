@@ -28,6 +28,15 @@ const emit = defineEmits<{
     (e: 'select', media: PickedMedia[]): void;
 }>();
 
+withDefaults(
+    defineProps<{
+        titleKey?: string;
+    }>(),
+    {
+        titleKey: 'posts.edit.media_picker.title',
+    },
+);
+
 const isOpen = ref(false);
 const selected = ref<PickedMedia[]>([]);
 const selectedCount = computed(() => selected.value.length);
@@ -60,9 +69,7 @@ defineExpose({ open, close });
             class="flex h-[85vh] max-w-[calc(100%-2rem)] flex-col gap-0 p-0 sm:max-w-5xl"
         >
             <DialogHeader class="border-b px-6 py-4">
-                <DialogTitle>{{
-                    trans('posts.edit.media_picker.title')
-                }}</DialogTitle>
+                <DialogTitle>{{ trans(titleKey) }}</DialogTitle>
             </DialogHeader>
 
             <div class="flex-1 overflow-y-auto px-6 py-4">

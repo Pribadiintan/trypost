@@ -5,7 +5,7 @@ import { computed, ref } from 'vue';
 import WorkspaceController from '@/actions/App/Http/Controllers/App/WorkspaceController';
 import BrandForm from '@/components/BrandForm.vue';
 import ConfirmDeleteModal from '@/components/ConfirmDeleteModal.vue';
-import BrandReferencePhotos from '@/components/settings/BrandReferencePhotos.vue';
+import BrandReferencesSummaryCard from '@/components/settings/BrandReferencesSummaryCard.vue';
 import BrandVariantCard from '@/components/settings/BrandVariantCard.vue';
 import BrandVariantDialog from '@/components/settings/BrandVariantDialog.vue';
 import { Button } from '@/components/ui/button';
@@ -151,7 +151,7 @@ const deleteVariant = (variant: BrandVariant) => {
             </div>
         </section>
 
-        <BrandReferencePhotos :references="brandReferences ?? []" />
+        <BrandReferencesSummaryCard :references="brandReferences ?? []" />
 
         <BrandVariantDialog
             v-model:open="variantDialogOpen"

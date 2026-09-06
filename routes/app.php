@@ -190,6 +190,12 @@ Route::middleware(['auth', EnsureAccountReady::class, EnsureHasWorkspace::class]
         ->name('app.workspace.brand-variants.destroy');
     Route::get('settings/workspace/brand-references', [BrandReferencePhotoController::class, 'index'])
         ->name('app.workspace.brand-references.index');
+    Route::get('settings/workspace/brand-references/search', [BrandReferencePhotoController::class, 'search'])
+        ->name('app.workspace.brand-references.search');
+    Route::post('settings/workspace/brand-references/from-asset', [BrandReferencePhotoController::class, 'fromAsset'])
+        ->name('app.workspace.brand-references.from-asset');
+    Route::patch('settings/workspace/brand-references/{media}', [BrandReferencePhotoController::class, 'update'])
+        ->name('app.workspace.brand-references.update');
     Route::post('settings/workspace/brand-references', [BrandReferencePhotoController::class, 'store'])
         ->name('app.workspace.brand-references.store');
     Route::delete('settings/workspace/brand-references/{media}', [BrandReferencePhotoController::class, 'destroy'])

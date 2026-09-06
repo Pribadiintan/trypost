@@ -9,6 +9,7 @@ use App\Models\SocialAccount;
 use App\Models\User;
 use App\Models\Workspace;
 use App\Support\AiPromptRules;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Str;
 use Symfony\Component\HttpFoundation\Response;
@@ -298,6 +299,69 @@ test('start defaults apply_brand_visuals to true when omitted', function () {
         ->assertAccepted();
 
     Bus::assertDispatched(StreamPostCreation::class, fn ($job) => $job->applyBrandVisuals === true);
+});
+
+test('start carries reference_media_ids and use_brand_references', function () {
+    Bus::fake();
+
+    $reference = $this->workspace->addMedia(
+        UploadedFile::fake()->image('reference.jpg'),
+        'brand_references',
+    );
+
+    $this->actingAs($this->user)
+        ->postJson(route('app.posts.ai.create'), [
+            'prompt' => 'hello',
+            'format' => 'x_post',
+            'creation_id' => Str::uuid()->toString(),
+            'reference_media_ids' => [$reference->id],
+            'use_brand_references' => false,
+        ])
+        ->assertAccepted();
+
+    Bus::assertDispatched(StreamPostCreation::class, fn ($job) => $job->referenceMediaIds === [$reference->id]
+        && $job->useBrandReferences === false);
+});
+
+test('start rejects reference media ids outside the workspace', function () {
+    Bus::fake();
+
+    $otherWorkspace = Workspace::factory()->create();
+    $otherMedia = $otherWorkspace->addMedia(
+        UploadedFile::fake()->image('other.jpg'),
+        'brand_references',
+    );
+
+    $this->actingAs($this->user)
+        ->postJson(route('app.posts.ai.create'), [
+            'prompt' => 'hello',
+            'format' => 'x_post',
+            'creation_id' => Str::uuid()->toString(),
+            'reference_media_ids' => [$otherMedia->id],
+        ])
+        ->assertUnprocessable();
+
+    Bus::assertNotDispatched(StreamPostCreation::class);
+});
+
+test('start rejects non-brand_reference media ids', function () {
+    Bus::fake();
+
+    $asset = $this->workspace->addMedia(
+        UploadedFile::fake()->image('asset.jpg'),
+        'assets',
+    );
+
+    $this->actingAs($this->user)
+        ->postJson(route('app.posts.ai.create'), [
+            'prompt' => 'hello',
+            'format' => 'x_post',
+            'creation_id' => Str::uuid()->toString(),
+            'reference_media_ids' => [$asset->id],
+        ])
+        ->assertUnprocessable();
+
+    Bus::assertNotDispatched(StreamPostCreation::class);
 });
 
 test('start rejects invalid date format', function () {
