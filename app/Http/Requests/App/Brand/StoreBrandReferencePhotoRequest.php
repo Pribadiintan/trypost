@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\App\Brand;
 
+use App\Enums\Media\BrandReferenceKind;
 use App\Enums\Media\Type as MediaType;
 use App\Models\Workspace;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class StoreBrandReferencePhotoRequest extends FormRequest
 {
@@ -27,6 +29,7 @@ class StoreBrandReferencePhotoRequest extends FormRequest
                 'mimetypes:'.implode(',', MediaType::Image->allowedMimeTypes()),
             ],
             'label' => ['nullable', 'string', 'max:100'],
+            'kind' => ['nullable', 'string', Rule::enum(BrandReferenceKind::class)],
         ];
     }
 }

@@ -1,19 +1,22 @@
 <script setup lang="ts">
-import { router } from '@inertiajs/vue3';
+import { Link, router } from '@inertiajs/vue3';
 import { IconArrowLeft, IconCheck } from '@tabler/icons-vue';
 import { trans } from 'laravel-vue-i18n';
 import { computed, ref, watch } from 'vue';
 import { toast } from 'vue-sonner';
 
 import ContentStylePicker from '@/components/ai/ContentStylePicker.vue';
+import BrandReferencePicker from '@/components/posts/create/BrandReferencePicker.vue';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { getPlatformLogo } from '@/composables/usePlatformLogo';
+import { index as assetsIndex } from '@/routes/app/assets';
 import { loading as loadingRoute } from '@/routes/app/posts/ai';
 import type { AiTemplate } from '@/types';
 import { ContentType, type ContentTypeValue } from '@/types/content-type';
+import type { MediaItem } from '@/types/media';
 
 interface SocialAccount {
     id: string;
@@ -29,10 +32,14 @@ interface Props {
     templates: AiTemplate[];
     /** ISO date (YYYY-MM-DD) carried over from the calendar's per-day "+" button. */
     date?: string | null;
+    brandReferences?: MediaItem[];
+    canManageBrandReferences?: boolean;
 }
 
 const props = withDefaults(defineProps<Props>(), {
     date: null,
+    brandReferences: () => [],
+    canManageBrandReferences: false,
 });
 
 const emit = defineEmits<{
@@ -54,7 +61,9 @@ const imageCount = ref(2);
 const promptText = ref('');
 // true = images use the workspace brand palette; false = the AI picks colors freely.
 const useBrandColors = ref(true);
-// true = images use brand reference photos (e.g. Sara's persona likeness).
+const selectedReferenceIds = ref<string[]>(
+    props.brandReferences.map((reference) => reference.id),
+);
 const useBrandReferences = ref(true);
 const PROMPT_MIN = 3;
 const PROMPT_MAX = 2000;
@@ -162,6 +171,21 @@ const submittedImageCount = computed(() => {
     return 0;
 });
 
+const showsReferencePicker = computed(
+    () =>
+        selectedFormat.value !== null &&
+        submittedImageCount.value > 0 &&
+        props.brandReferences.length > 0,
+);
+
+const submittedReferenceIds = computed(() =>
+    useBrandReferences.value ? selectedReferenceIds.value : [],
+);
+
+const submittedUseBrandReferences = computed(
+    () => useBrandReferences.value && selectedReferenceIds.value.length > 0,
+);
+
 const promptLength = computed(() => [...promptText.value.trim()].length);
 
 const canSubmit = computed(
@@ -225,7 +249,10 @@ const startGeneration = () => {
                     date: props.date ?? '',
                     template: resolvedTemplate.value,
                     apply_brand_visuals: useBrandColors.value ? '1' : '0',
-                    use_brand_references: useBrandReferences.value ? '1' : '0',
+                    reference_media_ids: submittedReferenceIds.value.join(','),
+                    use_brand_references: submittedUseBrandReferences.value
+                        ? '1'
+                        : '0',
                 },
             },
         ).url,
@@ -452,20 +479,45 @@ const startGeneration = () => {
             <Switch id="apply-brand-visuals" v-model="useBrandColors" />
         </div>
 
-        <!-- Brand reference photos (persona/founder face likeness) -->
+        <!-- Brand references: which photos guide the generated images. -->
         <div
-            v-if="selectedFormat && submittedImageCount > 0"
-            class="flex items-center justify-between gap-4 rounded-xl border-2 border-foreground bg-card p-4 shadow-2xs"
+            v-if="showsReferencePicker"
+            class="space-y-2 rounded-xl border-2 border-foreground bg-card p-4 shadow-2xs"
         >
-            <div class="space-y-0.5">
-                <Label for="use-brand-references" class="text-sm font-bold">{{
-                    $t('posts.create.steps.brand_references_label')
-                }}</Label>
-                <p class="text-sm text-foreground/70">
-                    {{ $t('posts.create.steps.brand_references_description') }}
-                </p>
+            <div class="flex items-center justify-between gap-4">
+                <div class="space-y-0.5">
+                    <Label
+                        for="use-brand-references"
+                        class="text-sm font-bold"
+                        >{{
+                            $t('posts.create.steps.brand_references_label')
+                        }}</Label
+                    >
+                    <p class="text-sm text-foreground/70">
+                        {{
+                            $t(
+                                'posts.create.steps.brand_references_description',
+                            )
+                        }}
+                    </p>
+                </div>
+                <Switch
+                    id="use-brand-references"
+                    v-model="useBrandReferences"
+                />
             </div>
-            <Switch id="use-brand-references" v-model="useBrandReferences" />
+            <BrandReferencePicker
+                v-if="useBrandReferences"
+                :references="props.brandReferences"
+                v-model:selected-ids="selectedReferenceIds"
+            />
+            <Link
+                v-if="canManageBrandReferences"
+                :href="assetsIndex.url({ query: { tab: 'references' } })"
+                class="text-xs font-semibold text-foreground/70 underline-offset-2 hover:underline"
+            >
+                {{ $t('posts.create.steps.brand_references_manage') }}
+            </Link>
         </div>
 
         <!-- Prompt -->

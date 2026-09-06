@@ -14,7 +14,6 @@ use App\Enums\Workspace\ImageStyle;
 use App\Http\Requests\App\Workspace\AutofillBrandRequest;
 use App\Http\Requests\App\Workspace\StoreWorkspaceRequest;
 use App\Http\Requests\App\Workspace\UpdateWorkspaceRequest;
-use App\Http\Resources\App\MediaResource;
 use App\Http\Resources\App\WorkspaceMemberResource;
 use App\Models\Invite;
 use App\Models\User;
@@ -194,14 +193,14 @@ class WorkspaceController extends Controller
 
         return Inertia::render('settings/workspace/Brand', [
             'workspace' => $workspace->load('brandVariants'),
-            'brandReferences' => MediaResource::collection($workspace->getMedia('brand_references')->latest()->get()),
-            'variantLanguages' => collect([
-                ['code' => 'en', 'label' => 'English Content'],
-                ['code' => 'zh', 'label' => 'Chinese Content'],
-            ])->map(fn (array $language): array => [
-                ...$language,
-                'available' => ! $workspace->brandVariants->contains('language_code', $language['code']),
-            ])->values()->all(),
+            'variantLanguages' => collect(ContentLanguage::cases())
+                ->map(fn (ContentLanguage $language): array => [
+                    'code' => $language->value,
+                    'label' => $language->label(),
+                    'available' => ! $workspace->brandVariants->contains('language_code', $language->value),
+                ])
+                ->values()
+                ->all(),
             'availableFonts' => BrandFont::values(),
             'availableImageStyles' => ImageStyle::values(),
             'availableVoiceTraits' => BrandVoiceTrait::grouped(),

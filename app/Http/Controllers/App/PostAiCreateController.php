@@ -41,6 +41,21 @@ class PostAiCreateController extends Controller
 
         $creationId = $request->string('creation_id')->toString();
 
+        $referenceMediaIds = collect($request->input('reference_media_ids', []))
+            ->map(fn ($id) => (string) $id)
+            ->unique()
+            ->values()
+            ->all();
+
+        if ($referenceMediaIds !== []) {
+            $ownedCount = $workspace->media()
+                ->whereIn('id', $referenceMediaIds)
+                ->where('collection', 'brand_references')
+                ->count();
+
+            abort_if($ownedCount !== count($referenceMediaIds), Response::HTTP_UNPROCESSABLE_ENTITY);
+        }
+
         StreamPostCreation::dispatch(
             userId: $request->user()->id,
             creationId: $creationId,
@@ -52,7 +67,7 @@ class PostAiCreateController extends Controller
             date: $request->input('date'),
             template: $request->input('template', 'image_card'),
             applyBrandVisuals: $request->boolean('apply_brand_visuals', true),
-            referenceMediaIds: (array) $request->input('reference_media_ids', []),
+            referenceMediaIds: $referenceMediaIds,
             useBrandReferences: $request->boolean('use_brand_references', true),
         );
 
@@ -64,6 +79,11 @@ class PostAiCreateController extends Controller
 
     public function loading(Request $request, string $creationId): InertiaResponse
     {
+        $referenceMediaIds = $request->query('reference_media_ids', []);
+        if (is_string($referenceMediaIds)) {
+            $referenceMediaIds = $referenceMediaIds === '' ? [] : explode(',', $referenceMediaIds);
+        }
+
         return Inertia::render('posts/ai/Loading', [
             'creationId' => $creationId,
             'channel' => "user.{$request->user()->id}.ai-creation.{$creationId}",
@@ -74,7 +94,7 @@ class PostAiCreateController extends Controller
             'date' => $request->query('date') ?: null,
             'template' => (string) $request->query('template', 'image_card'),
             'applyBrandVisuals' => $request->boolean('apply_brand_visuals', true),
-            'referenceMediaIds' => (array) $request->query('reference_media_ids', []),
+            'referenceMediaIds' => array_values(array_filter(array_map(strval(...), (array) $referenceMediaIds))),
             'useBrandReferences' => $request->boolean('use_brand_references', true),
         ]);
     }

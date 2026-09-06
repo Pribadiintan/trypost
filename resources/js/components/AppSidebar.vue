@@ -1,9 +1,8 @@
 <script setup lang="ts">
-import { Link, usePage } from '@inertiajs/vue3';
+import { router, usePage } from '@inertiajs/vue3';
 import {
     IconAffiliate,
     IconAlertTriangle,
-    IconBolt,
     IconCalendar,
     IconChartBar,
     IconChevronRight,
@@ -15,14 +14,16 @@ import {
     IconPhoto,
     IconPlugConnected,
     IconSelector,
+    IconSparkles,
     IconTag,
+    IconWebhook,
 } from '@tabler/icons-vue';
 import { trans } from 'laravel-vue-i18n';
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 
 import {
-    create as createPost,
     index as postsIndex,
+    store as storePost,
 } from '@/actions/App/Http/Controllers/App/PostController';
 import NavMain from '@/components/NavMain.vue';
 import NotificationBell from '@/components/NotificationBell.vue';
@@ -46,13 +47,13 @@ import {
 } from '@/components/ui/sidebar';
 import WorkspaceMenuContent from '@/components/WorkspaceMenuContent.vue';
 import { useWorkspaceRole } from '@/composables/useWorkspaceRole';
-import { accounts, analytics, calendar } from '@/routes/app';
+import { accounts, analytics, calendar, chat } from '@/routes/app';
 import { index as assets } from '@/routes/app/assets';
-import { index as automations } from '@/routes/app/automations';
 import { portal } from '@/routes/app/billing';
 import { index as labels } from '@/routes/app/labels';
 import { index as mcp } from '@/routes/app/mcp';
 import { index as signatures } from '@/routes/app/signatures';
+import { index as webhooks } from '@/routes/app/webhooks';
 import type { NavItem, User } from '@/types';
 
 interface Workspace {
@@ -76,10 +77,27 @@ const subscriptionPastDue = computed<boolean>(() =>
 const {
     canCreatePost,
     canManageAccounts,
-    canManageAutomations,
+    canManageWebhooks,
     canCreateWorkspace,
 } = useWorkspaceRole();
 const { isMobile } = useSidebar();
+
+const creatingPost = ref(false);
+
+const createPost = () => {
+    if (creatingPost.value) return;
+
+    creatingPost.value = true;
+    router.post(
+        storePost.url(),
+        {},
+        {
+            onFinish: () => {
+                creatingPost.value = false;
+            },
+        },
+    );
+};
 
 const mainNavItems = computed<NavItem[]>(() => [
     {
@@ -92,16 +110,11 @@ const mainNavItems = computed<NavItem[]>(() => [
         href: analytics.url(),
         icon: IconChartBar,
     },
-    ...(canManageAutomations.value
-        ? [
-              {
-                  title: trans('sidebar.automations'),
-                  href: automations.url(),
-                  icon: IconBolt,
-                  badge: trans('common.beta'),
-              },
-          ]
-        : []),
+    {
+        title: trans('sidebar.chat'),
+        href: chat.url(),
+        icon: IconSparkles,
+    },
 ]);
 
 const postsNavItems = computed<NavItem[]>(() => [
@@ -158,6 +171,15 @@ const workspaceNavItems = computed<NavItem[]>(() => [
                   title: trans('sidebar.workspace.assets'),
                   href: assets.url(),
                   icon: IconPhoto,
+              },
+          ]
+        : []),
+    ...(canManageWebhooks.value
+        ? [
+              {
+                  title: trans('sidebar.workspace.webhooks'),
+                  href: webhooks.url(),
+                  icon: IconWebhook,
               },
           ]
         : []),
@@ -232,11 +254,14 @@ const workspaceNavItems = computed<NavItem[]>(() => [
 
         <SidebarContent class="gap-px">
             <div v-if="currentWorkspace && canCreatePost" class="px-2 py-2">
-                <Link :href="createPost.url()" class="block">
-                    <Button class="w-full">
-                        {{ $t('sidebar.create_post') }}
-                    </Button>
-                </Link>
+                <Button
+                    class="w-full"
+                    data-testid="sidebar-create-post"
+                    :loading="creatingPost"
+                    @click="createPost"
+                >
+                    {{ $t('sidebar.create_post') }}
+                </Button>
             </div>
 
             <NavMain v-if="currentWorkspace" :items="mainNavItems" />

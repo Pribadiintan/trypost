@@ -1,36 +1,48 @@
 # TryPost Production Deployment
 
-Production deployment is triggered by pushes to the `samunu` branch. The
-workflow builds an image, tags it with the first seven characters of the commit
-SHA, pushes it to GHCR, and deploys that image to the VM through SSH.
+Production runs are started manually from the Actions tab via **Run workflow**
+on the `TryPost Production Pipeline` workflow. The workflow builds an image,
+tags it with the first seven characters of the commit SHA, pushes it to GHCR,
+and — unless started in build-only mode — deploys that image to the VM
+through SSH.
 
-TryPost uses its own PostgreSQL and Redis containers. Existing containers such
-as `scsme-db`, `scsme-redis`, and `redis-shared` are not used or modified.
-The existing host Nginx proxies application traffic to `127.0.0.1:8000` and
-Reverb traffic to `127.0.0.1:8080`.
+## Starting a run
+
+| Input | Description |
+|---|---|
+| `mode` | `build-and-deploy` (default) or `build-only` (image only, VM untouched) |
+| `public_host` | Optional per-run host override. Empty falls back to the stored variable |
+| `platform` | Target image platform (`linux/amd64` default). Match the VM architecture |
+
+The host must be a bare hostname and is validated before the build. Note it
+only affects the build-time `VITE_REVERB_HOST`; the server steps below (VM
+`.env`, Nginx, DNS, certificate) stay manual.
 
 ## GitHub Actions configuration
 
-Create the following secrets and variable under the GitHub Environment named
-`production`. Both workflow jobs use this environment.
-
 ### Secrets
+
+Create the following secrets under the GitHub Environment named `production`.
+Only the deploy job uses this environment.
 
 | Name | Required | Description |
 |---|---:|---|
-| `SSH_CONFIG` | Yes | SSH endpoint in the format `user@host:port`, for example `dck@srv1900584:22` |
+| `SSH_HOST` | Yes | VM hostname or IP, for example `srv1900584` |
+| `SSH_USER` | Yes | SSH user for deployment, for example `dck` |
+| `SSH_PORT` | Yes | SSH port, for example `22` |
 | `SSH_PRIVATE_KEY` | Yes | Private key for the VM SSH user |
 | `GITHUB_TOKEN` | Automatic | GitHub-provided token used to push and pull the GHCR image; no manual setup required |
 
-`SSH_CONFIG` contains only the endpoint. Keep the private key in
-`SSH_PRIVATE_KEY`; do not combine them.
-
 ### Variables
+
+Create this repository variable (Actions variables tab, not the environment):
 
 | Name | Required | Description |
 |---|---:|---|
-| `TRYPOST_PUBLIC_HOST` | Yes | Environment variable containing the public hostname without protocol or path, for example `post.example.com` |
-| Other variables | No | No optional GitHub variables are currently used |
+| `TRYPOST_PUBLIC_HOST` | Yes, unless `public_host` is passed | Public hostname, for example `post.example.com` |
+
+> If it still lives under the `production` environment variables, move it to
+> a repository variable and delete the environment copy.
 
 ### Build arguments
 
@@ -38,7 +50,7 @@ Create the following secrets and variable under the GitHub Environment named
 |---|---|---:|
 | `VITE_APP_NAME` | `TryPost` | No |
 | `VITE_REVERB_APP_KEY` | `trypost-reverb-key` | No |
-| `VITE_REVERB_HOST` | `${TRYPOST_PUBLIC_HOST}` | No |
+| `VITE_REVERB_HOST` | Resolved host (`public_host` input, else `${TRYPOST_PUBLIC_HOST}`) | No |
 | `VITE_REVERB_PORT` | `443` | No |
 | `VITE_REVERB_SCHEME` | `https` | No |
 
@@ -58,7 +70,7 @@ If required, grant the deployment user Docker access. Docker group membership
 is root-equivalent:
 
 ```bash
-sudo usermod -aG docker <deploy-user>
+sudo usermod -aG docker $USER
 ```
 
 The VM must have `curl`, Docker Compose v2, and an `/opt/trypost` directory.
@@ -69,16 +81,12 @@ Create the application directory if needed:
 
 ```bash
 sudo mkdir -p /opt/trypost
-sudo chown <deploy-user>:<deploy-user> /opt/trypost
+sudo chown -R $USER:$USER /opt/trypost
 ```
 
 Keep the production `.env` file at `/opt/trypost/.env` with mode `600`.
 
 ## Host Nginx
-
-The production VM runs Ubuntu Nginx `1.24.0` as a systemd service. It includes
-`/etc/nginx/sites-enabled/*` and already owns ports 80 and 443. Ports 8000 and
-8080 are available for the TryPost container bindings.
 
 Create a dedicated HTTP site file without changing the existing virtual
 hosts. Replace `post.example.com` with the value of `TRYPOST_PUBLIC_HOST`:
@@ -137,21 +145,6 @@ sudo certbot --nginx --redirect -d post.example.com
 ```
 
 Certbot will add the TLS directives and HTTP-to-HTTPS redirect to the site.
-Verify automatic renewal:
-
-```bash
-systemctl is-enabled certbot.timer
-sudo certbot renew --dry-run
-```
-
-If the timer is not enabled:
-
-```bash
-sudo systemctl enable --now certbot.timer
-```
-
-Do not enable the Caddy profile because host Nginx already owns ports 80 and
-443.
 
 ## Compose and image reference
 

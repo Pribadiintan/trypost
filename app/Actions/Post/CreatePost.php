@@ -26,8 +26,11 @@ class CreatePost
      * `label_ids[]` are attached after creation so the same set of UUIDs
      * works for REST, MCP, and web callers.
      *
-     * `created_via` records which entry point created the post (web, mcp,
-     * api, or automation). Analytical only — null when omitted.
+     * `created_via` records which entry point created the post (web, mcp, or api). Analytical only — null when omitted.
+     *
+     * `creation_id` links the post back to the AI generation that produced
+     * it (see `App\Jobs\Ai\StreamPostCreation`). Null when the post was not
+     * AI-generated.
      *
      * @param  array{
      *     content?: ?string,
@@ -35,6 +38,7 @@ class CreatePost
      *     date?: ?string,
      *     scheduled_at?: ?string,
      *     created_via?: ?CreatedVia,
+     *     creation_id?: ?string,
      *     platforms?: array<int, array{social_account_id: string, content_type?: string, meta?: array<string, mixed>}>,
      *     label_ids?: array<int, string>
      * }  $data
@@ -50,6 +54,7 @@ class CreatePost
                 'media' => data_get($data, 'media', []),
                 'status' => PostStatus::Draft,
                 'created_via' => data_get($data, 'created_via'),
+                'creation_id' => data_get($data, 'creation_id'),
                 'scheduled_at' => $scheduledAt,
             ]);
 

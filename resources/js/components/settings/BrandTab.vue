@@ -5,7 +5,6 @@ import { computed, ref } from 'vue';
 import WorkspaceController from '@/actions/App/Http/Controllers/App/WorkspaceController';
 import BrandForm from '@/components/BrandForm.vue';
 import ConfirmDeleteModal from '@/components/ConfirmDeleteModal.vue';
-import BrandReferencePhotos from '@/components/settings/BrandReferencePhotos.vue';
 import BrandVariantCard from '@/components/settings/BrandVariantCard.vue';
 import BrandVariantDialog from '@/components/settings/BrandVariantDialog.vue';
 import { Button } from '@/components/ui/button';
@@ -15,7 +14,6 @@ import type {
     BrandVariantLanguage,
     ContentLanguageOption,
 } from '@/types';
-import type { MediaItem } from '@/types/media';
 
 interface Workspace {
     id: string;
@@ -35,7 +33,6 @@ interface Workspace {
 
 const props = defineProps<{
     workspace: Workspace;
-    brandReferences?: MediaItem[];
     availableFonts: string[];
     availableImageStyles: string[];
     availableVoiceTraits: Record<string, string[]>;
@@ -150,8 +147,6 @@ const deleteVariant = (variant: BrandVariant) => {
                 />
             </div>
         </section>
-
-        <BrandReferencePhotos :references="brandReferences ?? []" />
 
         <BrandVariantDialog
             v-model:open="variantDialogOpen"

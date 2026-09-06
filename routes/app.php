@@ -5,10 +5,11 @@ declare(strict_types=1);
 use App\Http\Controllers\App\AnalyticsController;
 use App\Http\Controllers\App\ApiKeyController;
 use App\Http\Controllers\App\AssetController;
-use App\Http\Controllers\App\AutomationController;
 use App\Http\Controllers\App\BillingController;
 use App\Http\Controllers\App\BrandReferencePhotoController;
 use App\Http\Controllers\App\BrandVariantController;
+use App\Http\Controllers\App\ChatController;
+use App\Http\Controllers\App\ChatMessageController;
 use App\Http\Controllers\App\DiscordController as AppDiscordController;
 use App\Http\Controllers\App\GiphyController;
 use App\Http\Controllers\App\LinkPreviewController;
@@ -17,6 +18,7 @@ use App\Http\Controllers\App\NotificationController;
 use App\Http\Controllers\App\OnboardingController;
 use App\Http\Controllers\App\PostAiCreateController;
 use App\Http\Controllers\App\PostAiGenerateController;
+use App\Http\Controllers\App\PostAiRegenerateCaptionController;
 use App\Http\Controllers\App\PostAiRegenerateMediaController;
 use App\Http\Controllers\App\PostAiReviewController;
 use App\Http\Controllers\App\PostCommentController;
@@ -29,6 +31,7 @@ use App\Http\Controllers\App\Settings\ProfileController;
 use App\Http\Controllers\App\Settings\SettingsController;
 use App\Http\Controllers\App\Settings\UsageController;
 use App\Http\Controllers\App\UnsplashController;
+use App\Http\Controllers\App\WebhookController;
 use App\Http\Controllers\App\WelcomeController;
 use App\Http\Controllers\App\WorkspaceController;
 use App\Http\Controllers\App\WorkspaceInviteController;
@@ -187,6 +190,12 @@ Route::middleware(['auth', EnsureAccountReady::class, EnsureHasWorkspace::class]
         ->name('app.workspace.brand-variants.destroy');
     Route::get('settings/workspace/brand-references', [BrandReferencePhotoController::class, 'index'])
         ->name('app.workspace.brand-references.index');
+    Route::get('settings/workspace/brand-references/search', [BrandReferencePhotoController::class, 'search'])
+        ->name('app.workspace.brand-references.search');
+    Route::post('settings/workspace/brand-references/from-asset', [BrandReferencePhotoController::class, 'fromAsset'])
+        ->name('app.workspace.brand-references.from-asset');
+    Route::patch('settings/workspace/brand-references/{media}', [BrandReferencePhotoController::class, 'update'])
+        ->name('app.workspace.brand-references.update');
     Route::post('settings/workspace/brand-references', [BrandReferencePhotoController::class, 'store'])
         ->name('app.workspace.brand-references.store');
     Route::delete('settings/workspace/brand-references/{media}', [BrandReferencePhotoController::class, 'destroy'])
@@ -195,6 +204,25 @@ Route::middleware(['auth', EnsureAccountReady::class, EnsureHasWorkspace::class]
     // Social Accounts
     Route::get('accounts', [SocialController::class, 'index'])->name('app.accounts');
     Route::put('accounts/{account}/toggle', [SocialController::class, 'toggleActive'])->name('app.accounts.toggle');
+
+    // Chat
+    Route::get('chat', [ChatController::class, 'index'])->name('app.chat');
+    Route::post('chat/{conversation}', [ChatMessageController::class, 'store'])
+        ->whereUuid('conversation')
+        ->middleware('throttle:20,1')
+        ->name('app.chat.messages.store');
+    Route::post('chat/{conversation}/cancel', [ChatMessageController::class, 'cancel'])
+        ->whereUuid('conversation')
+        ->name('app.chat.messages.cancel');
+    Route::get('chat/{conversation}', [ChatController::class, 'show'])
+        ->whereUuid('conversation')
+        ->name('app.chat.show');
+    Route::patch('chat/{conversation}', [ChatController::class, 'update'])
+        ->whereUuid('conversation')
+        ->name('app.chat.update');
+    Route::delete('chat/{conversation}', [ChatController::class, 'destroy'])
+        ->whereUuid('conversation')
+        ->name('app.chat.destroy');
 
     // Analytics
     Route::get('analytics', [AnalyticsController::class, 'index'])->name('app.analytics');
@@ -210,6 +238,7 @@ Route::middleware(['auth', EnsureAccountReady::class, EnsureHasWorkspace::class]
     Route::get('posts/{post}/edit', [PostController::class, 'edit'])->name('app.posts.edit');
     Route::get('posts/{post}', [PostController::class, 'show'])->name('app.posts.show');
     Route::get('posts/{post}/platforms/{postPlatform}/metrics', [PostController::class, 'platformMetrics'])->name('app.posts.platforms.metrics');
+    Route::get('posts/{post}/chat-preview', [PostController::class, 'chatPreview'])->name('app.posts.chat-preview');
     Route::put('posts/{post}', [PostController::class, 'update'])->name('app.posts.update');
     Route::delete('posts/{post}', [PostController::class, 'destroy'])->name('app.posts.destroy');
     Route::post('posts/{post}/duplicate', [PostController::class, 'duplicate'])->name('app.posts.duplicate');
@@ -219,6 +248,7 @@ Route::middleware(['auth', EnsureAccountReady::class, EnsureHasWorkspace::class]
 
     // Post AI
     Route::post('posts/{post}/ai/generate', [PostAiGenerateController::class, 'generate'])->name('app.posts.ai.generate');
+    Route::post('posts/{post}/ai/regenerate-caption', [PostAiRegenerateCaptionController::class, 'regenerate'])->name('app.posts.ai.regenerate-caption');
     Route::post('posts/{post}/media/{mediaId}/ai/regenerate', [PostAiRegenerateMediaController::class, 'regenerate'])->name('app.posts.ai.regenerate-media');
     Route::post('posts/{post}/ai/review', [PostAiReviewController::class, 'review'])->name('app.posts.ai.review');
     Route::post('posts/ai/create', [PostAiCreateController::class, 'start'])->name('app.posts.ai.create');
@@ -262,23 +292,6 @@ Route::middleware(['auth', EnsureAccountReady::class, EnsureHasWorkspace::class]
     Route::put('labels/{label}', [WorkspaceLabelController::class, 'update'])->name('app.labels.update');
     Route::delete('labels/{label}', [WorkspaceLabelController::class, 'destroy'])->name('app.labels.destroy');
 
-    // Automations
-    Route::get('automations', [AutomationController::class, 'index'])->name('app.automations.index');
-    Route::post('automations', [AutomationController::class, 'store'])->name('app.automations.store');
-    Route::get('automations/{automation}', [AutomationController::class, 'show'])->name('app.automations.show');
-    Route::get('automations/{automation}/workflow', [AutomationController::class, 'workflow'])->name('app.automations.workflow');
-    Route::get('automations/{automation}/invocations', [AutomationController::class, 'invocations'])->name('app.automations.invocations');
-    Route::get('automations/{automation}/metrics', [AutomationController::class, 'metrics'])->name('app.automations.metrics');
-    Route::get('automations/{automation}/settings', [AutomationController::class, 'settings'])->name('app.automations.settings');
-    Route::put('automations/{automation}', [AutomationController::class, 'update'])->name('app.automations.update');
-    Route::delete('automations/{automation}', [AutomationController::class, 'destroy'])->name('app.automations.destroy');
-    Route::post('automations/{automation}/activate', [AutomationController::class, 'activate'])->name('app.automations.activate');
-    Route::post('automations/{automation}/pause', [AutomationController::class, 'pause'])->name('app.automations.pause');
-    Route::post('automations/{automation}/runs/{run}/retry', [AutomationController::class, 'retryRun'])->name('app.automations.runs.retry');
-    Route::post('automations/{automation}/test', [AutomationController::class, 'test'])->name('app.automations.test');
-    Route::post('automations/{automation}/feed/inspect', [AutomationController::class, 'inspectFeed'])->name('app.automations.feed.inspect');
-    Route::get('automations/{automation}/runs/{run}', [AutomationController::class, 'showRun'])->name('app.automations.runs.show');
-
     // API Keys
     Route::get('settings/workspace/api-keys', [ApiKeyController::class, 'index'])->name('app.api-keys.index');
     Route::post('settings/workspace/api-keys', [ApiKeyController::class, 'store'])->name('app.api-keys.store');
@@ -287,6 +300,16 @@ Route::middleware(['auth', EnsureAccountReady::class, EnsureHasWorkspace::class]
     // MCP
     Route::get('settings/workspace/mcp', [McpSettingsController::class, 'index'])->name('app.mcp.index');
     Route::delete('settings/workspace/mcp/{client}', [McpSettingsController::class, 'disconnect'])->name('app.mcp.disconnect');
+
+    // Webhooks
+    Route::get('webhooks', [WebhookController::class, 'index'])->name('app.webhooks.index');
+    Route::post('webhooks', [WebhookController::class, 'store'])->name('app.webhooks.store');
+    Route::get('webhooks/{webhook}', [WebhookController::class, 'show'])->name('app.webhooks.show');
+    Route::put('webhooks/{webhook}', [WebhookController::class, 'update'])->name('app.webhooks.update');
+    Route::post('webhooks/{webhook}/send-test', [WebhookController::class, 'sendTest'])->name('app.webhooks.send-test');
+    Route::post('webhooks/{webhook}/rotate-secret', [WebhookController::class, 'rotateSecret'])->name('app.webhooks.rotate-secret');
+    Route::post('webhooks/{webhook}/logs/{webhookLog}/replay', [WebhookController::class, 'replay'])->name('app.webhooks.replay');
+    Route::delete('webhooks/{webhook}', [WebhookController::class, 'destroy'])->name('app.webhooks.destroy');
 
     // Account Settings
     Route::get('settings/account', [AccountController::class, 'edit'])->name('app.account.edit');

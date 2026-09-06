@@ -9,6 +9,7 @@ use App\Models\SocialAccount;
 use App\Models\User;
 use App\Models\Workspace;
 use App\Support\AiPromptRules;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Str;
 use Symfony\Component\HttpFoundation\Response;
@@ -300,6 +301,69 @@ test('start defaults apply_brand_visuals to true when omitted', function () {
     Bus::assertDispatched(StreamPostCreation::class, fn ($job) => $job->applyBrandVisuals === true);
 });
 
+test('start carries reference_media_ids and use_brand_references', function () {
+    Bus::fake();
+
+    $reference = $this->workspace->addMedia(
+        UploadedFile::fake()->image('reference.jpg'),
+        'brand_references',
+    );
+
+    $this->actingAs($this->user)
+        ->postJson(route('app.posts.ai.create'), [
+            'prompt' => 'hello',
+            'format' => 'x_post',
+            'creation_id' => Str::uuid()->toString(),
+            'reference_media_ids' => [$reference->id],
+            'use_brand_references' => false,
+        ])
+        ->assertAccepted();
+
+    Bus::assertDispatched(StreamPostCreation::class, fn ($job) => $job->referenceMediaIds === [$reference->id]
+        && $job->useBrandReferences === false);
+});
+
+test('start rejects reference media ids outside the workspace', function () {
+    Bus::fake();
+
+    $otherWorkspace = Workspace::factory()->create();
+    $otherMedia = $otherWorkspace->addMedia(
+        UploadedFile::fake()->image('other.jpg'),
+        'brand_references',
+    );
+
+    $this->actingAs($this->user)
+        ->postJson(route('app.posts.ai.create'), [
+            'prompt' => 'hello',
+            'format' => 'x_post',
+            'creation_id' => Str::uuid()->toString(),
+            'reference_media_ids' => [$otherMedia->id],
+        ])
+        ->assertUnprocessable();
+
+    Bus::assertNotDispatched(StreamPostCreation::class);
+});
+
+test('start rejects non-brand_reference media ids', function () {
+    Bus::fake();
+
+    $asset = $this->workspace->addMedia(
+        UploadedFile::fake()->image('asset.jpg'),
+        'assets',
+    );
+
+    $this->actingAs($this->user)
+        ->postJson(route('app.posts.ai.create'), [
+            'prompt' => 'hello',
+            'format' => 'x_post',
+            'creation_id' => Str::uuid()->toString(),
+            'reference_media_ids' => [$asset->id],
+        ])
+        ->assertUnprocessable();
+
+    Bus::assertNotDispatched(StreamPostCreation::class);
+});
+
 test('start rejects invalid date format', function () {
     Bus::fake();
 
@@ -412,38 +476,4 @@ it('requires social_account_id when the template needsAccount', function () {
         ->assertJsonValidationErrors(['social_account_id']);
 
     Bus::assertNotDispatched(StreamPostCreation::class);
-});
-
-test('start dispatches StreamPostCreation with reference_media_ids and use_brand_references', function () {
-    Bus::fake();
-
-    $mediaId1 = Str::uuid()->toString();
-    $mediaId2 = Str::uuid()->toString();
-
-    $this->actingAs($this->user)
-        ->postJson(route('app.posts.ai.create'), [
-            'prompt' => 'Sara speaking at a design conference',
-            'format' => 'instagram_feed',
-            'creation_id' => Str::uuid()->toString(),
-            'use_brand_references' => true,
-            'reference_media_ids' => [$mediaId1, $mediaId2],
-        ])
-        ->assertAccepted();
-
-    Bus::assertDispatched(StreamPostCreation::class, function ($job) use ($mediaId1, $mediaId2) {
-        return $job->useBrandReferences === true
-            && $job->referenceMediaIds === [$mediaId1, $mediaId2];
-    });
-});
-
-test('loading page carries useBrandReferences and referenceMediaIds when provided', function () {
-    $creationId = '019e0532-7b74-7369-b238-a5f2a93d12b7';
-    $mediaId = Str::uuid()->toString();
-
-    $this->actingAs($this->user)
-        ->get(route('app.posts.ai.loading', $creationId)."?images=2&format=instagram_feed&prompt=Hello&use_brand_references=1&reference_media_ids[]={$mediaId}")
-        ->assertInertia(fn ($page) => $page
-            ->where('useBrandReferences', true)
-            ->where('referenceMediaIds', [$mediaId])
-        );
 });

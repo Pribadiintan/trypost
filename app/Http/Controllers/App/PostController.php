@@ -19,11 +19,13 @@ use App\Enums\SocialAccount\Platform;
 use App\Http\Requests\App\Post\StorePostRequest;
 use App\Http\Requests\App\Post\UpdatePostRequest;
 use App\Http\Resources\Api\PostResource;
+use App\Http\Resources\App\MediaResource;
 use App\Http\Resources\App\PlatformConfigResource;
 use App\Http\Resources\App\SocialAccountResource;
 use App\Models\Post;
 use App\Models\PostPlatform;
 use App\Services\Post\PostMetricsFetcher;
+use App\Services\Post\PostPreviewer;
 use App\Services\Social\TikTokCreatorInfo;
 use App\Support\LinkTlds;
 use App\Support\PostStatusRules;
@@ -72,9 +74,11 @@ class PostController extends Controller
             fn ($q) => $q->whereIn('workspace_labels.id', $labelIds),
         ));
 
+        $orderColumn = $status === PostStatus::Draft->value ? 'created_at' : 'scheduled_at';
+
         return Inertia::render('posts/Index', [
             'workspace' => $workspace,
-            'posts' => Inertia::scroll(fn () => $query->latest('scheduled_at')->paginate(config('app.pagination.default'))),
+            'posts' => Inertia::scroll(fn () => $query->latest($orderColumn)->paginate(config('app.pagination.default'))),
             'currentStatus' => $status,
             'labels' => $workspace->labels()->orderBy('name')->get(['id', 'name', 'color']),
             'filters' => [
@@ -164,6 +168,10 @@ class PostController extends Controller
                 $workspace->socialAccounts()->active()->get()
             ),
             'templates' => $templates,
+            'brandReferences' => MediaResource::collection(
+                $workspace->getMedia('brand_references')->latest()->get()
+            ),
+            'canManageBrandReferences' => $request->user()->can('update', $workspace),
         ]);
     }
 
@@ -206,6 +214,47 @@ class PostController extends Controller
         }
 
         return response()->json(app(PostMetricsFetcher::class)->forPlatform($postPlatform));
+    }
+
+    /**
+     * Read-only preview payload for the chat's expandable post preview.
+     * Lazy-loaded client-side on expand so media URLs and sanitized text
+     * never enter tool payloads (and the model's context with them).
+     */
+    public function chatPreview(Request $request, Post $post): JsonResponse
+    {
+        $this->authorize('view', $post);
+
+        $post->load(['postPlatforms.socialAccount']);
+
+        $preview = app(PostPreviewer::class)->forPost($post, onlyEnabled: false);
+
+        $contents = collect($preview['platforms'])->mapWithKeys(fn (array $entry): array => [
+            $entry['post_platform_id'] => $entry['sanitized_content'],
+        ])->all();
+
+        return response()->json([
+            'content' => (string) $post->content,
+            'media' => $post->media ?? [],
+            'platforms' => $post->postPlatforms->map(fn (PostPlatform $platform): array => [
+                'id' => $platform->id,
+                'platform' => $platform->platform->value,
+                'platform_name' => $platform->display_name,
+                'platform_avatar' => $platform->display_avatar,
+                'content_type' => $platform->content_type?->value,
+                'enabled' => $platform->enabled,
+                'social_account' => $platform->socialAccount !== null
+                    ? (new SocialAccountResource($platform->socialAccount))->resolve()
+                    : null,
+            ])->all(),
+            'platform_content_types' => $post->postPlatforms->mapWithKeys(fn (PostPlatform $platform): array => $platform->content_type !== null
+                ? [$platform->id => $platform->content_type->value]
+                : [])->all(),
+            'platform_meta' => $post->postPlatforms->mapWithKeys(fn (PostPlatform $platform): array => [
+                $platform->id => $platform->meta ?? [],
+            ])->all(),
+            'contents' => $contents,
+        ]);
     }
 
     public function show(Request $request, Post $post): Response|RedirectResponse

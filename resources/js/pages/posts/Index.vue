@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Head, InfiniteScroll, Link, router } from '@inertiajs/vue3';
+import { Head, InfiniteScroll, router } from '@inertiajs/vue3';
 import {
     IconCopy,
     IconCopyPlus,
@@ -12,12 +12,12 @@ import { trans } from 'laravel-vue-i18n';
 import { computed, ref, watch } from 'vue';
 
 import {
-    create as createPost,
     destroy as destroyPost,
     duplicate as duplicatePost,
     edit as editPost,
     index as postsIndex,
     show as showPost,
+    store as storePost,
 } from '@/actions/App/Http/Controllers/App/PostController';
 import ConfirmDeleteModal from '@/components/ConfirmDeleteModal.vue';
 import EmptyState from '@/components/EmptyState.vue';
@@ -91,6 +91,7 @@ interface Post {
     status: string;
     scheduled_at: string | null;
     published_at: string | null;
+    created_at: string;
     post_platforms: PostPlatform[];
     labels: Label[];
 }
@@ -160,6 +161,17 @@ const formatDateTime = (value: string | null): string => {
     return date.formatDateTime(value);
 };
 
+const dateColumnLabel = computed(() =>
+    props.currentStatus === PostStatus.Draft
+        ? trans('posts.table.created_at')
+        : trans('posts.table.scheduled_at'),
+);
+
+const getPostDate = (post: Post): string | null =>
+    post.status === PostStatus.Draft
+        ? post.created_at
+        : (post.scheduled_at ?? post.published_at);
+
 const getEnabledPlatforms = (post: Post) =>
     post.post_platforms.filter((pp) => pp.enabled);
 
@@ -194,8 +206,38 @@ const handleDelete = (post: Post) => {
     });
 };
 
+const duplicatingPost = ref(false);
+
 const handleDuplicate = (post: Post) => {
-    router.post(duplicatePost.url(post.id));
+    if (duplicatingPost.value) return;
+
+    duplicatingPost.value = true;
+    router.post(
+        duplicatePost.url(post.id),
+        {},
+        {
+            onFinish: () => {
+                duplicatingPost.value = false;
+            },
+        },
+    );
+};
+
+const creatingPost = ref(false);
+
+const createPost = () => {
+    if (creatingPost.value) return;
+
+    creatingPost.value = true;
+    router.post(
+        storePost.url(),
+        {},
+        {
+            onFinish: () => {
+                creatingPost.value = false;
+            },
+        },
+    );
 };
 
 const handleCopyId = (post: Post) =>
@@ -245,15 +287,15 @@ useWorkspaceEcho(
                     />
                 </div>
 
-                <Link
+                <Button
                     v-if="canCreatePost"
-                    :href="createPost.url()"
                     class="w-full sm:w-auto"
+                    data-testid="posts-create-post"
+                    :loading="creatingPost"
+                    @click="createPost"
                 >
-                    <Button class="w-full sm:w-auto">{{
-                        $t('posts.new_post')
-                    }}</Button>
-                </Link>
+                    {{ $t('posts.new_post') }}
+                </Button>
             </div>
 
             <EmptyState
@@ -286,9 +328,7 @@ useWorkspaceEcho(
                                 <TableHead>{{
                                     $t('posts.table.status')
                                 }}</TableHead>
-                                <TableHead>{{
-                                    $t('posts.table.scheduled_at')
-                                }}</TableHead>
+                                <TableHead>{{ dateColumnLabel }}</TableHead>
                                 <TableHead class="text-right">{{
                                     $t('posts.table.actions')
                                 }}</TableHead>
@@ -439,12 +479,7 @@ useWorkspaceEcho(
                                     </Badge>
                                 </TableCell>
                                 <TableCell>
-                                    {{
-                                        formatDateTime(
-                                            post.scheduled_at ??
-                                                post.published_at,
-                                        )
-                                    }}
+                                    {{ formatDateTime(getPostDate(post)) }}
                                 </TableCell>
                                 <TableCell class="text-right" @click.stop>
                                     <DropdownMenu>

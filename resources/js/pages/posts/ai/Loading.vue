@@ -27,8 +27,8 @@ const props = defineProps<{
     date: string | null;
     template: string;
     applyBrandVisuals: boolean;
-    useBrandReferences?: boolean;
-    referenceMediaIds?: string[];
+    referenceMediaIds: string[];
+    useBrandReferences: boolean;
 }>();
 
 const status = ref<'loading' | 'error'>('loading');
@@ -104,8 +104,8 @@ const httpStart = useHttp<{
     date: string | null;
     template: string;
     apply_brand_visuals: boolean;
-    use_brand_references: boolean;
     reference_media_ids: string[];
+    use_brand_references: boolean;
 }>({
     creation_id: props.creationId,
     format: props.format,
@@ -115,8 +115,8 @@ const httpStart = useHttp<{
     date: props.date,
     template: props.template,
     apply_brand_visuals: props.applyBrandVisuals,
-    use_brand_references: props.useBrandReferences ?? true,
-    reference_media_ids: props.referenceMediaIds ?? [],
+    reference_media_ids: props.referenceMediaIds,
+    use_brand_references: props.useBrandReferences,
 });
 
 const startGeneration = async () => {

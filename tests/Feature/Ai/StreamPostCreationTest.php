@@ -7,6 +7,7 @@ use App\Ai\Agents\PostContentHumanizer;
 use App\Enums\Post\CreatedVia;
 use App\Enums\PostPlatform\ContentType;
 use App\Enums\UserWorkspace\Role;
+use App\Jobs\Ai\RenderPostImages;
 use App\Jobs\Ai\StreamPostCreation;
 use App\Models\PostPlatform;
 use App\Models\SocialAccount;
@@ -32,11 +33,13 @@ beforeEach(function () {
     ]);
 });
 
-function runStreamPostCreation(string $format, SocialAccount $account, int $imageCount, string $template = 'image_card'): void
+function runStreamPostCreation(string $format, SocialAccount $account, int $imageCount, string $template = 'image_card'): string
 {
+    $creationId = (string) Str::uuid();
+
     (new StreamPostCreation(
         userId: $account->workspace->user_id,
-        creationId: (string) Str::uuid(),
+        creationId: $creationId,
         workspaceId: $account->workspace_id,
         format: $format,
         socialAccountId: $account->id,
@@ -44,6 +47,14 @@ function runStreamPostCreation(string $format, SocialAccount $account, int $imag
         prompt: 'Five tips about productivity',
         template: $template,
     ))->handle();
+
+    (new RenderPostImages(
+        userId: $account->workspace->user_id,
+        creationId: $creationId,
+        workspaceId: $account->workspace_id,
+    ))->handle();
+
+    return $creationId;
 }
 
 test('AI carousel generation stores the post as an instagram feed, never instagram_carousel', function () {
@@ -98,15 +109,23 @@ test('tweet_card template stores the tweet_text as post content and attaches a m
     $minimalPng = base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==');
     Image::fake([base64_encode($minimalPng)]);
 
+    $creationId = (string) Str::uuid();
+
     (new StreamPostCreation(
         userId: $this->user->id,
-        creationId: (string) Str::uuid(),
+        creationId: $creationId,
         workspaceId: $this->workspace->id,
         format: 'x_post',
         socialAccountId: $this->account->id,
         imageCount: 1,
         prompt: 'A punchy take on productivity',
         template: 'tweet_card',
+    ))->handle();
+
+    (new RenderPostImages(
+        userId: $this->user->id,
+        creationId: $creationId,
+        workspaceId: $this->workspace->id,
     ))->handle();
 
     $post = $this->user->currentWorkspace->posts()->latest()->first();
@@ -131,15 +150,23 @@ test('tweet_card carousel produces caption as content and N media items without 
         ],
     ]]);
 
+    $creationId = (string) Str::uuid();
+
     (new StreamPostCreation(
         userId: $this->user->id,
-        creationId: (string) Str::uuid(),
+        creationId: $creationId,
         workspaceId: $this->workspace->id,
         format: 'instagram_carousel',
         socialAccountId: $this->account->id,
         imageCount: 2,
         prompt: 'Punchy productivity takes',
         template: 'tweet_card',
+    ))->handle();
+
+    (new RenderPostImages(
+        userId: $this->user->id,
+        creationId: $creationId,
+        workspaceId: $this->workspace->id,
     ))->handle();
 
     $post = $this->user->currentWorkspace->posts()->latest()->first();
@@ -165,15 +192,23 @@ test('tweet_card_image single stores tweet_text as content, attaches media, and 
     $minimalPng = base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==');
     Image::fake([base64_encode($minimalPng)]);
 
+    $creationId = (string) Str::uuid();
+
     (new StreamPostCreation(
         userId: $this->user->id,
-        creationId: (string) Str::uuid(),
+        creationId: $creationId,
         workspaceId: $this->workspace->id,
         format: 'x_post',
         socialAccountId: $this->account->id,
         imageCount: 1,
         prompt: 'A punchy take on productivity',
         template: 'tweet_card_image',
+    ))->handle();
+
+    (new RenderPostImages(
+        userId: $this->user->id,
+        creationId: $creationId,
+        workspaceId: $this->workspace->id,
     ))->handle();
 
     $post = $this->user->currentWorkspace->posts()->latest()->first();
@@ -201,15 +236,23 @@ test('tweet_card_image carousel stores caption and N media items each with an AI
     $minimalPng = base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==');
     Image::fake([base64_encode($minimalPng), base64_encode($minimalPng)]);
 
+    $creationId = (string) Str::uuid();
+
     (new StreamPostCreation(
         userId: $this->user->id,
-        creationId: (string) Str::uuid(),
+        creationId: $creationId,
         workspaceId: $this->workspace->id,
         format: 'instagram_carousel',
         socialAccountId: $this->account->id,
         imageCount: 2,
         prompt: 'Deep work carousel',
         template: 'tweet_card_image',
+    ))->handle();
+
+    (new RenderPostImages(
+        userId: $this->user->id,
+        creationId: $creationId,
+        workspaceId: $this->workspace->id,
     ))->handle();
 
     $post = $this->user->currentWorkspace->posts()->latest()->first();
@@ -221,6 +264,97 @@ test('tweet_card_image carousel stores caption and N media items each with an AI
     expect($platform->content_type)->toBe(ContentType::InstagramFeed);
 
     PostContentHumanizer::assertNeverPrompted();
+
+    Image::assertGenerated(fn () => true);
+});
+
+test('telegram_post text-only generation stores the caption with no media', function () {
+    PostContentGenerator::fake([[
+        'content' => 'Channel update for the week',
+        'image_title' => 'Weekly update',
+        'image_body' => 'Here is what shipped',
+        'image_keywords' => [],
+    ]]);
+    PostContentHumanizer::fake([[
+        'content' => 'Channel update for the week',
+        'image_title' => 'Weekly update',
+        'image_body' => 'Here is what shipped',
+    ]]);
+
+    $telegram = SocialAccount::factory()->telegram()->create([
+        'workspace_id' => $this->workspace->id,
+    ]);
+
+    $creationId = (string) Str::uuid();
+
+    (new StreamPostCreation(
+        userId: $this->user->id,
+        creationId: $creationId,
+        workspaceId: $this->workspace->id,
+        format: 'telegram_post',
+        socialAccountId: $telegram->id,
+        imageCount: 0,
+        prompt: 'Weekly channel update',
+        template: 'image_card',
+    ))->handle();
+
+    $post = $this->workspace->posts()->where('creation_id', $creationId)->firstOrFail();
+
+    expect($post->content)->toBe('Channel update for the week')
+        ->and($post->media)->toHaveCount(0);
+
+    $platform = PostPlatform::where('social_account_id', $telegram->id)->firstOrFail();
+
+    expect($platform->content_type)->toBe(ContentType::TelegramPost);
+});
+
+test('telegram_post single-image generation attaches one rendered image', function () {
+    PostContentGenerator::fake([[
+        'content' => 'Channel update with a visual',
+        'image_title' => 'Big news',
+        'image_body' => 'Read the update below',
+        'image_keywords' => ['announcement', 'megaphone'],
+    ]]);
+    PostContentHumanizer::fake([[
+        'content' => 'Channel update with a visual',
+        'image_title' => 'Big news',
+        'image_body' => 'Read the update below',
+    ]]);
+
+    $minimalPng = base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==');
+    Image::fake([base64_encode($minimalPng)]);
+
+    $telegram = SocialAccount::factory()->telegram()->create([
+        'workspace_id' => $this->workspace->id,
+    ]);
+
+    $creationId = (string) Str::uuid();
+
+    (new StreamPostCreation(
+        userId: $this->user->id,
+        creationId: $creationId,
+        workspaceId: $this->workspace->id,
+        format: 'telegram_post',
+        socialAccountId: $telegram->id,
+        imageCount: 1,
+        prompt: 'Channel update with visual',
+        template: 'image_card',
+    ))->handle();
+
+    (new RenderPostImages(
+        userId: $this->user->id,
+        creationId: $creationId,
+        workspaceId: $this->workspace->id,
+    ))->handle();
+
+    $post = $this->workspace->posts()->where('creation_id', $creationId)->firstOrFail();
+
+    expect($post->content)->toBe('Channel update with a visual')
+        ->and($post->media)->toHaveCount(1);
+
+    $platform = PostPlatform::where('social_account_id', $telegram->id)->firstOrFail();
+
+    expect($platform->content_type)->toBe(ContentType::TelegramPost);
 
     Image::assertGenerated(fn () => true);
 });

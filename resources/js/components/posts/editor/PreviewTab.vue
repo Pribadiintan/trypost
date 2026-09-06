@@ -20,8 +20,8 @@ import type { MediaItem } from '@/types/media';
 interface SocialAccount {
     id: string;
     platform: string;
-    display_name: string;
-    username: string;
+    display_name: string | null;
+    username: string | null;
     display_label: string;
     handle_label: string;
     avatar_url: string | null;
@@ -33,6 +33,7 @@ interface PostPlatform {
     platform_name: string | null;
     platform_avatar: string | null;
     content_type: string | null;
+    enabled?: boolean;
     social_account: SocialAccount | null;
 }
 
@@ -43,6 +44,16 @@ const props = defineProps<{
     platformContentTypes: Record<string, string>;
     platformMeta?: Record<string, Record<string, any>>;
     postedAt?: string | null;
+    /**
+     * Per-platform content override, keyed by post platform id. Lets a
+     * read-only preview show each platform's sanitized text (the editor
+     * passes one shared draft instead). Absent entries fall back to content:
+     * keys always ship with the platforms map, so a miss only means the row
+     * was added after the fetch — raw text beats a blank preview there.
+     */
+    platformContents?: Record<string, string>;
+    /** Mark rows that won't publish. The editor only lists enabled ones. */
+    showDisabledBadge?: boolean;
 }>();
 
 const getPlatformAvatar = (pp: PostPlatform): string | null =>
@@ -71,6 +82,30 @@ const activeContentType = computed((): string | undefined => {
         activePlatform.value.content_type ??
         undefined
     );
+});
+const activeContent = computed(
+    (): string =>
+        (activePlatform.value &&
+            props.platformContents?.[activePlatform.value.id]) ??
+        props.content,
+);
+/**
+ * `PlatformPreview` requires non-null names; the endpoint may send nulls for
+ * rows whose account was deleted. Normalize here so the preview never breaks
+ * on a dangling row.
+ */
+const activeSocialAccount = computed(() => {
+    const account = activePlatform.value?.social_account ?? null;
+
+    if (account === null) {
+        return null;
+    }
+
+    return {
+        ...account,
+        display_name: account.display_name ?? '',
+        username: account.username ?? '',
+    };
 });
 </script>
 
@@ -134,6 +169,15 @@ const activeContentType = computed((): string | undefined => {
                                 <p class="opacity-70">
                                     {{ getPlatformLabel(pp.platform) }}
                                 </p>
+                                <p
+                                    v-if="
+                                        showDisabledBadge &&
+                                        pp.enabled === false
+                                    "
+                                    class="font-semibold text-amber-500"
+                                >
+                                    {{ $t('posts.edit.preview_disabled') }}
+                                </p>
                             </div>
                         </TooltipContent>
                     </Tooltip>
@@ -147,9 +191,9 @@ const activeContentType = computed((): string | undefined => {
             <PhoneMockup v-if="activePlatform">
                 <PlatformPreview
                     :platform="activePlatform.platform"
-                    :content="content"
+                    :content="activeContent"
                     :media="media"
-                    :social-account="activePlatform.social_account"
+                    :social-account="activeSocialAccount"
                     :content-type="activeContentType"
                     :meta="platformMeta?.[activePlatform.id] ?? {}"
                     :posted-at="postedAt"

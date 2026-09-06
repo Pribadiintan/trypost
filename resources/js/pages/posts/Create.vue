@@ -9,6 +9,7 @@ import AiPostWizard from '@/components/posts/create/AiPostWizard.vue';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { store as storePost } from '@/routes/app/posts';
 import type { AiTemplate } from '@/types';
+import type { MediaItem } from '@/types/media';
 
 interface SocialAccount {
     id: string;
@@ -25,10 +26,14 @@ interface Props {
     date?: string | null;
     socialAccounts: SocialAccount[];
     templates: AiTemplate[];
+    brandReferences?: MediaItem[];
+    canManageBrandReferences?: boolean;
 }
 
 const props = withDefaults(defineProps<Props>(), {
     date: null,
+    brandReferences: () => [],
+    canManageBrandReferences: false,
 });
 
 type View = 'choice' | 'ai';
@@ -151,6 +156,10 @@ const stepHeader = computed(() => {
                     :social-accounts="socialAccounts"
                     :templates="templates"
                     :date="props.date"
+                    :brand-references="props.brandReferences"
+                    :can-manage-brand-references="
+                        props.canManageBrandReferences
+                    "
                     @update:step-header="aiHeader = $event"
                     @cancel="
                         view = 'choice';
