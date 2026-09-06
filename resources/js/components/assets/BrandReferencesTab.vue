@@ -96,8 +96,6 @@ let observer: IntersectionObserver | null = null;
 const fileInput = ref<HTMLInputElement | null>(null);
 const isDragging = ref(false);
 const uploading = ref(false);
-const uploadKind = ref<BrandReferenceKind>('face_closeup');
-const uploadLabel = ref('');
 let uploadAbortController: AbortController | null = null;
 
 const lightbox = ref<InstanceType<typeof ImagePreviewDialog> | null>(null);
@@ -209,29 +207,6 @@ const handleDrop = (event: DragEvent) => {
     }
 };
 
-const applyMeta = async (
-    id: string,
-    kind: BrandReferenceKind,
-    label: string,
-) => {
-    const trimmedLabel = label.trim();
-    const response = await fetch(referencesUpdate.url(id), {
-        method: 'PATCH',
-        body: JSON.stringify({
-            kind,
-            label: trimmedLabel === '' ? null : trimmedLabel,
-        }),
-        headers: {
-            Accept: 'application/json',
-            'Content-Type': 'application/json',
-            'X-Requested-With': 'XMLHttpRequest',
-            'X-CSRF-TOKEN': csrfToken(),
-        },
-        credentials: 'same-origin',
-    });
-    if (!response.ok) throw new Error('Failed to apply reference details');
-};
-
 const uploadFiles = async (files: File[]) => {
     if (uploading.value || remaining.value === 0) return;
     uploading.value = true;
@@ -239,15 +214,12 @@ const uploadFiles = async (files: File[]) => {
     const allowed = files.slice(0, remaining.value);
     for (const file of allowed) {
         try {
-            const done = await uploadChunked({
+            await uploadChunked({
                 file,
                 url: storeChunked.url(),
                 collection: 'brand_references',
                 signal: uploadAbortController.signal,
             });
-            if (done.id) {
-                await applyMeta(done.id, uploadKind.value, uploadLabel.value);
-            }
         } catch (error) {
             if (error instanceof DOMException && error.name === 'AbortError') {
                 toast.info(trans('assets.upload.cancelled'));
@@ -458,37 +430,6 @@ onUnmounted(() => {
             </div>
         </div>
 
-        <div v-if="canManage" class="mb-4 grid gap-3 sm:grid-cols-2">
-            <div class="space-y-1.5">
-                <Label>{{ trans('assets.references.kind_label') }}</Label>
-                <Select v-model="uploadKind">
-                    <SelectTrigger>
-                        <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem
-                            v-for="kind in KINDS"
-                            :key="kind"
-                            :value="kind"
-                        >
-                            {{ kindLabel(kind) }}
-                        </SelectItem>
-                    </SelectContent>
-                </Select>
-                <p class="text-xs text-foreground/60">
-                    {{ trans('assets.references.kind_hint') }}
-                </p>
-            </div>
-            <div class="space-y-1.5">
-                <Label>{{ trans('assets.references.label_label') }}</Label>
-                <Input
-                    v-model="uploadLabel"
-                    maxlength="100"
-                    :placeholder="trans('assets.references.label_placeholder')"
-                />
-            </div>
-        </div>
-
         <div class="mb-4 flex flex-wrap items-center gap-3">
             <div class="relative flex-1 sm:min-w-56">
                 <IconSearch
@@ -524,16 +465,6 @@ onUnmounted(() => {
                 <IconPlus class="mr-2 size-4" />
                 {{ trans('assets.references.add_from_assets') }}
             </Button>
-            <p
-                class="w-full text-xs font-medium text-foreground/60 sm:w-auto sm:text-right"
-            >
-                {{
-                    trans('assets.references.count', {
-                        count: String(unfilteredTotal),
-                        max: String(MAX_REFERENCES),
-                    })
-                }}
-            </p>
         </div>
 
         <div

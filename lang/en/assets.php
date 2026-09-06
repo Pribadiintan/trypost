@@ -55,7 +55,6 @@ return [
 
     'references' => [
         'description' => 'Photos that guide AI image generation: faces to preserve, logos, products, and visual styles. Up to :max photos.',
-        'count' => ':count of :max photos',
         'kind_label' => 'Photo type',
         'label_label' => 'Label (optional)',
         'label_placeholder' => 'e.g. Sara, front-facing portrait',
@@ -67,7 +66,6 @@ return [
             'style' => 'Style',
             'other' => 'Other',
         ],
-        'kind_hint' => 'Applies to the next uploads. You can change it per photo later.',
         'upload' => [
             'drag_drop' => 'Drag & drop reference photos here, or click to select',
             'formats' => 'JPEG, PNG, GIF, WebP',

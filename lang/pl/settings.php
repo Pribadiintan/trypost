@@ -259,13 +259,11 @@ return [
             'variant_updated' => 'Brand variant updated.',
             'variant_deleted' => 'Brand variant deleted.',
         ],
-        
-        "reference_photos_title" => "Brand Reference Photos",
-        "reference_photos_description" => "Upload photos that represent your brand, products, team, or visual style. AI image generation uses them to create visuals that are more consistent with your brand.",
-        "upload_reference_photo" => "Add Reference Photo",
-        "no_reference_photos" => "No reference photos uploaded yet",
-        "no_reference_photos_hint" => "Add 1–5 clear portrait, close-up, or activity photos of your persona to give the AI visual reference for post and slide image generation.",
-        "upload_first_photo" => "Upload Reference Photo",
+
+        'upload_reference_photo' => 'Add Reference Photo',
+        'no_reference_photos' => 'No reference photos uploaded yet',
+        'no_reference_photos_hint' => 'Add 1–5 clear portrait, close-up, or activity photos of your persona to give the AI visual reference for post and slide image generation.',
+        'upload_first_photo' => 'Upload Reference Photo',
         'content_language' => 'Język treści',
         'content_language_description' => 'Język używany w podpisach, hasztagach generowanych przez AI oraz w dowolnym tekście wewnątrz generowanych obrazów lub filmów.',
         'font_placeholder' => 'Wybierz czcionkę…',
