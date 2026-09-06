@@ -7,6 +7,8 @@ namespace App\Ai\Tools\Post;
 use App\Ai\Templates\AiTemplateRegistry;
 use App\Ai\Templates\Concerns\ResolvesContentType;
 use App\Ai\Tools\WorkspaceWriteTool;
+use App\Enums\PostPlatform\ContentType;
+use App\Enums\SocialAccount\Platform;
 use App\Events\Ai\PostCreationReady;
 use App\Jobs\Ai\StreamPostCreation;
 use App\Services\Ai\PostGenerationCatalog;
@@ -49,7 +51,7 @@ class GeneratePostTool extends WorkspaceWriteTool
 
     public function description(): Stringable|string
     {
-        return 'Generate a post with AI in the current workspace, using the format, style and prompt the user chose. Generation follows the workspace brand (variant plus photo references) on its own. Call start_post_generation first to learn which formats and styles this workspace supports, and confirm those choices with the user before calling this. Generation runs in the background: this tool returns as soon as it starts, with a creation id and the channel the finished post is announced on, so never claim the post is ready — tell the user it is being generated. Pass label_ids from list_labels to tag it; add a signature or library asset afterwards with update_post / attach_existing_asset.';
+        return 'Generate a post with AI in the current workspace, using the format, style and prompt the user chose. Generation follows the workspace brand (variant plus photo references) on its own. Call start_post_generation first to learn which formats and styles this workspace supports, and confirm those choices with the user before calling this. Generation runs in the background: this tool returns as soon as it starts, with a creation id and the channel the finished post is announced on. Say one short sentence BEFORE the call naming what is being generated, and nothing after it: the result card above reports waiting, progress, readiness and failure on its own, and any narration added afterwards lands below it as stale text that can never update. When the user asks to retry only the images of a failed generation, call retry_post_images with that result\'s creation_id instead of generating a fresh post. Pass label_ids from list_labels to tag it; add a signature or library asset afterwards with update_post / attach_existing_asset.';
     }
 
     /**
@@ -87,7 +89,7 @@ class GeneratePostTool extends WorkspaceWriteTool
 
         $error = $this->formatError($catalog, $format)
             ?? $this->styleError($style, $socialAccountId)
-            ?? $this->socialAccountError($catalog, $format, $socialAccountId)
+            ?? $this->socialAccountError($catalog, $format, $socialAccountId, $request->integer('image_count'))
             ?? $this->imageCountError($format, $request->integer('image_count'));
 
         if ($error !== null) {
@@ -174,6 +176,21 @@ class GeneratePostTool extends WorkspaceWriteTool
         ));
 
         if ($available === []) {
+            $connected = $this->workspace->socialAccounts()->active()->get()
+                ->map(fn ($account): string => $account->platform->value)
+                ->unique()
+                ->values()
+                ->all();
+
+            if ($connected !== []) {
+                $names = array_map(
+                    fn (string $platform): string => Platform::tryFrom($platform)?->label() ?? $platform,
+                    $connected,
+                );
+
+                return 'This workspace has connected '.implode(', ', $names).' account(s), but AI generation does not support those platforms yet. Ask the user to connect an account on a supported platform first.';
+            }
+
             return 'This workspace has no connected social accounts, so there is no format to generate a post for. Ask the user to connect an account first.';
         }
 
@@ -230,9 +247,16 @@ class GeneratePostTool extends WorkspaceWriteTool
      *     applies_brand_visuals_default: bool,
      * }  $catalog
      */
-    private function socialAccountError(array $catalog, string $format, ?string $socialAccountId): ?string
+    private function socialAccountError(array $catalog, string $format, ?string $socialAccountId, int $imageCount = 0): ?string
     {
         if ($socialAccountId === null) {
+            // Every template renders images as the account's own card, so an
+            // image request without an account could never produce media —
+            // refuse loudly instead of delivering a text-only surprise.
+            if ($imageCount > 0) {
+                return "The image_count asks for {$imageCount} image(s) but no social_account_id was given. Pass social_account_id using one of the account ids start_post_generation returned for this format, or set image_count to 0 for a text-only post.";
+            }
+
             return null;
         }
 
@@ -327,6 +351,18 @@ class GeneratePostTool extends WorkspaceWriteTool
      */
     private function imageCountError(string $format, int $imageCount): ?string
     {
+        // The pipeline renders at most one image for a single-image format, so
+        // accepting more would silently truncate the request.
+        if (in_array($format, [ContentType::TelegramPost->value, ContentType::DiscordMessage->value], true) && $imageCount > 1) {
+            return "The format \"{$format}\" accepts at most 1 image per generation. Call generate_post again with image_count set to 1 or 0.";
+        }
+
+        // A carousel without images can never be published, and the pipeline
+        // would otherwise render one image unasked.
+        if ($format === ContentType::CAROUSEL_FORMAT && $imageCount < 1) {
+            return 'The format "instagram_carousel" needs at least 1 image. Call generate_post again with image_count set to 1 or more, or pick a single-image format for a text-only post.';
+        }
+
         $max = self::resolveContentType($format)->maxMediaCount();
 
         if ($imageCount <= $max) {

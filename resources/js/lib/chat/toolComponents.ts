@@ -50,6 +50,7 @@ export const toolComponents: Record<string, ToolComponentEntry> = {
         kind: 'prompt',
     },
     generate_post: { component: ChatPostGenerationResult, kind: 'display' },
+    retry_post_images: { component: ChatPostGenerationResult, kind: 'display' },
     get_brand: { component: ChatBrandCard, kind: 'display' },
     list_labels: { component: ChatLabelList, kind: 'display' },
     list_signatures: { component: ChatSignatureList, kind: 'display' },

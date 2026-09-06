@@ -75,6 +75,8 @@ const SINGLE_IMAGE_FORMATS = [
 
 /**
  * Formats where images are optional, mapped to the highest count offered.
+ * Telegram and Discord render at most one image per generation, like the
+ * single-image pipeline they share — offering more would silently truncate.
  */
 const OPTIONAL_IMAGE_MAX: Record<string, number> = {
     instagram_feed: 1,
@@ -84,6 +86,8 @@ const OPTIONAL_IMAGE_MAX: Record<string, number> = {
     threads_post: 4,
     bluesky_post: 4,
     mastodon_post: 4,
+    telegram_post: 1,
+    discord_message: 1,
 };
 
 const DEFAULT_OPTIONAL_IMAGE_MAX = 4;
@@ -423,6 +427,36 @@ const brandStepVisible = computed(
 );
 
 const isEmptyCatalog = computed(() => formatOptions.value.length === 0);
+
+const connectedPlatforms = computed<string[]>(
+    () => props.data?.connected_platforms ?? [],
+);
+
+/**
+ * Empty for two different reasons: no accounts at all, or accounts whose
+ * platforms AI generation does not support yet (e.g. video-only). The two
+ * need different advice — "connect an account" gaslights a user who already
+ * did.
+ */
+const emptyCatalogMessage = computed(() => {
+    if (!isEmptyCatalog.value) {
+        return '';
+    }
+
+    if (connectedPlatforms.value.length === 0) {
+        return line('unavailable');
+    }
+
+    const template =
+        props.data?.copy?.unavailable_unsupported ??
+        trans('chat.post_generation.unavailable_unsupported');
+
+    return fill(template, {
+        platforms: connectedPlatforms.value
+            .map((platform) => getPlatformLabel(platform))
+            .join(', '),
+    });
+});
 
 /**
  * A format was chosen but the catalog offers nothing to render it with, so
@@ -772,7 +806,7 @@ const submit = (): void => {
     >
         <ChatAssistantMessage
             v-if="isEmptyCatalog"
-            :title="line('unavailable')"
+            :title="emptyCatalogMessage"
             data-testid="chat-post-generation-empty"
             dusk="chat-post-generation-empty"
         />

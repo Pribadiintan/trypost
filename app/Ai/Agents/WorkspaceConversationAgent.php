@@ -27,6 +27,7 @@ use App\Ai\Tools\Post\GetPostMetricsTool;
 use App\Ai\Tools\Post\GetPostTool;
 use App\Ai\Tools\Post\ListPostsTool;
 use App\Ai\Tools\Post\PublishPostTool;
+use App\Ai\Tools\Post\RetryPostImagesTool;
 use App\Ai\Tools\Post\SchedulePostTool;
 use App\Ai\Tools\Post\StartPostGenerationTool;
 use App\Ai\Tools\Post\UpdatePostTool;
@@ -69,10 +70,12 @@ class WorkspaceConversationAgent implements Agent, Conversational, HasTools
     {
         return view('prompts.conversation.assistant', [
             'brand_name' => $this->workspace->name ?? '',
+            'brand_website' => $this->workspace->brand_website ?? '',
             'brand_description' => $this->workspace->brand_description ?? '',
             'brand_voice_traits' => $this->workspace->brand_voice_traits ?? [],
             'content_language' => $this->workspace->content_language,
             'connected_platforms' => $this->workspace->socialAccounts()
+                ->active()
                 ->get()
                 ->map(fn ($account): string => $account->platform->value)
                 ->unique()
@@ -92,6 +95,7 @@ class WorkspaceConversationAgent implements Agent, Conversational, HasTools
             new GetPostMetricsTool($this->workspace, $this->user),
             new StartPostGenerationTool($this->workspace, $this->user),
             new GeneratePostTool($this->workspace, $this->user),
+            new RetryPostImagesTool($this->workspace, $this->user),
             new CreatePostTool($this->workspace, $this->user),
             new UpdatePostTool($this->workspace, $this->user),
             new SchedulePostTool($this->workspace, $this->user),

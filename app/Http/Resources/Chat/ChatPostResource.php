@@ -54,6 +54,7 @@ class ChatPostResource extends JsonResource
             'id' => $this->id,
             'content' => $truncated ? $preview : $content,
             'content_truncated' => $truncated,
+            'media_count' => count($this->media ?? []),
             'status' => $this->status?->value,
             'scheduled_at' => $this->scheduled_at?->toIso8601String(),
             'published_at' => $this->published_at?->toIso8601String(),

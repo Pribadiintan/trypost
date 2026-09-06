@@ -225,6 +225,72 @@ it('refuses a format when the workspace has no connected accounts at all', funct
     Bus::assertNotDispatched(StreamPostCreation::class);
 });
 
+it('names the connected platforms when none supports AI generation', function (): void {
+    $this->account->delete();
+
+    SocialAccount::factory()->for($this->workspace)->create([
+        'platform' => Platform::TikTok,
+    ]);
+
+    $output = json_decode($this->tool->handle(new Request(generatePostPayload([
+        'format' => 'threads_post',
+        'social_account_id' => null,
+    ]))), true);
+
+    expect($output)->toHaveKey('error')
+        ->and($output['error'])->toContain('TikTok')
+        ->and($output['error'])->not->toContain('no connected social accounts');
+
+    Bus::assertNotDispatched(StreamPostCreation::class);
+});
+
+it('refuses images without an account instead of going text-only silently', function (): void {
+    $output = json_decode($this->tool->handle(new Request(generatePostPayload([
+        'style' => 'image_card',
+        'social_account_id' => null,
+        'image_count' => 2,
+    ]))), true);
+
+    expect($output)->toHaveKey('error')
+        ->and($output['error'])->toContain('image_count');
+
+    Bus::assertNotDispatched(StreamPostCreation::class);
+});
+
+it('caps telegram generations at one image', function (): void {
+    $telegram = SocialAccount::factory()->for($this->workspace)->create([
+        'platform' => Platform::Telegram,
+    ]);
+
+    $output = json_decode($this->tool->handle(new Request(generatePostPayload([
+        'format' => 'telegram_post',
+        'social_account_id' => $telegram->id,
+        'image_count' => 5,
+    ]))), true);
+
+    expect($output)->toHaveKey('error')
+        ->and($output['error'])->toContain('at most 1 image');
+
+    Bus::assertNotDispatched(StreamPostCreation::class);
+});
+
+it('refuses a carousel without images', function (): void {
+    $instagram = SocialAccount::factory()->instagram()->create([
+        'workspace_id' => $this->workspace->id,
+    ]);
+
+    $output = json_decode($this->tool->handle(new Request(generatePostPayload([
+        'format' => 'instagram_carousel',
+        'social_account_id' => $instagram->id,
+        'image_count' => 0,
+    ]))), true);
+
+    expect($output)->toHaveKey('error')
+        ->and($output['error'])->toContain('at least 1 image');
+
+    Bus::assertNotDispatched(StreamPostCreation::class);
+});
+
 it('refuses an unknown style and names the valid ones', function (): void {
     $output = json_decode($this->tool->handle(new Request(generatePostPayload([
         'style' => 'bogus',

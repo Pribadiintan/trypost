@@ -13,6 +13,7 @@ use App\Ai\Tools\Post\ListPostsTool;
 use App\Ai\Tools\Post\StartPostGenerationTool;
 use App\Ai\Tools\Signature\ListSignaturesTool;
 use App\Http\Resources\Chat\ChatPostResource;
+use App\Models\AiGeneration;
 use App\Models\Post;
 use App\Models\WorkspaceConversation;
 use App\Models\WorkspaceConversationMessage;
@@ -110,6 +111,14 @@ class ToolReplayer
      */
     private const GENERATE_POST = 'generate_post';
 
+    /**
+     * Answered with the same `{creation_id, channel}` payload as generate_post
+     * and augmented the same way (see {@see withGeneratedPost()}). Kept out of
+     * the spent/position bookkeeping: a retry never arms a choices form, so it
+     * must not settle the card that collected the original choices.
+     */
+    private const RETRY_POST_IMAGES = 'retry_post_images';
+
     private const START_POST_GENERATION = 'start_post_generation';
 
     /**
@@ -144,6 +153,7 @@ class ToolReplayer
         $position = 0;
         $lastGeneratePosition = $this->lastGeneratePostPosition($conversation);
         $freshSnapshots = $this->freshPostSnapshots($conversation);
+        $generations = $this->generationsFor($conversation);
 
         foreach ($conversation->messages as $message) {
             $storedResults = collect($message->tool_results ?? [])->keyBy('id');
@@ -154,8 +164,8 @@ class ToolReplayer
                 $name = data_get($call, 'name');
                 $callPosition = $position++;
 
-                if ($name === self::GENERATE_POST) {
-                    $payloads[$id] = $this->withGeneratedPost($conversation, $message, $stored);
+                if ($name === self::GENERATE_POST || $name === self::RETRY_POST_IMAGES) {
+                    $payloads[$id] = $this->withGeneratedPost($conversation, $message, $stored, $generations);
 
                     continue;
                 }
@@ -271,6 +281,47 @@ class ToolReplayer
     }
 
     /**
+     * Generations for every generate_post call in the conversation, keyed by
+     * creation id. One batched query, scoped to the workspace so another
+     * workspace's generation never leaks in. Posts are eager loaded so the
+     * per-card resolve below needs no extra query.
+     *
+     * @return array<string, AiGeneration>
+     */
+    private function generationsFor(WorkspaceConversation $conversation): array
+    {
+        $creationIds = [];
+
+        foreach ($conversation->messages as $message) {
+            foreach ($message->tool_calls ?? [] as $call) {
+                if (! in_array(data_get($call, 'name'), [self::GENERATE_POST, self::RETRY_POST_IMAGES], true)) {
+                    continue;
+                }
+
+                $storedResults = collect($message->tool_results ?? [])->keyBy('id');
+                $stored = (string) data_get($storedResults->get(data_get($call, 'id')), 'result', '');
+                $creationId = data_get(json_decode($stored, true), 'data.creation_id');
+
+                if (is_string($creationId) && $creationId !== '') {
+                    $creationIds[] = $creationId;
+                }
+            }
+        }
+
+        if ($creationIds === []) {
+            return [];
+        }
+
+        return AiGeneration::query()
+            ->with(['post.postPlatforms.socialAccount'])
+            ->where('workspace_id', $conversation->workspace_id)
+            ->whereIn('creation_id', array_unique($creationIds))
+            ->get()
+            ->keyBy('creation_id')
+            ->all();
+    }
+
+    /**
      * Resolve a finished generation back into its post.
      *
      * generate_post dispatches StreamPostCreation and answers immediately with
@@ -294,9 +345,10 @@ class ToolReplayer
      * missed, or the job failed. Nothing is coming, and the card would
      * otherwise sit spinning for the length of its own timeout implying work
      * is in progress. That payload is marked `settled` so the card can say so
-     * on first paint.
+     * on first paint. A terminal generation with no post left (failed, or the
+     * post was deleted since) settles the same way regardless of age.
      */
-    private function withGeneratedPost(WorkspaceConversation $conversation, WorkspaceConversationMessage $message, string $stored): string
+    private function withGeneratedPost(WorkspaceConversation $conversation, WorkspaceConversationMessage $message, string $stored, array $generations = []): string
     {
         $payload = json_decode($stored, true);
 
@@ -308,6 +360,37 @@ class ToolReplayer
 
         if (! is_string($creationId) || $creationId === '') {
             return $stored;
+        }
+
+        $generation = $generations[$creationId] ?? null;
+
+        if ($generation instanceof AiGeneration) {
+            $post = $generation->post;
+
+            if ($post !== null && $post->workspace_id !== $conversation->workspace_id) {
+                $post = null;
+            }
+
+            data_set($payload, 'data.generation', [
+                'status' => $generation->status->value,
+                'image_done' => $generation->image_done,
+                'image_expected' => $generation->image_expected,
+                'post_id' => $post?->id,
+                'error' => $generation->error,
+                'error_phase' => $generation->error_phase,
+            ]);
+
+            if ($post !== null) {
+                $post->loadMissing(['postPlatforms.socialAccount']);
+
+                data_set($payload, 'data.post', (new ChatPostResource($post))->withFullContent()->resolve());
+            }
+
+            if ($generation->status->isTerminal() && ($post === null || $post->workspace_id !== $conversation->workspace_id)) {
+                data_set($payload, 'data.settled', true);
+            }
+
+            return $this->encode($payload);
         }
 
         $post = $conversation->workspace->posts()

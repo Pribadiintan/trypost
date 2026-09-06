@@ -20,7 +20,7 @@ class GetBrandTool extends WorkspaceTool
 
     public function description(): Stringable|string
     {
-        return 'Get the current workspace brand identity: name, description, voice traits, guidelines, colors and fonts, plus its language variants and photo references. Generation already follows this brand (variant plus photo references) on its own.';
+        return 'Get the current workspace brand identity: name, website (read-only), description, voice traits, guidelines, colors and fonts, plus its language variants and photo references. Generation already follows this brand (variant plus photo references) on its own.';
     }
 
     /**

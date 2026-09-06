@@ -30,9 +30,20 @@ export interface PostCreationCompleted {
     error?: string | null;
 }
 
+/** The payload `App\Events\Ai\PostCreationProgress::broadcastWith()` sends. */
+export interface PostCreationProgress {
+    creation_id?: string;
+    phase?: string;
+    post_id?: string | null;
+    image_done?: number;
+    image_expected?: number;
+}
+
 export interface UsePostCreationOptions {
     /** Called once with the finished post's id. */
     onReady: (postId: string) => void;
+    /** Called on every phased progress broadcast (text ready, image running). */
+    onProgress?: (progress: PostCreationProgress) => void;
     /**
      * Called once when the GENERATION itself reported a failure. The message is
      * whatever the event carried, or null when the caller supplies its own copy.
@@ -130,6 +141,17 @@ export const usePostCreation = (
             channel,
             (privateChannel) => {
                 subscribedChannel = channel;
+
+                privateChannel.listen(
+                    '.ai.creation.progress',
+                    (event: PostCreationProgress) => {
+                        if (disposed || settled) {
+                            return;
+                        }
+
+                        options.onProgress?.(event);
+                    },
+                );
 
                 privateChannel.listen(
                     '.ai.creation.completed',

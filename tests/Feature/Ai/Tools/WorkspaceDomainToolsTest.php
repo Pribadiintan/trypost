@@ -40,7 +40,7 @@ use Laravel\Ai\Tools\Request;
 
 test('get_brand returns the workspace identity with variants and photo references', function () {
     [$user, $workspace] = workspaceUserWithRole(Role::Member);
-    $workspace->update(['name' => 'Acme Co', 'brand_description' => 'We sell anvils.']);
+    $workspace->update(['name' => 'Acme Co', 'brand_description' => 'We sell anvils.', 'brand_website' => 'https://acme.example']);
     $workspace->brandVariants()->create([
         'language_code' => 'en',
         'label' => 'English',
@@ -53,6 +53,7 @@ test('get_brand returns the workspace identity with variants and photo reference
     $output = json_decode((new GetBrandTool($workspace, $user))->handle(new Request([])), true);
 
     expect($output['data']['name'])->toBe('Acme Co')
+        ->and($output['data']['brand_website'])->toBe('https://acme.example')
         ->and($output['data']['brand_description'])->toBe('We sell anvils.')
         ->and($output['data']['variants'])->toHaveCount(1)
         ->and($output['data']['reference_photos'])->toHaveCount(1);

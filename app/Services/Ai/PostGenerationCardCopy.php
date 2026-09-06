@@ -30,6 +30,7 @@ final class PostGenerationCardCopy
      */
     private const KEYS = [
         'unavailable',
+        'unavailable_unsupported',
         'styles_unavailable',
         'format_question',
         'style_question',

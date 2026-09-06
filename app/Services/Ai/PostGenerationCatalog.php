@@ -30,11 +30,18 @@ use Illuminate\Support\Collection;
 final class PostGenerationCatalog
 {
     /**
+     * `connected_platforms` names every platform with an active account, even
+     * when none of them maps to a generatable format — so the card can tell
+     * "no accounts connected" apart from "accounts connected, but AI
+     * generation does not support them yet" instead of showing the same empty
+     * message for both.
+     *
      * @param  string|null  $locale  the locale every displayed name is resolved in, or null for the application's own
      * @return array{
      *     formats: list<array{value: string, platform: string, label: string, accounts: list<array{id: string, label: string, username: ?string, platform: string}>}>,
      *     styles: list<array{key: string, name: string, description: string, preview: string, needs_account: bool, supported_formats: list<string>, applies_brand_visuals: bool}>,
      *     applies_brand_visuals_default: bool,
+     *     connected_platforms: list<string>,
      * }
      */
     public static function forWorkspace(Workspace $workspace, ?string $locale = null): array
@@ -46,6 +53,7 @@ final class PostGenerationCatalog
             'formats' => self::buildFormats($accountsByPlatform, $locale),
             'styles' => self::buildStyles($locale),
             'applies_brand_visuals_default' => true,
+            'connected_platforms' => $accountsByPlatform->keys()->all(),
         ];
     }
 

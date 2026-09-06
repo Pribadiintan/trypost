@@ -11,13 +11,16 @@ use App\Ai\Templates\AiTemplateRegistry;
 use App\Ai\Templates\GeneratedPost;
 use App\Ai\Templates\TemplateContext;
 use App\Enums\Ai\ContentStyle;
+use App\Enums\Ai\GenerationStatus;
 use App\Enums\Ai\GeneratorFormat;
 use App\Enums\Notification\Channel as NotificationChannel;
 use App\Enums\Notification\Type as NotificationType;
 use App\Enums\Post\CreatedVia;
 use App\Enums\PostPlatform\ContentType;
+use App\Events\Ai\PostCreationProgress;
 use App\Events\Ai\PostCreationReady;
 use App\Jobs\SendNotification;
+use App\Models\AiGeneration;
 use App\Models\Post;
 use App\Models\SocialAccount;
 use App\Models\User;
@@ -61,8 +64,48 @@ class StreamPostCreation implements ShouldBeUnique, ShouldQueue
         return "{$this->userId}:{$this->creationId}";
     }
 
+    public function failed(?\Throwable $exception): void
+    {
+        $generation = AiGeneration::query()
+            ->where('workspace_id', $this->workspaceId)
+            ->where('creation_id', $this->creationId)
+            ->first();
+
+        if ($generation === null || $generation->status->isTerminal()) {
+            return;
+        }
+
+        $generation->update([
+            'status' => GenerationStatus::FailedText,
+            'error_phase' => 'text',
+            'error' => $exception?->getMessage() ?? 'Text generation failed.',
+        ]);
+
+        PostCreationReady::dispatch($this->userId, $this->creationId, $generation->post_id, (string) $generation->error);
+    }
+
     public function handle(): void
     {
+        $generation = AiGeneration::query()->firstOrCreate(
+            ['creation_id' => $this->creationId],
+            [
+                'workspace_id' => $this->workspaceId,
+                'user_id' => $this->userId,
+                'status' => GenerationStatus::PendingText,
+                'format' => $this->format,
+                'template' => $this->template,
+                'apply_brand_visuals' => $this->applyBrandVisuals,
+                'reference_media_ids' => $this->referenceMediaIds,
+                'use_brand_references' => $this->useBrandReferences,
+                'social_account_id' => $this->socialAccountId,
+                'image_expected' => $this->imageCount,
+            ],
+        );
+
+        if ($generation->status->isTerminal()) {
+            return;
+        }
+
         $workspace = Workspace::findOrFail($this->workspaceId);
         $socialAccount = $this->socialAccountId ? SocialAccount::find($this->socialAccountId) : null;
 
@@ -73,28 +116,19 @@ class StreamPostCreation implements ShouldBeUnique, ShouldQueue
         $slideCount = $isCarousel && $this->imageCount > 0 ? $this->imageCount : 1;
         $brand = $workspace->resolvedBrand();
 
-        $referenceImages = [];
-        if (! empty($this->referenceMediaIds)) {
-            $referenceImages = $workspace->media()
-                ->whereIn('id', $this->referenceMediaIds)
-                ->pluck('path')
-                ->all();
-        } elseif ($this->useBrandReferences) {
-            $referenceImages = $workspace->getMedia('brand_references')
-                ->pluck('path')
-                ->all();
-        }
-
-        $context = new TemplateContext(
+        // Text phase never touches the image model: assembling with a null
+        // account yields caption plus content type with empty media on every
+        // template, so no image provider is billed here.
+        $textContext = new TemplateContext(
             workspace: $workspace,
-            socialAccount: $socialAccount,
+            socialAccount: null,
             format: $this->format,
             imageCount: $this->imageCount,
             isCarousel: $isCarousel,
             applyBrandVisuals: $this->applyBrandVisuals,
             languageCode: $brand->languageCode,
             brand: $brand,
-            referenceImages: $referenceImages,
+            referenceImages: [],
         );
 
         $agent = new PostContentGenerator(
@@ -103,7 +137,7 @@ class StreamPostCreation implements ShouldBeUnique, ShouldQueue
             slideCount: $slideCount,
             platformContext: $this->format,
             template: $style,
-            templateContext: $context,
+            templateContext: $textContext,
             brand: $brand,
         );
 
@@ -132,19 +166,84 @@ class StreamPostCreation implements ShouldBeUnique, ShouldQueue
 
             $structured = $this->humanize($workspace, $structured, $agentFormat, $style->style(), $brand);
 
-            $generated = $style->assemble($structured, $context);
-            $post = $this->createPostFromGenerated($workspace, $generated, $socialAccount);
-            $this->notifyReady($workspace, $post);
+            $textOnly = $style->assemble($structured, $textContext);
+            $post = $this->createPostFromGenerated($workspace, $textOnly, $socialAccount);
+
+            $imageExpected = $this->expectedImageCount($isCarousel, $slideCount, $socialAccount);
+
+            $generation->update([
+                'workspace_id' => $workspace->id,
+                'user_id' => $this->userId,
+                'status' => GenerationStatus::TextReady,
+                'format' => $this->format,
+                'template' => $this->template,
+                'apply_brand_visuals' => $this->applyBrandVisuals,
+                'reference_media_ids' => $this->referenceMediaIds,
+                'use_brand_references' => $this->useBrandReferences,
+                'social_account_id' => $socialAccount?->id,
+                'image_expected' => $imageExpected,
+                'image_done' => 0,
+                'post_id' => $post->id,
+                'structured' => $structured,
+                'error_phase' => null,
+                'error' => null,
+            ]);
+
+            PostCreationProgress::dispatch(
+                userId: $this->userId,
+                creationId: $this->creationId,
+                phase: GenerationStatus::TextReady,
+                postId: $post->id,
+                imageDone: 0,
+                imageExpected: $imageExpected,
+            );
+
+            if ($imageExpected === 0) {
+                $generation->update(['status' => GenerationStatus::Ready]);
+
+                $this->notifyReady($workspace, $post);
+
+                return;
+            }
+
+            RenderPostImages::dispatch(
+                userId: $this->userId,
+                creationId: $this->creationId,
+                workspaceId: $this->workspaceId,
+                applyBrandVisuals: $this->applyBrandVisuals,
+                referenceMediaIds: $this->referenceMediaIds,
+                useBrandReferences: $this->useBrandReferences,
+            );
         } catch (\Throwable $e) {
-            Log::error('StreamPostCreation failed', [
-                'creation_id' => $this->creationId,
+            $generation->update([
+                'status' => GenerationStatus::FailedText,
+                'error_phase' => 'text',
                 'error' => $e->getMessage(),
             ]);
 
-            PostCreationReady::dispatch($this->userId, $this->creationId, null, $e->getMessage());
+            Log::error('StreamPostCreation failed', [
+                'creation_id' => $this->creationId,
+                'phase' => 'text',
+                'error' => $e->getMessage(),
+            ]);
+
+            PostCreationReady::dispatch($this->userId, $this->creationId, $generation->post_id, $e->getMessage());
 
             throw $e;
         }
+    }
+
+    private function expectedImageCount(bool $isCarousel, int $slideCount, ?SocialAccount $socialAccount): int
+    {
+        if ($socialAccount === null) {
+            return 0;
+        }
+
+        if ($isCarousel) {
+            return $slideCount;
+        }
+
+        return $this->imageCount > 0 ? 1 : 0;
     }
 
     /**
@@ -244,13 +343,30 @@ class StreamPostCreation implements ShouldBeUnique, ShouldQueue
 
         $labelIds = $workspace->labels()->whereIn('id', $this->labelIds)->pluck('id')->all();
 
-        $post = CreatePost::execute($workspace, $user, [
-            'content' => $generated->content,
-            'media' => $generated->media,
-            'date' => $this->date,
-            'created_via' => CreatedVia::Web,
-            'label_ids' => $labelIds,
-        ]);
+        // A hard worker loss between CreatePost and the generation update below
+        // leaves a draft with this creation_id but a non-terminal generation,
+        // so a retry must adopt that draft instead of inserting a second one.
+        $orphan = $workspace->posts()->where('creation_id', $this->creationId)->first();
+
+        if ($orphan instanceof Post) {
+            $orphan->update([
+                'content' => $generated->content,
+                'media' => $generated->media,
+            ]);
+
+            $orphan->labels()->sync($labelIds);
+
+            $post = $orphan;
+        } else {
+            $post = CreatePost::execute($workspace, $user, [
+                'content' => $generated->content,
+                'media' => $generated->media,
+                'date' => $this->date,
+                'created_via' => CreatedVia::Web,
+                'creation_id' => $this->creationId,
+                'label_ids' => $labelIds,
+            ]);
+        }
 
         if ($generated->contentType && $socialAccount) {
             $aspectRatio = $this->aspectRatioFor($generated->contentType);

@@ -3,6 +3,7 @@ import { Link } from '@inertiajs/vue3';
 import { IconExternalLink } from '@tabler/icons-vue';
 import { computed } from 'vue';
 
+import ChatPostPreview from '@/components/chat/tools/ChatPostPreview.vue';
 import { Badge } from '@/components/ui/badge';
 import {
     getPlatformLabel,
@@ -95,6 +96,8 @@ const platforms = computed(() => props.data.platforms ?? []);
                 <IconExternalLink class="size-3.5" />
                 {{ $t('chat.tool_card.open_in_editor') }}
             </Link>
+
+            <ChatPostPreview :post-id="data.id" />
         </template>
     </div>
 </template>

@@ -44,6 +44,7 @@ class ChatBrandResource extends JsonResource
 
         return [
             'name' => $workspace->name,
+            'brand_website' => $workspace->brand_website,
             'brand_description' => $workspace->brand_description,
             'brand_voice_traits' => $workspace->brand_voice_traits ?? [],
             'brand_guidelines' => $workspace->brand_guidelines,

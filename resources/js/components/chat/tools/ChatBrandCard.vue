@@ -24,6 +24,17 @@ const voice = computed<string>(() =>
     >
         <p class="text-sm font-semibold">{{ data.name }}</p>
 
+        <a
+            v-if="data.brand_website"
+            :href="data.brand_website"
+            target="_blank"
+            rel="noopener"
+            class="block truncate text-xs font-semibold text-primary hover:underline"
+            data-testid="chat-brand-card-website"
+        >
+            {{ data.brand_website }}
+        </a>
+
         <p
             v-if="data.brand_description"
             class="line-clamp-3 text-sm text-foreground/90"

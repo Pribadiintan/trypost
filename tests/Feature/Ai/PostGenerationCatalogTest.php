@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Models\SocialAccount;
 use App\Models\Workspace;
+use App\Services\Ai\PostGenerationCardCopy;
 use App\Services\Ai\PostGenerationCatalog;
 
 beforeEach(function (): void {
@@ -129,4 +130,46 @@ it('labels every format and style in the app locale when no locale is asked for'
     expect($catalog['formats'][0]['label'])->toBe(__('posts.formats.threads_post', [], 'en'))
         ->and(collect($catalog['styles'])->firstWhere('key', 'tweet_card')['name'])
         ->toBe(__('posts.ai.templates.tweet_card.name', [], 'en'));
+});
+
+it('offers telegram_post to a telegram-only workspace', function (): void {
+    $workspace = Workspace::factory()->create();
+    $account = SocialAccount::factory()->for($workspace)->create(['platform' => 'telegram']);
+
+    $catalog = PostGenerationCatalog::forWorkspace($workspace);
+    $format = collect($catalog['formats'])->firstWhere('value', 'telegram_post');
+
+    expect($format)->not->toBeNull()
+        ->and($format['platform'])->toBe('telegram')
+        ->and(collect($format['accounts'])->pluck('id')->all())->toBe([$account->id])
+        ->and($catalog['connected_platforms'])->toContain('telegram');
+});
+
+it('offers discord_message to a discord-only workspace', function (): void {
+    $workspace = Workspace::factory()->create();
+    $account = SocialAccount::factory()->for($workspace)->create(['platform' => 'discord']);
+
+    $catalog = PostGenerationCatalog::forWorkspace($workspace);
+    $format = collect($catalog['formats'])->firstWhere('value', 'discord_message');
+
+    expect($format)->not->toBeNull()
+        ->and($format['platform'])->toBe('discord')
+        ->and(collect($format['accounts'])->pluck('id')->all())->toBe([$account->id]);
+});
+
+it('names connected platforms when none maps to a generatable format', function (): void {
+    $workspace = Workspace::factory()->create();
+    SocialAccount::factory()->for($workspace)->create(['platform' => 'tiktok']);
+
+    $catalog = PostGenerationCatalog::forWorkspace($workspace);
+
+    expect($catalog['formats'])->toBe([])
+        ->and($catalog['connected_platforms'])->toBe(['tiktok']);
+});
+
+it('ships the unsupported-platforms copy line for the empty-catalog card', function (): void {
+    $copy = PostGenerationCardCopy::forLocale('en');
+
+    expect($copy)->toHaveKey('unavailable_unsupported')
+        ->and($copy['unavailable_unsupported'])->toContain(':platforms');
 });

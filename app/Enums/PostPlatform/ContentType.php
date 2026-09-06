@@ -541,6 +541,10 @@ enum ContentType: string
      * never be published. Do not add a type here without teaching
      * App\Jobs\Ai\StreamPostCreation how to generate it.
      *
+     * TelegramPost and DiscordMessage are text-first, image-optional types in
+     * the same family as XPost: the single-image flow already honours their
+     * copy budgets and caption rules with no pipeline changes.
+     *
      * @return array<self>
      */
     public static function aiSupported(): array
@@ -556,6 +560,8 @@ enum ContentType: string
             self::MastodonPost,
             self::FacebookPost,
             self::PinterestPin,
+            self::TelegramPost,
+            self::DiscordMessage,
         ];
     }
 

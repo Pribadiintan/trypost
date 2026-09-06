@@ -7,12 +7,12 @@ on:
         description: 'Pipeline mode'
         type: choice
         required: true
-        default: build-and-deploy
+        default: Build and deploy
         options:
-          - build-and-deploy
-          - build-only
+          - Build and deploy
+          - Build only
       public_host:
-        description: 'Optional host override (e.g. post.example.com)'
+        description: 'Public host override (optional)'
         type: string
         required: false
         default: ''
@@ -140,7 +140,7 @@ jobs:
             echo "- Mode: \`$MODE\`"
             echo "- Image: \`$IMAGE\`"
             echo "- Public host: \`$PUBLIC_HOST\`"
-            if [ "$MODE" = "build-only" ]; then
+            if [ "$MODE" = "Build only" ]; then
               echo "- Deploy manually: \`TRYPOST_IMAGE=$IMAGE docker compose --env-file .env -p trypost -f compose.prod.yaml up -d\`"
             fi
           } >> "$GITHUB_STEP_SUMMARY"
@@ -148,7 +148,7 @@ jobs:
   deploy:
     name: Deploy to VM
     needs: build
-    if: ${{ inputs.mode == 'build-and-deploy' }}
+    if: ${{ inputs.mode == 'Build and deploy' }}
     runs-on: ubuntu-latest
     environment: production
     timeout-minutes: 15

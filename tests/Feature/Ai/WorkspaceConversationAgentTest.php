@@ -20,6 +20,7 @@ test('the agent exposes the post plus workspace tools', function () {
         'get_post_metrics',
         'start_post_generation',
         'generate_post',
+        'retry_post_images',
         'create_post',
         'update_post',
         'schedule_post',
@@ -52,6 +53,7 @@ test('the agent exposes the post plus workspace tools', function () {
 test('the instructions carry the workspace brand and content language', function () {
     $workspace = Workspace::factory()->create([
         'name' => 'Acme Co',
+        'brand_website' => 'https://acme.example',
         'brand_description' => 'We sell anvils.',
         'content_language' => 'es',
         'brand_voice_traits' => ['playful', 'confident'],
@@ -64,6 +66,7 @@ test('the instructions carry the workspace brand and content language', function
     $instructions = (new WorkspaceConversationAgent($workspace, User::factory()->create()))->instructions();
 
     expect($instructions)->toContain('Acme Co')
+        ->and($instructions)->toContain('https://acme.example')
         ->and($instructions)->toContain('We sell anvils.')
         ->and($instructions)->toContain('Content language: es')
         ->and($instructions)->toContain('playful')

@@ -17,6 +17,8 @@ export interface ChatPost {
     content?: string | null;
     /** True when `content` is a shortened preview — `list_posts` entries only. */
     content_truncated?: boolean;
+    /** How many media items the post currently has. */
+    media_count?: number;
     status?: PostStatusValue | string | null;
     scheduled_at?: string | null;
     published_at?: string | null;
@@ -106,6 +108,8 @@ export interface ChatBrandReference {
 /** Mirrors `App\Ai\Tools\Brand\GetBrandTool`'s payload. */
 export interface ChatBrand {
     name: string;
+    /** Read-only canonical site from settings; absent on payloads stored before it was exposed. */
+    brand_website?: string | null;
     brand_description: string | null;
     brand_voice_traits: string[];
     brand_guidelines: string | null;
@@ -274,6 +278,7 @@ export interface ChatPostGenerationFormat {
  */
 export interface ChatPostGenerationCopy {
     unavailable: string;
+    unavailable_unsupported?: string;
     styles_unavailable: string;
     format_question: string;
     style_question: string;
@@ -316,6 +321,23 @@ export interface ChatPostGenerationStyle {
  * when a reopened conversation's `creation_id` still resolves to a post, which
  * is the only way a card that missed the broadcast can ever show one.
  */
+export type ChatGenerationStatus =
+    | 'pending_text'
+    | 'text_ready'
+    | 'image_running'
+    | 'ready'
+    | 'failed_text'
+    | 'failed_image';
+
+export interface ChatGeneration {
+    status: ChatGenerationStatus | string;
+    image_done: number;
+    image_expected: number;
+    post_id?: string | null;
+    error?: string | null;
+    error_phase?: string | null;
+}
+
 export interface ChatPostGeneration {
     creation_id: string;
     /**
@@ -333,6 +355,12 @@ export interface ChatPostGeneration {
      * coming" from "still running", which a bare missing `post` cannot.
      */
     settled?: boolean;
+    /**
+     * Persisted phased status from `ai_generations`, merged by
+     * `App\Ai\Tools\ToolReplayer`. Absent on payloads stored before phased
+     * generation existed — the card then falls back to post/settled.
+     */
+    generation?: ChatGeneration | null;
 }
 
 /** Mirrors `App\Ai\Tools\Post\StartPostGenerationTool`'s payload. */
@@ -340,6 +368,12 @@ export interface ChatPostGenerationCatalog {
     formats: ChatPostGenerationFormat[];
     styles: ChatPostGenerationStyle[];
     applies_brand_visuals_default: boolean;
+    /**
+     * Every platform with an active account, even when none maps to a
+     * generatable format. Lets the card tell "no accounts" apart from
+     * "accounts connected, but AI generation does not support them yet".
+     */
+    connected_platforms?: string[];
     /**
      * The locale every string in this payload was resolved in — the language
      * the user is writing in, which the model reported, or the app locale

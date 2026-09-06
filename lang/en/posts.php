@@ -387,6 +387,7 @@ return [
             'title' => 'No platform selected',
             'description' => 'Select a platform to publish to see the preview.',
         ],
+        'preview_disabled' => "Won't publish — disabled for this post.",
         'drop_zone_title' => 'Add media',
         'drop_zone_subtitle' => 'Drag & drop files or click to browse',
         'add' => 'Add',
@@ -652,5 +653,7 @@ return [
         'facebook_post' => 'Facebook Post',
         'pinterest_pin' => 'Pinterest Pin',
         'instagram_story' => 'Instagram Story',
+        'telegram_post' => 'Telegram Post',
+        'discord_message' => 'Discord Message',
     ],
 ];
