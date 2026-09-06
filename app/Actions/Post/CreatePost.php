@@ -26,8 +26,7 @@ class CreatePost
      * `label_ids[]` are attached after creation so the same set of UUIDs
      * works for REST, MCP, and web callers.
      *
-     * `created_via` records which entry point created the post (web, mcp,
-     * api, or automation). Analytical only — null when omitted.
+     * `created_via` records which entry point created the post (web, mcp, or api). Analytical only — null when omitted.
      *
      * `creation_id` links the post back to the AI generation that produced
      * it (see `App\Jobs\Ai\StreamPostCreation`). Null when the post was not

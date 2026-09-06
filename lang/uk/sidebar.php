@@ -25,7 +25,6 @@ return [
         'workspace' => 'Робочий простір',
     ],
     'analytics' => 'Аналітика',
-    'automations' => 'Автоматизації',
     'onboarding' => 'Початок роботи',
     'onboarding_hint' => 'Завершіть налаштування',
     'chat' => 'Чат',

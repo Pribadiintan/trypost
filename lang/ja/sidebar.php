@@ -25,7 +25,6 @@ return [
         'workspace' => 'ワークスペース',
     ],
     'analytics' => 'アナリティクス',
-    'automations' => 'オートメーション',
     'onboarding' => 'はじめに',
     'onboarding_hint' => 'セットアップを完了',
     'chat' => 'チャット',

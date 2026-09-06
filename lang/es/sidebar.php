@@ -25,7 +25,6 @@ return [
         'workspace' => 'Workspace',
     ],
     'analytics' => 'Analytics',
-    'automations' => 'Automatizaciones',
     'onboarding' => 'Primeros pasos',
     'onboarding_hint' => 'Termina la configuración',
     'chat' => 'Chat',

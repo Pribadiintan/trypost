@@ -25,7 +25,6 @@ return [
         'workspace' => '工作区',
     ],
     'analytics' => '分析',
-    'automations' => '自动化',
     'onboarding' => '开始使用',
     'onboarding_hint' => '完成设置',
     'chat' => '聊天',

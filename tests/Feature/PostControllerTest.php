@@ -257,14 +257,6 @@ test('calendar does not include unscheduled drafts', function () {
         );
 });
 
-// The post-creation screen is gone: every entry point creates a draft
-// directly via POST /posts (which redirects to the editor). These routes
-// must stay unregistered so nothing links to the removed wizard.
-test('the creation screen and wizard endpoints no longer exist', function () {
-    $this->actingAs($this->user)->get('/posts/create')->assertNotFound();
-    $this->actingAs($this->user)->postJson('/posts/ai/create', [])->assertNotFound();
-});
-
 // Store tests
 test('store post requires authentication', function () {
     $response = $this->post(route('app.posts.store'));

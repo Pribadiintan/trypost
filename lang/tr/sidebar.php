@@ -25,7 +25,6 @@ return [
         'workspace' => 'Çalışma Alanı',
     ],
     'analytics' => 'Analitik',
-    'automations' => 'Otomasyonlar',
     'onboarding' => 'Başlarken',
     'onboarding_hint' => 'Kurulumu bitir',
     'chat' => 'Sohbet',

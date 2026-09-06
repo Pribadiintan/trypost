@@ -30,7 +30,6 @@ export const useWorkspaceRole = () => {
         isAdminOrAbove,
         isMemberOrAbove,
         canCreatePost: isMemberOrAbove,
-        canManageAutomations: isMemberOrAbove,
         canManageAccounts: isAdminOrAbove,
         canManageWebhooks: isAdminOrAbove,
         canManageTeam: isAdminOrAbove,

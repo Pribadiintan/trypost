@@ -25,7 +25,6 @@ return [
         'workspace' => 'Przestrzeń robocza',
     ],
     'analytics' => 'Analityka',
-    'automations' => 'Automatyzacje',
     'onboarding' => 'Pierwsze kroki',
     'onboarding_hint' => 'Dokończ konfigurację',
     'chat' => 'Czat',

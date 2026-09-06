@@ -10,6 +10,8 @@ use App\Actions\Post\DuplicatePost;
 use App\Actions\Post\SyncPostPlatforms;
 use App\Actions\Post\UpdatePost;
 use App\Actions\SocialAccount\ListPinterestBoards;
+use App\Ai\Templates\AiContentTemplate;
+use App\Ai\Templates\AiTemplateRegistry;
 use App\Enums\Post\Action as PostAction;
 use App\Enums\Post\CreatedVia;
 use App\Enums\Post\Status as PostStatus;
@@ -138,6 +140,33 @@ class PostController extends Controller
             'currentWeekStart' => $weekStart->format('Y-m-d'),
             'currentMonth' => $monthDate->format('Y-m-d'),
             'view' => $view,
+        ]);
+    }
+
+    public function create(Request $request): Response
+    {
+        $workspace = $request->user()->currentWorkspace;
+
+        $this->authorize('createPost', $workspace);
+
+        $registry = app(AiTemplateRegistry::class);
+
+        $templates = array_map(fn (AiContentTemplate $t) => [
+            'key' => $t->key(),
+            'name' => trans($t->name()),
+            'description' => trans($t->description()),
+            'preview' => $t->previewAsset(),
+            'needs_account' => $t->needsAccount(),
+            'supported_formats' => $t->supportedFormats(),
+            'applies_brand_visuals' => $t->appliesBrandVisuals(),
+        ], $registry->all());
+
+        return Inertia::render('posts/Create', [
+            'date' => $request->query('date'),
+            'socialAccounts' => SocialAccountResource::collection(
+                $workspace->socialAccounts()->active()->get()
+            ),
+            'templates' => $templates,
         ]);
     }
 

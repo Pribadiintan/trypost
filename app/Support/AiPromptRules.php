@@ -6,7 +6,8 @@ namespace App\Support;
 
 /**
  * Single source of truth for the user-supplied AI generation prompt length,
- * shared by the chat's generate_post tool and the editor's content generation
+ * shared by the chat's generate_post tool, the create wizard
+ * (StartPostCreationRequest) and the editor's content generation
  * (GeneratePostContentRequest).
  */
 class AiPromptRules
@@ -31,5 +32,16 @@ class AiPromptRules
     public static function generationPromptRule(): array
     {
         return ['required', 'string', 'min:'.self::PROMPT_MIN_LENGTH, 'max:'.self::PROMPT_MAX_LENGTH];
+    }
+
+    /**
+     * Alias used by the create wizard's request. Same bounds, shared counter
+     * in resources/js/components/posts/create/AiPostWizard.vue.
+     *
+     * @return array<int, string>
+     */
+    public static function wizardPromptRule(): array
+    {
+        return self::generationPromptRule();
     }
 }

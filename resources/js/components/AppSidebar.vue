@@ -3,14 +3,16 @@ import { router, usePage } from '@inertiajs/vue3';
 import {
     IconAffiliate,
     IconAlertTriangle,
-    IconBolt,
+    IconBrandDiscord,
     IconCalendar,
     IconChartBar,
     IconChevronRight,
     IconClock,
     IconFileCheck,
     IconFileText,
+    IconGift,
     IconHash,
+    IconLifebuoy,
     IconPencil,
     IconPhoto,
     IconPlugConnected,
@@ -27,6 +29,7 @@ import {
     store as storePost,
 } from '@/actions/App/Http/Controllers/App/PostController';
 import NavMain from '@/components/NavMain.vue';
+import NavSupport from '@/components/NavSupport.vue';
 import NotificationBell from '@/components/NotificationBell.vue';
 import SidebarOnboarding from '@/components/onboarding/SidebarOnboarding.vue';
 import { Avatar } from '@/components/ui/avatar';
@@ -50,7 +53,6 @@ import WorkspaceMenuContent from '@/components/WorkspaceMenuContent.vue';
 import { useWorkspaceRole } from '@/composables/useWorkspaceRole';
 import { accounts, analytics, calendar, chat } from '@/routes/app';
 import { index as assets } from '@/routes/app/assets';
-import { index as automations } from '@/routes/app/automations';
 import { portal } from '@/routes/app/billing';
 import { index as labels } from '@/routes/app/labels';
 import { index as mcp } from '@/routes/app/mcp';
@@ -80,7 +82,6 @@ const {
     canCreatePost,
     canManageAccounts,
     canManageWebhooks,
-    canManageAutomations,
     canCreateWorkspace,
 } = useWorkspaceRole();
 const { isMobile } = useSidebar();
@@ -118,16 +119,6 @@ const mainNavItems = computed<NavItem[]>(() => [
         href: chat.url(),
         icon: IconSparkles,
     },
-    ...(canManageAutomations.value
-        ? [
-              {
-                  title: trans('sidebar.automations'),
-                  href: automations.url(),
-                  icon: IconBolt,
-                  badge: trans('common.beta'),
-              },
-          ]
-        : []),
 ]);
 
 const postsNavItems = computed<NavItem[]>(() => [
@@ -200,6 +191,24 @@ const workspaceNavItems = computed<NavItem[]>(() => [
         title: trans('sidebar.workspace.mcp'),
         href: mcp.url(),
         icon: IconPlugConnected,
+    },
+]);
+
+const bottomNavItems = computed(() => [
+    {
+        title: trans('sidebar.support.referral'),
+        href: 'https://affiliates.trypost.it/',
+        icon: IconGift,
+    },
+    {
+        title: trans('sidebar.support.discord'),
+        href: 'https://trypost.it/discord',
+        icon: IconBrandDiscord,
+    },
+    {
+        title: trans('sidebar.support.docs'),
+        href: 'https://docs.trypost.it',
+        icon: IconLifebuoy,
     },
 ]);
 </script>
@@ -288,6 +297,14 @@ const workspaceNavItems = computed<NavItem[]>(() => [
                 :items="workspaceNavItems"
                 :label="$t('sidebar.groups.workspace')"
             />
+
+            <div class="mt-auto">
+                <NavSupport
+                    v-if="currentWorkspace"
+                    :items="bottomNavItems"
+                    :label="$t('sidebar.groups.others')"
+                />
+            </div>
         </SidebarContent>
         <SidebarFooter>
             <SidebarOnboarding v-if="currentWorkspace" />

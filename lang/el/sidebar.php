@@ -25,7 +25,6 @@ return [
         'workspace' => 'Workspace',
     ],
     'analytics' => 'Στατιστικά',
-    'automations' => 'Αυτοματισμοί',
     'onboarding' => 'Ξεκινώντας',
     'onboarding_hint' => 'Ολοκλήρωση ρύθμισης',
     'chat' => 'Συνομιλία',
