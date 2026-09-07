@@ -656,4 +656,13 @@ return [
         'telegram_post' => '텔레그램 게시물',
         'discord_message' => '디스코드 메시지',
     ],
+    'wizard' => [
+        'title' => '게시물 만들기',
+        'description' => '시작 방법을 선택하세요.',
+        'scratch_title' => '처음부터 만들기',
+        'scratch_description' => '편집기에서 직접 게시물을 작성합니다.',
+        'ai_title' => 'AI로 생성',
+        'ai_description' => '아이디어를 설명하면 AI가 초안을 만듭니다.',
+        'connect_first' => '먼저 소셜 계정을 연결하세요.',
+    ],
 ];

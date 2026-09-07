@@ -656,4 +656,13 @@ return [
         'telegram_post' => 'Post na Telegramie',
         'discord_message' => 'Wiadomość na Discordzie',
     ],
+    'wizard' => [
+        'title' => 'Utwórz post',
+        'description' => 'Wybierz, jak chcesz zacząć.',
+        'scratch_title' => 'Zacznij od zera',
+        'scratch_description' => 'Napisz post samodzielnie w edytorze.',
+        'ai_title' => 'Wygeneruj z AI',
+        'ai_description' => 'Opisz swój pomysł, a AI przygotuje szkic.',
+        'connect_first' => 'Najpierw połącz konto społecznościowe.',
+    ],
 ];

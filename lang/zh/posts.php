@@ -656,4 +656,13 @@ return [
         'telegram_post' => 'Telegram 帖子',
         'discord_message' => 'Discord 消息',
     ],
+    'wizard' => [
+        'title' => '创建帖子',
+        'description' => '选择你想如何开始。',
+        'scratch_title' => '从零开始',
+        'scratch_description' => '在编辑器中自己撰写帖子。',
+        'ai_title' => '用 AI 生成',
+        'ai_description' => '描述你的想法,AI 会为你生成草稿。',
+        'connect_first' => '请先连接社交账号。',
+    ],
 ];

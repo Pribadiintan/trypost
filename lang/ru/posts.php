@@ -656,4 +656,13 @@ return [
         'telegram_post' => 'Пост в Telegram',
         'discord_message' => 'Сообщение в Discord',
     ],
+    'wizard' => [
+        'title' => 'Создать пост',
+        'description' => 'Выберите, как вы хотите начать.',
+        'scratch_title' => 'Начать с нуля',
+        'scratch_description' => 'Напишите пост самостоятельно в редакторе.',
+        'ai_title' => 'Сгенерировать с ИИ',
+        'ai_description' => 'Опишите идею, и ИИ подготовит черновик.',
+        'connect_first' => 'Сначала подключите социальный аккаунт.',
+    ],
 ];

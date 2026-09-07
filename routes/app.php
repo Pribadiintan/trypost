@@ -22,6 +22,7 @@ use App\Http\Controllers\App\PostAiRegenerateMediaController;
 use App\Http\Controllers\App\PostAiReviewController;
 use App\Http\Controllers\App\PostCommentController;
 use App\Http\Controllers\App\PostController;
+use App\Http\Controllers\App\PostCreateController;
 use App\Http\Controllers\App\PresenceController;
 use App\Http\Controllers\App\RepurposeController;
 use App\Http\Controllers\App\Settings\AccountController;
@@ -230,6 +231,12 @@ Route::middleware(['auth', EnsureAccountReady::class, EnsureHasWorkspace::class]
 
     // Calendar
     Route::get('calendar', [PostController::class, 'calendar'])->name('app.calendar');
+
+    // Post creation (AI wizard + scratch). Declared before the `posts/{post}`
+    // wildcard so `posts/create` is not captured as a post id.
+    Route::get('posts/create', [PostCreateController::class, 'create'])->name('app.posts.create');
+    Route::post('posts/ai/start', [PostCreateController::class, 'start'])->name('app.posts.ai.start');
+    Route::get('posts/ai/{creationId}/status', [PostCreateController::class, 'status'])->name('app.posts.ai.status');
 
     // Posts
     Route::get('posts/{status?}', [PostController::class, 'index'])->name('app.posts.index')->where('status', 'draft|scheduled|published');

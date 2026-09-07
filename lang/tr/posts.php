@@ -658,4 +658,13 @@ return [
         'telegram_post' => 'Telegram Gönderisi',
         'discord_message' => 'Discord Mesajı',
     ],
+    'wizard' => [
+        'title' => 'Gönderi oluştur',
+        'description' => 'Nasıl başlamak istediğinizi seçin.',
+        'scratch_title' => 'Sıfırdan başla',
+        'scratch_description' => 'Gönderiyi düzenleyicide kendiniz yazın.',
+        'ai_title' => 'AI ile oluştur',
+        'ai_description' => 'Fikrinizi açıklayın, AI taslak hazırlasın.',
+        'connect_first' => 'Önce bir sosyal hesap bağlayın.',
+    ],
 ];

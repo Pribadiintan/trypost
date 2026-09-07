@@ -658,4 +658,13 @@ return [
         'telegram_post' => 'Telegram-Beitrag',
         'discord_message' => 'Discord-Nachricht',
     ],
+    'wizard' => [
+        'title' => 'Beitrag erstellen',
+        'description' => 'Wählen Sie, wie Sie beginnen möchten.',
+        'scratch_title' => 'Von Grund auf beginnen',
+        'scratch_description' => 'Schreiben Sie den Beitrag selbst im Editor.',
+        'ai_title' => 'Mit KI generieren',
+        'ai_description' => 'Beschreiben Sie Ihre Idee und die KI erstellt einen Entwurf.',
+        'connect_first' => 'Verbinden Sie zuerst ein Social-Konto.',
+    ],
 ];

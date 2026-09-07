@@ -656,4 +656,13 @@ return [
         'telegram_post' => 'Telegram 投稿',
         'discord_message' => 'Discord メッセージ',
     ],
+    'wizard' => [
+        'title' => '投稿を作成',
+        'description' => '始め方を選んでください。',
+        'scratch_title' => 'ゼロから作成',
+        'scratch_description' => 'エディターで自分で投稿を書きます。',
+        'ai_title' => 'AIで生成',
+        'ai_description' => 'アイデアを説明すると、AIが下書きを作成します。',
+        'connect_first' => '先にソーシャルアカウントを接続してください。',
+    ],
 ];

@@ -656,4 +656,13 @@ return [
         'telegram_post' => 'Postagem no Telegram',
         'discord_message' => 'Mensagem no Discord',
     ],
+    'wizard' => [
+        'title' => 'Criar publicação',
+        'description' => 'Escolha como deseja começar.',
+        'scratch_title' => 'Começar do zero',
+        'scratch_description' => 'Escreva a publicação você mesmo no editor.',
+        'ai_title' => 'Gerar com IA',
+        'ai_description' => 'Descreva sua ideia e a IA criará um rascunho.',
+        'connect_first' => 'Conecte primeiro uma conta social.',
+    ],
 ];

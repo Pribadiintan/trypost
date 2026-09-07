@@ -656,4 +656,13 @@ return [
         'telegram_post' => 'Telegram-bericht',
         'discord_message' => 'Discord-bericht',
     ],
+    'wizard' => [
+        'title' => 'Bericht maken',
+        'description' => 'Kies hoe je wilt beginnen.',
+        'scratch_title' => 'Vanaf nul beginnen',
+        'scratch_description' => 'Schrijf het bericht zelf in de editor.',
+        'ai_title' => 'Genereren met AI',
+        'ai_description' => 'Beschrijf je idee en AI maakt een concept.',
+        'connect_first' => 'Verbind eerst een socialaccount.',
+    ],
 ];
