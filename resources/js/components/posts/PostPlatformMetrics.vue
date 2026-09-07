@@ -1,11 +1,6 @@
 <script setup lang="ts">
 import { useHttp } from '@inertiajs/vue3';
-import {
-    IconChartBar,
-    IconLoader2,
-    IconMessageCircle,
-    IconUsers,
-} from '@tabler/icons-vue';
+import { IconChartBar, IconLoader2, IconMessageCircle, IconUsers } from '@tabler/icons-vue';
 import { computed, onMounted, ref } from 'vue';
 
 import {
@@ -26,16 +21,14 @@ interface Metric {
 type MetricsResponse = Metric[] | { unsupported: true; reason: string };
 
 interface Props {
-    postId?: string;
-    postPlatformId?: string;
-    /** Pre-fetched metrics — skips this component's own HTTP round trip when given. */
-    metrics?: Metric[];
+    postId: string;
+    postPlatformId: string;
 }
 
 const props = defineProps<Props>();
 
-const loading = ref(props.metrics === undefined);
-const metrics = ref<Metric[]>(props.metrics ?? []);
+const loading = ref(true);
+const metrics = ref<Metric[]>([]);
 
 const stats = computed(() => metrics.value.filter((m) => !m.kind));
 const subscribers = computed(() =>
@@ -53,16 +46,6 @@ const hasMetrics = computed(() => metrics.value.length > 0);
 const http = useHttp<Record<string, never>, MetricsResponse>({});
 
 onMounted(async () => {
-    if (props.metrics !== undefined) {
-        return;
-    }
-
-    if (!props.postId || !props.postPlatformId) {
-        loading.value = false;
-
-        return;
-    }
-
     try {
         const response = await http.get(
             metricsRoute.url({
@@ -126,16 +109,11 @@ onMounted(async () => {
             <TooltipProvider v-if="subscribers">
                 <Tooltip>
                     <TooltipTrigger as-child>
-                        <span
-                            class="inline-flex items-center gap-1 text-xs text-muted-foreground"
-                        >
-                            <IconUsers class="size-4" :stroke="1.75" />
-                            <span
-                                class="font-semibold text-foreground tabular-nums"
-                                >{{
-                                    formatNumberCompact(subscribers.value)
-                                }}</span
-                            >
+                        <span class="inline-flex items-center gap-1 text-xs text-muted-foreground">
+                            <IconUsers class="size-4" stroke-width="1.75" />
+                            <span class="font-semibold tabular-nums text-foreground">{{
+                                formatNumberCompact(subscribers.value)
+                            }}</span>
                         </span>
                     </TooltipTrigger>
                     <TooltipContent>
@@ -147,14 +125,11 @@ onMounted(async () => {
             <TooltipProvider v-if="comments">
                 <Tooltip>
                     <TooltipTrigger as-child>
-                        <span
-                            class="inline-flex items-center gap-1 text-xs text-muted-foreground"
-                        >
-                            <IconMessageCircle class="size-4" :stroke="1.75" />
-                            <span
-                                class="font-semibold text-foreground tabular-nums"
-                                >{{ formatNumberCompact(comments.value) }}</span
-                            >
+                        <span class="inline-flex items-center gap-1 text-xs text-muted-foreground">
+                            <IconMessageCircle class="size-4" stroke-width="1.75" />
+                            <span class="font-semibold tabular-nums text-foreground">{{
+                                formatNumberCompact(comments.value)
+                            }}</span>
                         </span>
                     </TooltipTrigger>
                     <TooltipContent>
@@ -176,10 +151,8 @@ onMounted(async () => {
                 :key="reaction.label"
                 class="inline-flex items-center gap-1.5 rounded-full bg-muted px-2.5 py-1 text-xs"
             >
-                <span class="text-[13px] leading-none">{{
-                    reaction.label
-                }}</span>
-                <span class="font-semibold text-foreground/80 tabular-nums">{{
+                <span class="text-[13px] leading-none">{{ reaction.label }}</span>
+                <span class="font-semibold tabular-nums text-foreground/80">{{
                     formatNumberCompact(reaction.value)
                 }}</span>
             </span>

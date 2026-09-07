@@ -23,14 +23,12 @@ return [
     'groups' => [
         'posts' => '게시물',
         'workspace' => '워크스페이스',
+        'others' => '기타',
     ],
     'analytics' => '분석',
+    'repurposes' => 'Repurpose',
     'onboarding' => '시작하기',
     'onboarding_hint' => '설정 마치기',
-    'chat' => '채팅',
-    'chat_history' => '기록',
-    'new_chat' => '새 채팅',
-    'no_chats' => '아직 채팅이 없습니다',
     'posts' => [
         'calendar' => '캘린더',
         'all' => '전체',
@@ -43,4 +41,9 @@ return [
     'mark_as_read' => '읽음으로 표시',
     'archive_all' => '모두 보관',
     'no_notifications' => '알림 없음',
+    'support' => [
+        'docs' => '문서',
+        'referral' => '30% 추천 수익 받기',
+        'discord' => 'Discord 커뮤니티',
+    ],
 ];

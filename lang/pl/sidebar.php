@@ -23,14 +23,12 @@ return [
     'groups' => [
         'posts' => 'Posty',
         'workspace' => 'Przestrzeń robocza',
+        'others' => 'Inne',
     ],
     'analytics' => 'Analityka',
+    'repurposes' => 'Repurpose',
     'onboarding' => 'Pierwsze kroki',
     'onboarding_hint' => 'Dokończ konfigurację',
-    'chat' => 'Czat',
-    'chat_history' => 'Historia',
-    'new_chat' => 'Nowy czat',
-    'no_chats' => 'Brak czatów',
     'posts' => [
         'calendar' => 'Kalendarz',
         'all' => 'Wszystkie',
@@ -43,4 +41,9 @@ return [
     'mark_as_read' => 'Oznacz jako przeczytane',
     'archive_all' => 'Zarchiwizuj wszystkie',
     'no_notifications' => 'Brak powiadomień',
+    'support' => [
+        'docs' => 'Dokumentacja',
+        'referral' => 'Zarabiaj 30% z poleceń',
+        'discord' => 'Społeczność Discord',
+    ],
 ];

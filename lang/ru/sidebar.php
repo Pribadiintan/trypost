@@ -23,14 +23,12 @@ return [
     'groups' => [
         'posts' => 'Посты',
         'workspace' => 'Рабочее пространство',
+        'others' => 'Прочее',
     ],
     'analytics' => 'Аналитика',
+    'repurposes' => 'Repurpose',
     'onboarding' => 'Начало работы',
     'onboarding_hint' => 'Завершите настройку',
-    'chat' => 'Чат',
-    'chat_history' => 'История',
-    'new_chat' => 'Новый чат',
-    'no_chats' => 'Пока нет чатов',
     'posts' => [
         'calendar' => 'Календарь',
         'all' => 'Все',
@@ -43,4 +41,9 @@ return [
     'mark_as_read' => 'Отметить как прочитанное',
     'archive_all' => 'Архивировать все',
     'no_notifications' => 'Нет уведомлений',
+    'support' => [
+        'docs' => 'Документация',
+        'referral' => 'Зарабатывайте 30% по реферальной программе',
+        'discord' => 'Сообщество Discord',
+    ],
 ];

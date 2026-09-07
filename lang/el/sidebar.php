@@ -23,14 +23,12 @@ return [
     'groups' => [
         'posts' => 'Δημοσιεύσεις',
         'workspace' => 'Workspace',
+        'others' => 'Άλλα',
     ],
     'analytics' => 'Στατιστικά',
+    'repurposes' => 'Repurpose',
     'onboarding' => 'Ξεκινώντας',
     'onboarding_hint' => 'Ολοκλήρωση ρύθμισης',
-    'chat' => 'Συνομιλία',
-    'chat_history' => 'Ιστορικό',
-    'new_chat' => 'Νέα συνομιλία',
-    'no_chats' => 'Δεν υπάρχουν συνομιλίες',
     'posts' => [
         'calendar' => 'Ημερολόγιο',
         'all' => 'Όλες',
@@ -43,4 +41,9 @@ return [
     'mark_as_read' => 'Επισήμανση ως αναγνωσμένου',
     'archive_all' => 'Αρχειοθέτηση όλων',
     'no_notifications' => 'Δεν υπάρχουν ειδοποιήσεις',
+    'support' => [
+        'docs' => 'Τεκμηρίωση',
+        'referral' => 'Κερδίστε 30% από συστάσεις',
+        'discord' => 'Κοινότητα Discord',
+    ],
 ];

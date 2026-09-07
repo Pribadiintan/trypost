@@ -3,6 +3,7 @@ import { router, usePage } from '@inertiajs/vue3';
 import {
     IconAffiliate,
     IconAlertTriangle,
+    IconBrandDiscord,
     IconCalendar,
     IconChartBar,
     IconChevronRight,
@@ -13,6 +14,7 @@ import {
     IconPencil,
     IconPhoto,
     IconPlugConnected,
+    IconRepeat,
     IconSelector,
     IconSparkles,
     IconTag,
@@ -52,6 +54,7 @@ import { index as assets } from '@/routes/app/assets';
 import { portal } from '@/routes/app/billing';
 import { index as labels } from '@/routes/app/labels';
 import { index as mcp } from '@/routes/app/mcp';
+import { index as repurposes } from '@/routes/app/repurposes';
 import { index as signatures } from '@/routes/app/signatures';
 import { index as webhooks } from '@/routes/app/webhooks';
 import type { NavItem, User } from '@/types';
@@ -76,6 +79,7 @@ const subscriptionPastDue = computed<boolean>(() =>
 
 const {
     canCreatePost,
+    canManageRepurposes,
     canManageAccounts,
     canManageWebhooks,
     canCreateWorkspace,
@@ -115,6 +119,16 @@ const mainNavItems = computed<NavItem[]>(() => [
         href: chat.url(),
         icon: IconSparkles,
     },
+    ...(canManageRepurposes.value
+        ? [
+              {
+                  title: trans('sidebar.repurposes'),
+                  href: repurposes.url(),
+                  icon: IconRepeat,
+                  badge: trans('common.beta'),
+              },
+          ]
+        : []),
 ]);
 
 const postsNavItems = computed<NavItem[]>(() => [

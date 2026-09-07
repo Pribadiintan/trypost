@@ -12,8 +12,7 @@ export const useWorkspaceRole = () => {
     const page = usePage();
 
     const role = computed<string | null>(
-        () =>
-            (page.props.auth?.currentWorkspace?.role as string | null) ?? null,
+        () => (page.props.auth?.currentWorkspace?.role as string | null) ?? null,
     );
 
     const isOwner = computed(() => role.value === WorkspaceRole.Owner);
@@ -30,6 +29,7 @@ export const useWorkspaceRole = () => {
         isAdminOrAbove,
         isMemberOrAbove,
         canCreatePost: isMemberOrAbove,
+        canManageRepurposes: isMemberOrAbove,
         canManageAccounts: isAdminOrAbove,
         canManageWebhooks: isAdminOrAbove,
         canManageTeam: isAdminOrAbove,

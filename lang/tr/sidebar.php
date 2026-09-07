@@ -23,14 +23,12 @@ return [
     'groups' => [
         'posts' => 'Gönderiler',
         'workspace' => 'Çalışma Alanı',
+        'others' => 'Diğerleri',
     ],
     'analytics' => 'Analitik',
+    'repurposes' => 'Repurpose',
     'onboarding' => 'Başlarken',
     'onboarding_hint' => 'Kurulumu bitir',
-    'chat' => 'Sohbet',
-    'chat_history' => 'Geçmiş',
-    'new_chat' => 'Yeni sohbet',
-    'no_chats' => 'Henüz sohbet yok',
     'posts' => [
         'calendar' => 'Takvim',
         'all' => 'Tümü',
@@ -43,4 +41,9 @@ return [
     'mark_as_read' => 'Okundu olarak işaretle',
     'archive_all' => 'Tümünü arşivle',
     'no_notifications' => 'Bildirim yok',
+    'support' => [
+        'docs' => 'Dokümantasyon',
+        'referral' => '%30 referans kazanın',
+        'discord' => 'Discord topluluğu',
+    ],
 ];

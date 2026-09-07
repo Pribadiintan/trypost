@@ -285,7 +285,7 @@ Self-hosted compose / `.env.example` set this `true`. When the env is unset, the
 - Always use normal pagination (`->paginate()`). NEVER use cursor pagination (`->cursorPaginate()`).
 - All paginated lists must use Inertia's scroll pagination (`Inertia::scroll()` on the backend with `<InfiniteScroll>` on the frontend). NEVER use traditional page-based pagination with page links/buttons.
 - The page size ALWAYS comes from `config('app.pagination.default')` — never a magic number, and never a `perPage`/`per_page` value supplied by the request or frontend. Action/service list methods must NOT accept a `$perPage` parameter; call `->paginate((int) config('app.pagination.default'))` directly.
-    - The only exception is the public REST API (`app/Http/Controllers/Api`), which uses its own fixed, documented page size (15) as a stable API contract.
+    - **This includes the public REST API** (`app/Http/Controllers/Api`). It used to pin its own page size of 15 as a stable contract; that exception is gone, so a list endpoint reads the same config as everything else. Changing `app.pagination.default` therefore changes the API's page size too — deliberate, and the reason a list response always carries `meta.per_page` for clients to read rather than assume.
 
 ## Form Validation
 
@@ -434,3 +434,51 @@ Standing constraints:
 - NEVER add `Co-Authored-By` lines to commit messages.
 - NEVER commit, push, or open PRs unless explicitly asked by the user.
 - Always create a new branch for feature work before making changes.
+
+## Repurpose account health
+
+A repurpose depends on social accounts it does not own the lifecycle of. Three
+decisions govern how it reacts, and each exists because the obvious alternative
+was tried and was wrong.
+
+- **A switched-off destination is skipped, never an error.** Deactivating an
+  account means "don't post here", which `ProcessRepurposeItem` already honours.
+  So `ActivateRepurpose::assertDestinationsPublishable()` requires **one** usable
+  destination, not all of them, and the destination rule in the repurpose
+  FormRequests carries **no** `is_active` clause. Requiring either is what used
+  to block editing *and* resuming any repurpose that listed a paused account.
+  Keep the `workspace_id` clause — that is tenancy, not health. The
+  `source_social_account_id` rules stay strict: a source genuinely must work.
+- **`repurposes.paused_reason` is not UI copy.** NULL means the user paused it.
+  Its only two jobs are deciding the watermark on resume (a system pause starts
+  from `now()`, a user pause keeps its place) and deciding whether the system may
+  auto-resume. Banners derive from current account health instead, so they can
+  say "ready to resume" once the cause is fixed. **Never clear it in
+  `UpdateRepurpose`** — that destroys the record that the pause was systemic, and
+  the next Resume replays the entire backlog.
+- **Source and destination are deliberately asymmetric.** A dead source stops the
+  automation; a dead destination keeps flowing to the publisher, which fails the
+  post visibly and lets the user retry it after reconnecting. Skipping a
+  destination at job time would be permanent for that item, since items are never
+  retried.
+
+`RepurposeAccountSync` runs from `SocialAccountObserver` and must never throw:
+`deleting` runs inside `$account->delete()`, and `persistIdentity()` wraps a
+reconnect in a transaction, so an exception there would 500 a disconnect or roll
+back a reconnect. It reads account health **from the database**, not from the
+model it was handed — `is_active` is absent from `SocialAccountFactory`, and
+strict mode exempts recently-created models from the missing-attribute
+exception, so a healthy account read back as `null` and silently skipped
+auto-resume.
+
+No email is sent when a repurpose stops. `markAsTokenExpired()` and
+`VerifyWorkspaceConnections` already email about the account, and reconnecting is
+what auto-resumes the repurpose; deleting or switching an account off is
+something the user just did, so the flash on the accounts page reports the count
+instead.
+
+`VerifyWorkspaceConnections` is the **only** thing that promotes an account back
+to `Connected`, because it does so after a real `verify()` call. A successful
+token refresh is not that proof — the refresh token being valid says nothing
+about whether publishing still works — so `RefreshSocialToken` must not promote,
+even though it would let a paused repurpose resume sooner.

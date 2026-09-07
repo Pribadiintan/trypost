@@ -23,14 +23,12 @@ return [
     'groups' => [
         'posts' => 'المنشورات',
         'workspace' => 'مساحة العمل',
+        'others' => 'أخرى',
     ],
     'analytics' => 'التحليلات',
+    'repurposes' => 'Repurpose',
     'onboarding' => 'البدء',
     'onboarding_hint' => 'أكمل الإعداد',
-    'chat' => 'محادثة',
-    'chat_history' => 'سجل المحادثات',
-    'new_chat' => 'محادثة جديدة',
-    'no_chats' => 'لا توجد محادثات بعد',
     'posts' => [
         'calendar' => 'التقويم',
         'all' => 'الكل',
@@ -43,4 +41,9 @@ return [
     'mark_as_read' => 'تعليم كمقروء',
     'archive_all' => 'أرشفة الكل',
     'no_notifications' => 'لا توجد إشعارات',
+    'support' => [
+        'docs' => 'التوثيق',
+        'referral' => 'اربح عمولة إحالة 30%',
+        'discord' => 'مجتمع Discord',
+    ],
 ];
