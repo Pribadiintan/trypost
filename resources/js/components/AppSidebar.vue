@@ -3,7 +3,6 @@ import { router, usePage } from '@inertiajs/vue3';
 import {
     IconAffiliate,
     IconAlertTriangle,
-    IconBrandDiscord,
     IconCalendar,
     IconChartBar,
     IconChevronRight,
