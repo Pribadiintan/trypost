@@ -7,6 +7,8 @@ namespace App\Services\Ai;
 use App\Ai\Templates\AiContentTemplate;
 use App\Ai\Templates\AiTemplateRegistry;
 use App\Enums\PostPlatform\ContentType;
+use App\Enums\Workspace\ContentLanguage;
+use App\Models\BrandVariant;
 use App\Models\SocialAccount;
 use App\Models\Workspace;
 use Illuminate\Support\Collection;
@@ -42,6 +44,9 @@ final class PostGenerationCatalog
      *     styles: list<array{key: string, name: string, description: string, preview: string, needs_account: bool, supported_formats: list<string>, applies_brand_visuals: bool}>,
      *     applies_brand_visuals_default: bool,
      *     connected_platforms: list<string>,
+     *     content_language: ?string,
+     *     languages: list<array{language_code: string, label: string}>,
+     *     brand_reference_count: int,
      * }
      */
     public static function forWorkspace(Workspace $workspace, ?string $locale = null): array
@@ -54,6 +59,9 @@ final class PostGenerationCatalog
             'styles' => self::buildStyles($locale),
             'applies_brand_visuals_default' => true,
             'connected_platforms' => $accountsByPlatform->keys()->all(),
+            'content_language' => $workspace->content_language,
+            'languages' => self::buildLanguages($workspace),
+            'brand_reference_count' => $workspace->getMedia('brand_references')->count(),
         ];
     }
 
@@ -165,5 +173,49 @@ final class PostGenerationCatalog
             'supported_formats' => $template->supportedFormats(),
             'applies_brand_visuals' => $template->appliesBrandVisuals(),
         ], app(AiTemplateRegistry::class)->all());
+    }
+
+    /**
+     * The languages the card can offer, the workspace default first. A variant
+     * label wins over the plain language name for the same code; the full
+     * variant payload already travels through `get_brand`.
+     *
+     * @return list<array{language_code: string, label: string}>
+     */
+    private static function buildLanguages(Workspace $workspace): array
+    {
+        $labels = $workspace->brandVariants()
+            ->orderBy('sort_order')
+            ->get()
+            ->mapWithKeys(fn (BrandVariant $variant): array => [
+                $variant->language_code => $variant->label ?: $variant->language_code,
+            ])
+            ->all();
+
+        $languages = [];
+        $default = $workspace->content_language;
+
+        if (is_string($default) && $default !== '') {
+            $languages[] = [
+                'language_code' => $default,
+                'label' => $labels[$default] ?? self::languageLabel($default),
+            ];
+
+            unset($labels[$default]);
+        }
+
+        foreach ($labels as $languageCode => $label) {
+            $languages[] = [
+                'language_code' => $languageCode,
+                'label' => $label,
+            ];
+        }
+
+        return $languages;
+    }
+
+    private static function languageLabel(string $languageCode): string
+    {
+        return ContentLanguage::tryFrom($languageCode)?->label() ?? $languageCode;
     }
 }

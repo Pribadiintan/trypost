@@ -132,6 +132,7 @@ class RetryPostImagesTool extends WorkspaceWriteTool
             applyBrandVisuals: $generation->apply_brand_visuals ?? true,
             referenceMediaIds: $generation->reference_media_ids ?? [],
             useBrandReferences: $generation->use_brand_references ?? true,
+            languageCode: $generation->language_code ?? null,
         );
 
         return $this->json([

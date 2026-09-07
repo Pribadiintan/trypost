@@ -31,9 +31,6 @@ return [
     'chat_history' => 'Histórico',
     'new_chat' => 'Novo chat',
     'no_chats' => 'Nenhum chat ainda',
-    'last_7_days' => 'Últimos 7 dias',
-    'last_30_days' => 'Últimos 30 dias',
-    'older' => 'Mais antigos',
     'posts' => [
         'calendar' => 'Calendário',
         'all' => 'Todos',

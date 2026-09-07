@@ -7,6 +7,13 @@ import ChatAssistantMessage from '@/components/chat/ChatAssistantMessage.vue';
 import ChatPostGenerationChoice from '@/components/chat/tools/ChatPostGenerationChoice.vue';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import {
     getPlatformLabel,
@@ -16,6 +23,7 @@ import type {
     ChatPostGenerationAccount,
     ChatPostGenerationCatalog,
     ChatPostGenerationCopy,
+    ChatPostGenerationLanguage,
     ChatPostGenerationStyle,
 } from '@/types/chat';
 
@@ -106,6 +114,7 @@ type RecordedStep = 'format' | 'style' | 'account';
 const TOPIC_MIN_LENGTH = 3;
 
 const brandColorsId = useId();
+const referencesId = useId();
 
 /**
  * One line of the card, in the language of the conversation.
@@ -199,12 +208,72 @@ const useBrandColors = computed<boolean>({
     },
 });
 
-/**
- * What the post should be about. The card always asks, pre-filled with
- * whatever the model extracted from the conversation: "post about the X
- * launch" carries a topic and "make me a post" does not, and only the user can
- * tell the difference between a topic they meant and one that was inferred.
- */
+const languages = computed<ChatPostGenerationLanguage[]>(
+    () => props.data?.languages ?? [],
+);
+
+const selectedLanguageCode = ref<string | null>(null);
+
+const brandReferencesOverride = ref<boolean | null>(null);
+
+const useBrandReferences = computed<boolean>({
+    get: () => brandReferencesOverride.value ?? true,
+    set: (value: boolean) => {
+        brandReferencesOverride.value = value;
+    },
+});
+
+const selectedLanguage = computed(
+    () =>
+        languages.value.find(
+            (language) => language.language_code === selectedLanguageCode.value,
+        ) ?? null,
+);
+
+const hasReferences = computed(
+    () => (props.data?.brand_reference_count ?? 0) > 0,
+);
+
+const showsLanguageStep = computed(() => languages.value.length > 1);
+
+const referencesStepVisible = computed(
+    () => hasReferences.value && submittedImageCount.value > 0,
+);
+
+const languagePhrase = computed(() =>
+    showsLanguageStep.value && selectedLanguage.value !== null
+        ? fill(line('sentence_language'), {
+              language: selectedLanguage.value.label,
+          })
+        : '',
+);
+
+const referencesPhrase = computed(() =>
+    line(
+        useBrandReferences.value
+            ? 'sentence_references_on'
+            : 'sentence_references_off',
+    ),
+);
+
+watch(
+    languages,
+    (list) => {
+        if (selectedLanguageCode.value !== null) {
+            return;
+        }
+
+        const preferred =
+            list.find(
+                (language) =>
+                    language.language_code === props.data?.content_language,
+            ) ?? list[0];
+
+        selectedLanguageCode.value = preferred?.language_code ?? null;
+    },
+    { immediate: true },
+);
+
 const topicValue = computed<string>(() => (props.data?.topic ?? '').trim());
 
 /**
@@ -736,14 +805,23 @@ const sentence = computed<string>(() => {
         account: accountPhrase.value,
     };
 
-    if (!brandStepVisible.value) {
-        return fill(line('sentence'), replacements);
+    const base = brandStepVisible.value
+        ? fill(line('sentence_with_brand'), {
+              ...replacements,
+              brand: brandPhrase.value,
+          })
+        : fill(line('sentence'), replacements);
+
+    const extras = [
+        languagePhrase.value,
+        referencesStepVisible.value ? referencesPhrase.value : '',
+    ].filter(Boolean);
+
+    if (extras.length === 0) {
+        return base;
     }
 
-    return fill(line('sentence_with_brand'), {
-        ...replacements,
-        brand: brandPhrase.value,
-    });
+    return `${base.replace(/[.。!！?？]+$/, '')}, ${extras.join(', ')}.`;
 });
 
 /**
@@ -777,6 +855,14 @@ const summaryParts = computed<string[]>(() => {
 
     if (brandStepVisible.value) {
         parts.push(brandPhrase.value);
+    }
+
+    if (showsLanguageStep.value && selectedLanguage.value !== null) {
+        parts.push(selectedLanguage.value.label);
+    }
+
+    if (referencesStepVisible.value) {
+        parts.push(referencesPhrase.value);
     }
 
     return parts;
@@ -1111,6 +1197,59 @@ const submit = (): void => {
                         data-testid="chat-post-generation-brand-toggle"
                         dusk="chat-post-generation-brand-toggle"
                     />
+                </div>
+
+                <div
+                    v-if="referencesStepVisible"
+                    class="flex items-center justify-between gap-3 border-t border-foreground/15 pt-3"
+                    data-testid="chat-post-generation-references-step"
+                    dusk="chat-post-generation-references-step"
+                >
+                    <div class="min-w-0 space-y-0.5">
+                        <Label :for="referencesId" class="text-sm font-semibold">
+                            {{ line('brand_references_label') }}
+                        </Label>
+                        <p class="text-xs text-muted-foreground">
+                            {{ line('brand_references_description') }}
+                        </p>
+                    </div>
+
+                    <Switch
+                        :id="referencesId"
+                        v-model="useBrandReferences"
+                        data-testid="chat-post-generation-references-toggle"
+                        dusk="chat-post-generation-references-toggle"
+                    />
+                </div>
+
+                <div
+                    v-if="showsLanguageStep"
+                    class="flex items-center justify-between gap-3 border-t border-foreground/15 pt-3"
+                    data-testid="chat-post-generation-language-step"
+                    dusk="chat-post-generation-language-step"
+                >
+                    <Label class="text-sm font-semibold">
+                        {{ line('language_question') }}
+                    </Label>
+
+                    <Select v-model="selectedLanguageCode">
+                        <SelectTrigger
+                            class="w-44"
+                            data-testid="chat-post-generation-language-select"
+                            dusk="chat-post-generation-language-select"
+                        >
+                            <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem
+                                v-for="language in languages"
+                                :key="language.language_code"
+                                :value="language.language_code"
+                            >
+                                {{ language.label }}
+                            </SelectItem>
+                        </SelectContent>
+                    </Select>
                 </div>
 
                 <div class="flex justify-end">

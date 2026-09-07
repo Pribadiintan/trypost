@@ -257,13 +257,8 @@ return [
         'image_regenerate' => [
             'button' => 'Dostosuj',
             'title' => 'Dostosuj obraz AI',
-            'description' => 'Opisz poprawkę. Nowy obraz zastąpi obecny i zachowa swoją pozycję w karuzeli.',
             'instruction_label' => 'Instrukcja',
-            'instruction_placeholder' => 'np. Popraw literówkę w nagłówku i rozjaśnij tło.',
-            'processing' => 'Regenerowanie obrazu... to może zająć kilka sekund.',
-            'submit' => 'Regeneruj obraz',
             'cancel' => 'Anuluj',
-            'success' => 'Obraz zaktualizowany. Nowa wersja zastąpiła poprzednią w Twoim poście.',
             'fallback_title' => 'Ulepsz tekst tego obrazu',
             'errors' => [
                 'required' => 'Instrukcja jest wymagana.',
@@ -273,6 +268,48 @@ return [
                 'media_not_found' => 'Nie znaleziono elementu multimedialnego.',
                 'not_ai_media' => 'Regenerować można tylko multimedia wygenerowane przez AI.',
             ],
+            'descriptions' => [
+                'text_only' => 'Opisz korektę tekstu. Aktualna grafika i pozycja w karuzeli pozostaną bez zmian.',
+                'image_only' => 'Opisz nową grafikę. Zastąpi ona aktualną i zachowa swoją pozycję w karuzeli.',
+                'both' => 'Opisz zmiany w tekście i grafice. Zaktualizowany obraz zachowa swoją pozycję w karuzeli.',
+            ],
+            'modes' => [
+                'text_only' => [
+                    'label' => 'Tylko tekst',
+                    'description' => 'Zachowaj aktualną grafikę i zaktualizuj tekst na obrazie.',
+                ],
+                'image_only' => [
+                    'label' => 'Nowa grafika',
+                    'description' => 'Wygeneruj nowe tło, pozostawiając tekst na obrazie bez zmian.',
+                ],
+                'both' => [
+                    'label' => 'Tekst i grafika',
+                    'description' => 'Wygeneruj nowe tło i zaktualizuj tekst na obrazie.',
+                ],
+            ],
+            'instruction_placeholders' => [
+                'text_only' => 'np. zmień „ECP” na „ICP” w nagłówku.',
+                'image_only' => 'np. zamień tło na las o wschodzie słońca.',
+                'both' => 'np. zaktualizuj nagłówek i użyj jaśniejszego tła biurowego.',
+            ],
+            'processing' => [
+                'text_only' => 'Aktualizowanie tekstu na obrazie… może to potrwać kilka sekund.',
+                'image_only' => 'Generowanie nowej grafiki… może to potrwać kilka sekund.',
+                'both' => 'Aktualizowanie tekstu i grafiki… może to potrwać kilka sekund.',
+            ],
+            'submit' => [
+                'text_only' => 'Aktualizuj tekst',
+                'image_only' => 'Wygeneruj nową grafikę',
+                'both' => 'Aktualizuj tekst i grafikę',
+            ],
+            'success' => [
+                'text_only' => 'Tekst na obrazie zaktualizowany.',
+                'image_only' => 'Nowa grafika zastosowana.',
+                'both' => 'Tekst i grafika na obrazie zaktualizowane.',
+            ],
+            'mode_label' => 'Co należy zmienić?',
+            'continue_in_background' => 'Kontynuuj w tle',
+            'background_notice' => 'Ponowne generowanie będzie kontynuowane w tle.',
         ],
         'templates' => [
             'image_card' => [
@@ -291,6 +328,16 @@ return [
                 'name' => 'Karta tweeta ze zdjęciem',
                 'description' => 'Twój post jako karta X/Twitter na rozmytym zdjęciu.',
             ],
+        ],
+        'regenerate_caption' => [
+            'button_tooltip' => 'Wygeneruj ponownie podpis',
+            'title' => 'Wygeneruj ponownie podpis',
+            'description' => 'Utwórz nowy podpis, zachowując kontrolę nad tym, co zostanie zastosowane w szkicu.',
+            'instruction_placeholder' => 'Opcjonalnie: np. uczyń go bardziej zwięzłym',
+            'start' => 'Generuj',
+            'apply' => 'Zastosuj podpis',
+            'retry' => 'Wygeneruj ponownie',
+            'cancel' => 'Anuluj',
         ],
     ],
 
@@ -468,6 +515,7 @@ return [
             'supports_up_to_images' => ':platform obsługuje maks. :count obrazów',
             'does_not_support_videos' => ':platform nie obsługuje filmów',
         ],
+        'preview_disabled' => 'Nie zostanie opublikowany — wyłączone dla tego posta.',
     ],
 
     'content_types' => [
@@ -605,5 +653,7 @@ return [
         'facebook_post' => 'Post na Facebooku',
         'pinterest_pin' => 'Pin na Pinterest',
         'instagram_story' => 'Relacja na Instagramie',
+        'telegram_post' => 'Post na Telegramie',
+        'discord_message' => 'Wiadomość na Discordzie',
     ],
 ];

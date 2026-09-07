@@ -134,5 +134,16 @@ else
     chmod -R 777 storage bootstrap/cache 2>/dev/null || true
 fi
 
+# 14) Re-tighten Passport keys. The dev 777 pass above would otherwise leave
+# them world-writable, and league/oauth2-server refuses to load a key whose
+# permissions are outside 400/440/600/640/660 — which breaks every
+# Passport-authenticated request. 644 is not in that set, hence 600 for both.
+if [ -f storage/oauth-private.key ]; then
+    chmod 600 storage/oauth-private.key 2>/dev/null || true
+fi
+if [ -f storage/oauth-public.key ]; then
+    chmod 600 storage/oauth-public.key 2>/dev/null || true
+fi
+
 echo "[entrypoint] ready — handing off to supervisord"
 exec /usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf

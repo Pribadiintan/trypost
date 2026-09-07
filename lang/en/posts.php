@@ -27,17 +27,6 @@ return [
     'delete_confirm' => 'Are you sure you want to delete this post?',
     'by' => 'by',
 
-    'create' => [
-        'steps' => [
-            'brand_references_label' => 'Brand references',
-            'brand_references_description' => 'AI will preserve faces, logos, and styles from the selected photos.',
-            'brand_references_select_all' => 'Select all',
-            'brand_references_clear' => 'Clear',
-            'brand_references_manage' => 'Manage references',
-            'brand_references_empty' => 'No brand references yet. Add portraits, logos, and product shots so AI visuals stay on-brand.',
-        ],
-    ],
-
     'actions' => [
         'view' => 'View post',
         'delete' => 'Delete',

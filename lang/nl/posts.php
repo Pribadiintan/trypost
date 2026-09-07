@@ -257,13 +257,8 @@ return [
         'image_regenerate' => [
             'button' => 'Aanpassen',
             'title' => 'AI-afbeelding aanpassen',
-            'description' => 'Beschrijf de correctie. De nieuwe afbeelding vervangt de huidige en behoudt zijn positie in de carrousel.',
             'instruction_label' => 'Instructie',
-            'instruction_placeholder' => 'bijv. Herstel de typefout in de kop en maak de achtergrond lichter.',
-            'processing' => 'Afbeelding opnieuw genereren... dit kan enkele seconden duren.',
-            'submit' => 'Afbeelding opnieuw genereren',
             'cancel' => 'Annuleren',
-            'success' => 'Afbeelding bijgewerkt. De nieuwe versie heeft de vorige in je post vervangen.',
             'fallback_title' => 'Verbeter deze afbeeldingstekst',
             'errors' => [
                 'required' => 'Instructie is vereist.',
@@ -273,6 +268,48 @@ return [
                 'media_not_found' => 'Media-item niet gevonden.',
                 'not_ai_media' => 'Alleen AI-gegenereerde media kan opnieuw worden gegenereerd.',
             ],
+            'descriptions' => [
+                'text_only' => 'Beschrijf de tekstcorrectie. Het huidige beeld en de carrouselpositie blijven hetzelfde.',
+                'image_only' => 'Beschrijf het nieuwe beeld. Het vervangt het huidige beeld en behoudt zijn positie in de carrousel.',
+                'both' => 'Beschrijf de tekst- en beeldwijzigingen. De bijgewerkte afbeelding behoudt zijn positie in de carrousel.',
+            ],
+            'modes' => [
+                'text_only' => [
+                    'label' => 'Alleen tekst',
+                    'description' => 'Behoud het huidige beeld en werk de tekst op de afbeelding bij.',
+                ],
+                'image_only' => [
+                    'label' => 'Nieuw beeld',
+                    'description' => 'Genereer een nieuwe achtergrond terwijl de afbeeldingstekst ongewijzigd blijft.',
+                ],
+                'both' => [
+                    'label' => 'Tekst en beeld',
+                    'description' => 'Genereer een nieuwe achtergrond en werk de afbeeldingstekst bij.',
+                ],
+            ],
+            'instruction_placeholders' => [
+                'text_only' => 'bijv. verander „ECP” in „ICP” in de koptekst.',
+                'image_only' => 'bijv. vervang de achtergrond door een bos bij zonsopgang.',
+                'both' => 'bijv. werk de koptekst bij en gebruik een lichtere kantoorachtergrond.',
+            ],
+            'processing' => [
+                'text_only' => 'Afbeeldingstekst bijwerken… dit kan enkele seconden duren.',
+                'image_only' => 'Nieuw beeld genereren… dit kan enkele seconden duren.',
+                'both' => 'Afbeeldingstekst en beeld bijwerken… dit kan enkele seconden duren.',
+            ],
+            'submit' => [
+                'text_only' => 'Tekst bijwerken',
+                'image_only' => 'Nieuw beeld genereren',
+                'both' => 'Tekst en beeld bijwerken',
+            ],
+            'success' => [
+                'text_only' => 'Afbeeldingstekst bijgewerkt.',
+                'image_only' => 'Nieuw beeld toegepast.',
+                'both' => 'Afbeeldingstekst en beeld bijgewerkt.',
+            ],
+            'mode_label' => 'Wat moet er veranderen?',
+            'continue_in_background' => 'Doorgaan op de achtergrond',
+            'background_notice' => 'De regeneratie wordt op de achtergrond voortgezet.',
         ],
         'templates' => [
             'image_card' => [
@@ -291,6 +328,16 @@ return [
                 'name' => 'Tweet-kaart met foto',
                 'description' => 'Je post als een X/Twitter-kaart over een vervaagde foto.',
             ],
+        ],
+        'regenerate_caption' => [
+            'button_tooltip' => 'Bijschrift opnieuw genereren',
+            'title' => 'Bijschrift opnieuw genereren',
+            'description' => 'Maak een nieuw bijschrift terwijl je bepaalt wat er op het concept wordt toegepast.',
+            'instruction_placeholder' => 'Optioneel: bijv. maak het beknopter',
+            'start' => 'Genereren',
+            'apply' => 'Bijschrift toepassen',
+            'retry' => 'Opnieuw genereren',
+            'cancel' => 'Annuleren',
         ],
     ],
 
@@ -468,6 +515,7 @@ return [
             'supports_up_to_images' => ':platform ondersteunt maximaal :count afbeeldingen',
             'does_not_support_videos' => ':platform ondersteunt geen video\'s',
         ],
+        'preview_disabled' => 'Wordt niet gepubliceerd — uitgeschakeld voor dit bericht.',
     ],
 
     'content_types' => [
@@ -605,5 +653,7 @@ return [
         'facebook_post' => 'Facebook-post',
         'pinterest_pin' => 'Pinterest-pin',
         'instagram_story' => 'Instagram-story',
+        'telegram_post' => 'Telegram-bericht',
+        'discord_message' => 'Discord-bericht',
     ],
 ];

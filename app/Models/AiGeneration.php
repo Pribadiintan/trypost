@@ -26,6 +26,7 @@ class AiGeneration extends Model
         'apply_brand_visuals',
         'reference_media_ids',
         'use_brand_references',
+        'language_code',
         'social_account_id',
         'image_expected',
         'image_done',

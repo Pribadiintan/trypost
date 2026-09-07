@@ -48,6 +48,7 @@ class RenderPostImages implements ShouldBeUnique, ShouldQueue
         public bool $applyBrandVisuals = true,
         public array $referenceMediaIds = [],
         public bool $useBrandReferences = true,
+        public ?string $languageCode = null,
     ) {
         $this->onQueue('ai');
     }
@@ -101,7 +102,7 @@ class RenderPostImages implements ShouldBeUnique, ShouldQueue
 
         $structured = $generation->structured ?? [];
         $style = app(AiTemplateRegistry::class)->find($generation->template);
-        $brand = $workspace->resolvedBrand();
+        $brand = $workspace->resolvedBrand($generation->language_code ?? $this->languageCode);
 
         $referenceImages = [];
         if ($this->referenceMediaIds !== []) {
@@ -176,8 +177,8 @@ class RenderPostImages implements ShouldBeUnique, ShouldQueue
                 workspaceId: $workspace->id,
                 type: NotificationType::PostReady,
                 channel: NotificationChannel::InApp,
-                title: trans('notifications.post_ready.title', [], $workspace->content_language),
-                body: trans('notifications.post_ready.body', [], $workspace->content_language),
+                title: trans('notifications.post_ready.title', [], $brand->languageCode),
+                body: trans('notifications.post_ready.body', [], $brand->languageCode),
                 data: ['post_id' => $post->id],
             );
         } catch (Throwable $e) {

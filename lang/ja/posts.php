@@ -257,13 +257,8 @@ return [
         'image_regenerate' => [
             'button' => '調整',
             'title' => 'AI 画像を調整',
-            'description' => '修正内容を説明してください。新しい画像が現在の画像を置き換え、カルーセル内の位置はそのまま保たれます。',
             'instruction_label' => '指示',
-            'instruction_placeholder' => '例: 見出しの誤字を直して、背景を明るくして。',
-            'processing' => '画像を再生成中... 数秒かかる場合があります。',
-            'submit' => '画像を再生成',
             'cancel' => 'キャンセル',
-            'success' => '画像を更新しました。新しいバージョンが投稿内の以前の画像を置き換えました。',
             'fallback_title' => 'この画像のコピーを改善',
             'errors' => [
                 'required' => '指示は必須です。',
@@ -273,6 +268,48 @@ return [
                 'media_not_found' => 'メディアアイテムが見つかりません。',
                 'not_ai_media' => 'AI 生成メディアのみ再生成できます。',
             ],
+            'descriptions' => [
+                'text_only' => '修正するテキストを説明してください。現在のビジュアルとカルーセルの位置はそのまま残ります。',
+                'image_only' => '新しいビジュアルを説明してください。現在のビジュアルを置き換え、カルーセル内の位置を維持します。',
+                'both' => 'テキストとビジュアルの変更を説明してください。更新された画像はカルーセル内の位置を維持します。',
+            ],
+            'modes' => [
+                'text_only' => [
+                    'label' => 'テキストのみ',
+                    'description' => '現在のビジュアルを保持し、画像上のテキストを更新します。',
+                ],
+                'image_only' => [
+                    'label' => '新しいビジュアル',
+                    'description' => '画像のテキストは変更せず、新しい背景を生成します。',
+                ],
+                'both' => [
+                    'label' => 'テキストとビジュアル',
+                    'description' => '新しい背景を生成し、画像のテキストを更新します。',
+                ],
+            ],
+            'instruction_placeholders' => [
+                'text_only' => '例: 見出しの「ECP」を「ICP」に変更する。',
+                'image_only' => '例: 背景を日の出の森に置き換える。',
+                'both' => '例: 見出しを更新し、より明るいオフィスの背景を使用する。',
+            ],
+            'processing' => [
+                'text_only' => '画像のテキストを更新しています...数秒かかる場合があります。',
+                'image_only' => '新しいビジュアルを生成しています...数秒かかる場合があります。',
+                'both' => '画像のテキストとビジュアルを更新しています...数秒かかる場合があります。',
+            ],
+            'submit' => [
+                'text_only' => 'テキストを更新',
+                'image_only' => '新しいビジュアルを生成',
+                'both' => 'テキストとビジュアルを更新',
+            ],
+            'success' => [
+                'text_only' => '画像のテキストを更新しました。',
+                'image_only' => '新しいビジュアルを適用しました。',
+                'both' => '画像のテキストとビジュアルを更新しました。',
+            ],
+            'mode_label' => '何を変更しますか?',
+            'continue_in_background' => 'バックグラウンドで続行',
+            'background_notice' => '再生成はバックグラウンドで続行されます。',
         ],
         'templates' => [
             'image_card' => [
@@ -291,6 +328,16 @@ return [
                 'name' => '写真付きツイートカード',
                 'description' => 'ぼかした写真の上に X/Twitter カード風にした投稿。',
             ],
+        ],
+        'regenerate_caption' => [
+            'button_tooltip' => 'キャプションを再生成',
+            'title' => 'キャプションを再生成',
+            'description' => '下書きに適用する内容を自分で管理しながら、新しいキャプションを作成します。',
+            'instruction_placeholder' => '任意: 例: より簡潔にする',
+            'start' => '生成',
+            'apply' => 'キャプションを適用',
+            'retry' => 'もう一度生成',
+            'cancel' => 'キャンセル',
         ],
     ],
 
@@ -468,6 +515,7 @@ return [
             'supports_up_to_images' => ':platform は画像を最大 :count 枚までサポートします',
             'does_not_support_videos' => ':platform は動画をサポートしていません',
         ],
+        'preview_disabled' => '公開されません — この投稿では無効です。',
     ],
 
     'content_types' => [
@@ -605,5 +653,7 @@ return [
         'facebook_post' => 'Facebook 投稿',
         'pinterest_pin' => 'Pinterest ピン',
         'instagram_story' => 'Instagram ストーリー',
+        'telegram_post' => 'Telegram 投稿',
+        'discord_message' => 'Discord メッセージ',
     ],
 ];

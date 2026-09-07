@@ -257,13 +257,8 @@ return [
         'image_regenerate' => [
             'button' => '조정',
             'title' => 'AI 이미지 조정',
-            'description' => '수정 사항을 설명하세요. 새 이미지가 현재 이미지를 대체하고 캐러셀 내 위치를 유지합니다.',
             'instruction_label' => '지시사항',
-            'instruction_placeholder' => '예: 헤드라인의 오타를 수정하고 배경을 더 밝게 해주세요.',
-            'processing' => '이미지를 재생성하는 중... 몇 초 정도 걸릴 수 있습니다.',
-            'submit' => '이미지 재생성',
             'cancel' => '취소',
-            'success' => '이미지가 업데이트되었습니다. 새 버전이 게시물의 이전 이미지를 대체했습니다.',
             'fallback_title' => '이 이미지 문구 개선',
             'errors' => [
                 'required' => '지시사항은 필수입니다.',
@@ -273,6 +268,48 @@ return [
                 'media_not_found' => '미디어 항목을 찾을 수 없습니다.',
                 'not_ai_media' => 'AI가 생성한 미디어만 재생성할 수 있습니다.',
             ],
+            'descriptions' => [
+                'text_only' => '수정할 텍스트를 설명하세요. 현재 이미지와 캐러셀 위치는 그대로 유지됩니다.',
+                'image_only' => '새로운 이미지를 설명하세요. 현재 이미지를 대체하고 캐러셀에서 위치를 유지합니다.',
+                'both' => '텍스트와 이미지 변경 사항을 설명하세요. 업데이트된 이미지는 캐러셀에서 위치를 유지합니다.',
+            ],
+            'modes' => [
+                'text_only' => [
+                    'label' => '텍스트만',
+                    'description' => '현재 이미지를 유지하고 이미지의 텍스트를 업데이트합니다.',
+                ],
+                'image_only' => [
+                    'label' => '새 이미지',
+                    'description' => '이미지 텍스트는 그대로 두고 새 배경을 생성합니다.',
+                ],
+                'both' => [
+                    'label' => '텍스트와 이미지',
+                    'description' => '새 배경을 생성하고 이미지 텍스트를 업데이트합니다.',
+                ],
+            ],
+            'instruction_placeholders' => [
+                'text_only' => '예: 헤드라인의 ‘ECP’를 ‘ICP’로 변경.',
+                'image_only' => '예: 배경을 일출 숲으로 교체.',
+                'both' => '예: 헤드라인을 업데이트하고 더 밝은 사무실 배경 사용.',
+            ],
+            'processing' => [
+                'text_only' => '이미지 텍스트를 업데이트하는 중... 몇 초 정도 걸릴 수 있습니다.',
+                'image_only' => '새 이미지를 생성하는 중... 몇 초 정도 걸릴 수 있습니다.',
+                'both' => '이미지 텍스트와 이미지를 업데이트하는 중... 몇 초 정도 걸릴 수 있습니다.',
+            ],
+            'submit' => [
+                'text_only' => '텍스트 업데이트',
+                'image_only' => '새 이미지 생성',
+                'both' => '텍스트와 이미지 업데이트',
+            ],
+            'success' => [
+                'text_only' => '이미지 텍스트가 업데이트되었습니다.',
+                'image_only' => '새 이미지가 적용되었습니다.',
+                'both' => '이미지 텍스트와 이미지가 업데이트되었습니다.',
+            ],
+            'mode_label' => '무엇을 변경할까요?',
+            'continue_in_background' => '백그라운드에서 계속',
+            'background_notice' => '재생성이 백그라운드에서 계속됩니다.',
         ],
         'templates' => [
             'image_card' => [
@@ -291,6 +328,16 @@ return [
                 'name' => '사진이 있는 트윗 카드',
                 'description' => '흐릿한 사진 위에 X/Twitter 카드로 표시된 게시물.',
             ],
+        ],
+        'regenerate_caption' => [
+            'button_tooltip' => '캡션 재생성',
+            'title' => '캡션 재생성',
+            'description' => '초안에 적용할 내용을 직접 제어하면서 새 캡션을 만듭니다.',
+            'instruction_placeholder' => '선택 사항: 예: 더 간결하게 작성',
+            'start' => '생성',
+            'apply' => '캡션 적용',
+            'retry' => '다시 생성',
+            'cancel' => '취소',
         ],
     ],
 
@@ -468,6 +515,7 @@ return [
             'supports_up_to_images' => ':platform은(는) 최대 :count개 이미지를 지원합니다',
             'does_not_support_videos' => ':platform은(는) 동영상을 지원하지 않습니다',
         ],
+        'preview_disabled' => '게시되지 않음 — 이 게시물에는 사용할 수 없습니다.',
     ],
 
     'content_types' => [
@@ -605,5 +653,7 @@ return [
         'facebook_post' => 'Facebook 게시물',
         'pinterest_pin' => 'Pinterest 핀',
         'instagram_story' => 'Instagram 스토리',
+        'telegram_post' => '텔레그램 게시물',
+        'discord_message' => '디스코드 메시지',
     ],
 ];

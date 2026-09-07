@@ -259,13 +259,8 @@ return [
         'image_regenerate' => [
             'button' => 'Anpassen',
             'title' => 'KI-Bild anpassen',
-            'description' => 'Beschreibe die Korrektur. Das neue Bild ersetzt das aktuelle und behält seine Position im Karussell.',
             'instruction_label' => 'Anweisung',
-            'instruction_placeholder' => 'z. B. Korrigiere den Tippfehler in der Überschrift und mache den Hintergrund heller.',
-            'processing' => 'Bild wird neu generiert... das kann einige Sekunden dauern.',
-            'submit' => 'Bild neu generieren',
             'cancel' => 'Abbrechen',
-            'success' => 'Bild aktualisiert. Die neue Version hat die vorherige in deinem Beitrag ersetzt.',
             'fallback_title' => 'Diesen Bildtext verbessern',
             'errors' => [
                 'required' => 'Eine Anweisung ist erforderlich.',
@@ -275,6 +270,48 @@ return [
                 'media_not_found' => 'Medienelement nicht gefunden.',
                 'not_ai_media' => 'Nur KI-generierte Medien können neu generiert werden.',
             ],
+            'descriptions' => [
+                'text_only' => 'Beschreiben Sie die Textkorrektur. Das aktuelle Bild und die Karussell-Position bleiben gleich.',
+                'image_only' => 'Beschreiben Sie das neue Bild. Es ersetzt das aktuelle Bild und behält seine Position im Karussell.',
+                'both' => 'Beschreiben Sie die Änderungen an Text und Bild. Das aktualisierte Bild behält seine Position im Karussell.',
+            ],
+            'modes' => [
+                'text_only' => [
+                    'label' => 'Nur Text',
+                    'description' => 'Aktuelles Bild behalten und den Text auf dem Bild aktualisieren.',
+                ],
+                'image_only' => [
+                    'label' => 'Neues Bild',
+                    'description' => 'Neuen Hintergrund generieren, während der Bildtext unverändert bleibt.',
+                ],
+                'both' => [
+                    'label' => 'Text und Bild',
+                    'description' => 'Neuen Hintergrund generieren und den Bildtext aktualisieren.',
+                ],
+            ],
+            'instruction_placeholders' => [
+                'text_only' => 'z. B. „ECP“ in „ICP“ in der Überschrift ändern.',
+                'image_only' => 'z. B. den Hintergrund durch einen Wald bei Sonnenaufgang ersetzen.',
+                'both' => 'z. B. die Überschrift aktualisieren und einen helleren Büro-Hintergrund verwenden.',
+            ],
+            'processing' => [
+                'text_only' => 'Bildtext wird aktualisiert… dies kann einige Sekunden dauern.',
+                'image_only' => 'Neues Bild wird generiert… dies kann einige Sekunden dauern.',
+                'both' => 'Bildtext und Bild werden aktualisiert… dies kann einige Sekunden dauern.',
+            ],
+            'submit' => [
+                'text_only' => 'Text aktualisieren',
+                'image_only' => 'Neues Bild generieren',
+                'both' => 'Text und Bild aktualisieren',
+            ],
+            'success' => [
+                'text_only' => 'Bildtext aktualisiert.',
+                'image_only' => 'Neues Bild angewendet.',
+                'both' => 'Bildtext und Bild aktualisiert.',
+            ],
+            'mode_label' => 'Was soll sich ändern?',
+            'continue_in_background' => 'Im Hintergrund fortfahren',
+            'background_notice' => 'Die Regenerierung wird im Hintergrund fortgesetzt.',
         ],
         'templates' => [
             'image_card' => [
@@ -293,6 +330,16 @@ return [
                 'name' => 'Tweet-Karte mit Foto',
                 'description' => 'Dein Beitrag als X/Twitter-Karte über einem unscharfen Foto.',
             ],
+        ],
+        'regenerate_caption' => [
+            'button_tooltip' => 'Bildunterschrift neu generieren',
+            'title' => 'Bildunterschrift neu generieren',
+            'description' => 'Erstellen Sie eine neue Bildunterschrift, während Sie die Kontrolle darüber behalten, was auf den Entwurf angewendet wird.',
+            'instruction_placeholder' => 'Optional: z. B. prägnanter formulieren',
+            'start' => 'Generieren',
+            'apply' => 'Bildunterschrift anwenden',
+            'retry' => 'Erneut generieren',
+            'cancel' => 'Abbrechen',
         ],
     ],
 
@@ -470,6 +517,7 @@ return [
             'supports_up_to_images' => ':platform unterstützt bis zu :count Bilder',
             'does_not_support_videos' => ':platform unterstützt keine Videos',
         ],
+        'preview_disabled' => 'Wird nicht veröffentlicht — für diesen Beitrag deaktiviert.',
     ],
 
     'content_types' => [
@@ -607,5 +655,7 @@ return [
         'facebook_post' => 'Facebook-Beitrag',
         'pinterest_pin' => 'Pinterest-Pin',
         'instagram_story' => 'Instagram-Story',
+        'telegram_post' => 'Telegram-Beitrag',
+        'discord_message' => 'Discord-Nachricht',
     ],
 ];

@@ -55,6 +55,7 @@ class StreamPostCreation implements ShouldBeUnique, ShouldQueue
         public array $referenceMediaIds = [],
         public bool $useBrandReferences = true,
         public array $labelIds = [],
+        public ?string $languageCode = null,
     ) {
         $this->onQueue('ai');
     }
@@ -97,6 +98,7 @@ class StreamPostCreation implements ShouldBeUnique, ShouldQueue
                 'apply_brand_visuals' => $this->applyBrandVisuals,
                 'reference_media_ids' => $this->referenceMediaIds,
                 'use_brand_references' => $this->useBrandReferences,
+                'language_code' => $this->languageCode,
                 'social_account_id' => $this->socialAccountId,
                 'image_expected' => $this->imageCount,
             ],
@@ -114,7 +116,7 @@ class StreamPostCreation implements ShouldBeUnique, ShouldQueue
         $isCarousel = $this->format === ContentType::CAROUSEL_FORMAT;
         $agentFormat = $isCarousel ? GeneratorFormat::Carousel : GeneratorFormat::Single;
         $slideCount = $isCarousel && $this->imageCount > 0 ? $this->imageCount : 1;
-        $brand = $workspace->resolvedBrand();
+        $brand = $workspace->resolvedBrand($this->languageCode);
 
         // Text phase never touches the image model: assembling with a null
         // account yields caption plus content type with empty media on every
@@ -180,6 +182,7 @@ class StreamPostCreation implements ShouldBeUnique, ShouldQueue
                 'apply_brand_visuals' => $this->applyBrandVisuals,
                 'reference_media_ids' => $this->referenceMediaIds,
                 'use_brand_references' => $this->useBrandReferences,
+                'language_code' => $this->languageCode,
                 'social_account_id' => $socialAccount?->id,
                 'image_expected' => $imageExpected,
                 'image_done' => 0,
@@ -201,7 +204,7 @@ class StreamPostCreation implements ShouldBeUnique, ShouldQueue
             if ($imageExpected === 0) {
                 $generation->update(['status' => GenerationStatus::Ready]);
 
-                $this->notifyReady($workspace, $post);
+                $this->notifyReady($workspace, $post, $brand);
 
                 return;
             }
@@ -213,6 +216,7 @@ class StreamPostCreation implements ShouldBeUnique, ShouldQueue
                 applyBrandVisuals: $this->applyBrandVisuals,
                 referenceMediaIds: $this->referenceMediaIds,
                 useBrandReferences: $this->useBrandReferences,
+                languageCode: $this->languageCode,
             );
         } catch (\Throwable $e) {
             $generation->update([
@@ -388,7 +392,7 @@ class StreamPostCreation implements ShouldBeUnique, ShouldQueue
         return $post;
     }
 
-    private function notifyReady(Workspace $workspace, Post $post): void
+    private function notifyReady(Workspace $workspace, Post $post, ResolvedBrand $brand): void
     {
         PostCreationReady::dispatch(
             userId: $this->userId,
@@ -403,8 +407,8 @@ class StreamPostCreation implements ShouldBeUnique, ShouldQueue
             workspaceId: $workspace->id,
             type: NotificationType::PostReady,
             channel: NotificationChannel::InApp,
-            title: trans('notifications.post_ready.title', [], $workspace->content_language),
-            body: trans('notifications.post_ready.body', [], $workspace->content_language),
+            title: trans('notifications.post_ready.title', [], $brand->languageCode),
+            body: trans('notifications.post_ready.body', [], $brand->languageCode),
             data: ['post_id' => $post->id],
         );
     }

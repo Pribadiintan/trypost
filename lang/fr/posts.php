@@ -257,13 +257,8 @@ return [
         'image_regenerate' => [
             'button' => 'Ajuster',
             'title' => 'Ajuster l\'image IA',
-            'description' => 'Décrivez la correction. La nouvelle image remplace l\'actuelle et conserve sa position dans le carrousel.',
             'instruction_label' => 'Instruction',
-            'instruction_placeholder' => 'par ex. Corrigez la faute dans le titre et éclaircissez l\'arrière-plan.',
-            'processing' => 'Régénération de l\'image... cela peut prendre quelques secondes.',
-            'submit' => 'Régénérer l\'image',
             'cancel' => 'Annuler',
-            'success' => 'Image mise à jour. La nouvelle version a remplacé la précédente dans votre publication.',
             'fallback_title' => 'Améliorer le texte de cette image',
             'errors' => [
                 'required' => 'L\'instruction est obligatoire.',
@@ -273,6 +268,48 @@ return [
                 'media_not_found' => 'Élément média introuvable.',
                 'not_ai_media' => 'Seuls les médias générés par l\'IA peuvent être régénérés.',
             ],
+            'descriptions' => [
+                'text_only' => 'Décrivez la correction de texte. Le visuel actuel et sa position dans le carrousel resteront identiques.',
+                'image_only' => 'Décrivez le nouveau visuel. Il remplacera le visuel actuel et conservera sa position dans le carrousel.',
+                'both' => 'Décrivez les modifications de texte et de visuel. L\'image mise à jour conservera sa position dans le carrousel.',
+            ],
+            'modes' => [
+                'text_only' => [
+                    'label' => 'Texte uniquement',
+                    'description' => 'Conserver le visuel actuel et mettre à jour le texte sur l\'image.',
+                ],
+                'image_only' => [
+                    'label' => 'Nouveau visuel',
+                    'description' => 'Générer un nouvel arrière-plan tout en gardant le texte de l\'image inchangé.',
+                ],
+                'both' => [
+                    'label' => 'Texte et visuel',
+                    'description' => 'Générer un nouvel arrière-plan et mettre à jour le texte de l\'image.',
+                ],
+            ],
+            'instruction_placeholders' => [
+                'text_only' => 'ex. remplacer « ECP » par « ICP » dans le titre.',
+                'image_only' => 'ex. remplacer l\'arrière-plan par une forêt au lever du soleil.',
+                'both' => 'ex. mettre à jour le titre et utiliser un arrière-plan de bureau plus lumineux.',
+            ],
+            'processing' => [
+                'text_only' => 'Mise à jour du texte de l’image… cela peut prendre quelques secondes.',
+                'image_only' => 'Génération d’un nouveau visuel… cela peut prendre quelques secondes.',
+                'both' => 'Mise à jour du texte et du visuel de l’image… cela peut prendre quelques secondes.',
+            ],
+            'submit' => [
+                'text_only' => 'Mettre à jour le texte',
+                'image_only' => 'Générer un nouveau visuel',
+                'both' => 'Mettre à jour le texte et le visuel',
+            ],
+            'success' => [
+                'text_only' => 'Texte de l’image mis à jour.',
+                'image_only' => 'Nouveau visuel appliqué.',
+                'both' => 'Texte et visuel de l’image mis à jour.',
+            ],
+            'mode_label' => 'Que faut-il changer ?',
+            'continue_in_background' => 'Continuer en arrière-plan',
+            'background_notice' => 'La régénération se poursuivra en arrière-plan.',
         ],
         'templates' => [
             'image_card' => [
@@ -291,6 +328,16 @@ return [
                 'name' => 'Carte tweet avec photo',
                 'description' => 'Votre publication en carte X/Twitter sur une photo floutée.',
             ],
+        ],
+        'regenerate_caption' => [
+            'button_tooltip' => 'Régénérer la légende',
+            'title' => 'Régénérer la légende',
+            'description' => 'Créez une nouvelle légende tout en gardant le contrôle de ce qui est appliqué au brouillon.',
+            'instruction_placeholder' => 'Facultatif : ex. rendez-la plus concise',
+            'start' => 'Générer',
+            'apply' => 'Appliquer la légende',
+            'retry' => 'Régénérer à nouveau',
+            'cancel' => 'Annuler',
         ],
     ],
 
@@ -468,6 +515,7 @@ return [
             'supports_up_to_images' => ':platform prend en charge jusqu\'à :count images',
             'does_not_support_videos' => ':platform ne prend pas en charge les vidéos',
         ],
+        'preview_disabled' => 'Ne sera pas publié — désactivé pour cette publication.',
     ],
 
     'content_types' => [
@@ -605,5 +653,7 @@ return [
         'facebook_post' => 'Publication Facebook',
         'pinterest_pin' => 'Épingle Pinterest',
         'instagram_story' => 'Story Instagram',
+        'telegram_post' => 'Publication Telegram',
+        'discord_message' => 'Message Discord',
     ],
 ];

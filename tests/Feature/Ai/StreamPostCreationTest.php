@@ -9,6 +9,9 @@ use App\Enums\PostPlatform\ContentType;
 use App\Enums\UserWorkspace\Role;
 use App\Jobs\Ai\RenderPostImages;
 use App\Jobs\Ai\StreamPostCreation;
+use App\Jobs\SendNotification;
+use App\Models\AiGeneration;
+use App\Models\BrandVariant;
 use App\Models\PostPlatform;
 use App\Models\SocialAccount;
 use App\Models\User;
@@ -376,4 +379,99 @@ test('the humanizer is given the same platform context as the generator so the r
 
     PostContentGenerator::assertPrompted(fn ($prompt) => $prompt->agent->platformContext === 'instagram_feed');
     PostContentHumanizer::assertPrompted(fn ($prompt) => $prompt->agent->platformContext === 'instagram_feed');
+});
+
+test('the chosen language is persisted on the generation', function () {
+    PostContentGenerator::fake([[
+        'content' => 'Uma dica de produtividade',
+        'image_title' => 'Dica',
+        'image_body' => 'Faça menos',
+        'image_keywords' => [],
+    ]]);
+    PostContentHumanizer::fake([[
+        'content' => 'Uma dica de produtividade',
+        'image_title' => 'Dica',
+        'image_body' => 'Faça menos',
+    ]]);
+
+    $creationId = (string) Str::uuid();
+
+    (new StreamPostCreation(
+        userId: $this->user->id,
+        creationId: $creationId,
+        workspaceId: $this->workspace->id,
+        format: 'instagram_feed',
+        socialAccountId: $this->account->id,
+        imageCount: 0,
+        prompt: 'Uma dica de produtividade',
+        template: 'image_card',
+        languageCode: 'pt-BR',
+    ))->handle();
+
+    $generation = AiGeneration::where('creation_id', $creationId)->firstOrFail();
+
+    expect($generation->language_code)->toBe('pt-BR');
+});
+
+function ptBrTextOnlyGeneration(): string
+{
+    PostContentGenerator::fake([[
+        'content' => 'Uma dica de produtividade',
+        'image_title' => 'Dica',
+        'image_body' => 'Faça menos',
+        'image_keywords' => [],
+    ]]);
+    PostContentHumanizer::fake([[
+        'content' => 'Uma dica de produtividade',
+        'image_title' => 'Dica',
+        'image_body' => 'Faça menos',
+    ]]);
+
+    test()->workspace->update(['content_language' => 'en']);
+
+    BrandVariant::factory()->for(test()->workspace)->create([
+        'language_code' => 'pt-BR',
+        'label' => 'Português (Brasil)',
+    ]);
+
+    $creationId = (string) Str::uuid();
+
+    (new StreamPostCreation(
+        userId: test()->user->id,
+        creationId: $creationId,
+        workspaceId: test()->workspace->id,
+        format: 'instagram_feed',
+        socialAccountId: test()->account->id,
+        imageCount: 0,
+        prompt: 'Uma dica de produtividade',
+        template: 'image_card',
+        languageCode: 'pt-BR',
+    ))->handle();
+
+    return $creationId;
+}
+
+test('the ready notification is written in the language the post was generated in', function () {
+    ptBrTextOnlyGeneration();
+
+    Bus::assertDispatched(SendNotification::class, function (SendNotification $job): bool {
+        return $job->title === trans('notifications.post_ready.title', [], 'pt-BR');
+    });
+});
+
+test('the image phase keeps the generation language when the job carries none', function () {
+    $creationId = ptBrTextOnlyGeneration();
+
+    (new RenderPostImages(
+        userId: $this->user->id,
+        creationId: $creationId,
+        workspaceId: $this->workspace->id,
+    ))->handle();
+
+    $notifications = Bus::dispatched(SendNotification::class);
+
+    expect($notifications)->not->toBeEmpty()
+        ->and($notifications->every(
+            fn (SendNotification $job): bool => $job->title === trans('notifications.post_ready.title', [], 'pt-BR'),
+        ))->toBeTrue();
 });

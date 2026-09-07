@@ -259,13 +259,8 @@ return [
         'image_regenerate' => [
             'button' => 'Ayarla',
             'title' => 'AI görselini ayarla',
-            'description' => 'Düzeltmeyi açıklayın. Yeni görsel mevcut olanın yerini alır ve karuseldeki konumunu korur.',
             'instruction_label' => 'Talimat',
-            'instruction_placeholder' => 'örn. Başlıktaki yazım hatasını düzelt ve arka planı daha aydınlık yap.',
-            'processing' => 'Görsel yeniden oluşturuluyor... bu birkaç saniye sürebilir.',
-            'submit' => 'Görseli yeniden oluştur',
             'cancel' => 'İptal',
-            'success' => 'Görsel güncellendi. Yeni sürüm, gönderinizde öncekinin yerini aldı.',
             'fallback_title' => 'Bu görsel metnini iyileştir',
             'errors' => [
                 'required' => 'Talimat gereklidir.',
@@ -275,6 +270,48 @@ return [
                 'media_not_found' => 'Medya öğesi bulunamadı.',
                 'not_ai_media' => 'Yalnızca AI ile oluşturulan medya yeniden oluşturulabilir.',
             ],
+            'descriptions' => [
+                'text_only' => 'Metin düzeltmesini açıklayın. Mevcut görsel ve karusel konumu aynı kalacak.',
+                'image_only' => 'Yeni görseli açıklayın. Mevcut görselin yerini alacak ve karuseldeki konumunu koruyacak.',
+                'both' => 'Metin ve görsel değişikliklerini açıklayın. Güncellenen görsel karuseldeki konumunu koruyacak.',
+            ],
+            'modes' => [
+                'text_only' => [
+                    'label' => 'Yalnızca metin',
+                    'description' => 'Mevcut görseli koru ve görseldeki metni güncelle.',
+                ],
+                'image_only' => [
+                    'label' => 'Yeni görsel',
+                    'description' => 'Görseldeki metni değiştirmeden yeni bir arka plan oluştur.',
+                ],
+                'both' => [
+                    'label' => 'Metin ve görsel',
+                    'description' => 'Yeni bir arka plan oluştur ve görseldeki metni güncelle.',
+                ],
+            ],
+            'instruction_placeholders' => [
+                'text_only' => 'örn. başlıkta “ECP” yerine “ICP” yaz.',
+                'image_only' => 'örn. arka planı gün doğumundaki bir ormanla değiştir.',
+                'both' => 'örn. başlığı güncelle ve daha aydınlık bir ofis arka planı kullan.',
+            ],
+            'processing' => [
+                'text_only' => 'Görsel metni güncelleniyor… bu birkaç saniye sürebilir.',
+                'image_only' => 'Yeni görsel oluşturuluyor… bu birkaç saniye sürebilir.',
+                'both' => 'Görsel metni ve görsel güncelleniyor… bu birkaç saniye sürebilir.',
+            ],
+            'submit' => [
+                'text_only' => 'Metni güncelle',
+                'image_only' => 'Yeni görsel oluştur',
+                'both' => 'Metni ve görseli güncelle',
+            ],
+            'success' => [
+                'text_only' => 'Görsel metni güncellendi.',
+                'image_only' => 'Yeni görsel uygulandı.',
+                'both' => 'Görsel metni ve görsel güncellendi.',
+            ],
+            'mode_label' => 'Ne değişmeli?',
+            'continue_in_background' => 'Arka planda devam et',
+            'background_notice' => 'Yeniden oluşturma arka planda devam edecek.',
         ],
         'templates' => [
             'image_card' => [
@@ -293,6 +330,16 @@ return [
                 'name' => 'Fotoğraflı tweet kartı',
                 'description' => 'Bulanık bir fotoğrafın üzerinde X/Twitter kartı olarak gönderiniz.',
             ],
+        ],
+        'regenerate_caption' => [
+            'button_tooltip' => 'Altyazıyı yeniden oluştur',
+            'title' => 'Altyazıyı yeniden oluştur',
+            'description' => 'Taslağa neyin uygulanacağı üzerinde kontrolü elinizde tutarak yeni bir altyazı oluşturun.',
+            'instruction_placeholder' => 'İsteğe bağlı: örn. daha kısa ve öz hale getirin',
+            'start' => 'Oluştur',
+            'apply' => 'Altyazıyı uygula',
+            'retry' => 'Yeniden oluştur',
+            'cancel' => 'İptal',
         ],
     ],
 
@@ -470,6 +517,7 @@ return [
             'supports_up_to_images' => ':platform en fazla :count görsel destekliyor',
             'does_not_support_videos' => ':platform videoları desteklemiyor',
         ],
+        'preview_disabled' => 'Yayınlanmayacak — bu gönderi için devre dışı.',
     ],
 
     'content_types' => [
@@ -607,5 +655,7 @@ return [
         'facebook_post' => 'Facebook Gönderisi',
         'pinterest_pin' => 'Pinterest Pin\'i',
         'instagram_story' => 'Instagram Hikayesi',
+        'telegram_post' => 'Telegram Gönderisi',
+        'discord_message' => 'Discord Mesajı',
     ],
 ];

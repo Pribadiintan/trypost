@@ -8,6 +8,7 @@ use App\Enums\SocialAccount\Platform;
 use App\Enums\UserWorkspace\Role;
 use App\Events\Ai\PostCreationReady;
 use App\Jobs\Ai\StreamPostCreation;
+use App\Models\BrandVariant;
 use App\Models\SocialAccount;
 use App\Models\Workspace;
 use App\Support\AiPromptRules;
@@ -114,7 +115,7 @@ it('gives two distinct tool calls two distinct creation ids', function (): void 
     Bus::assertDispatchedTimes(StreamPostCreation::class, 2);
 });
 
-it('defaults the optional arguments the way the create wizard did', function (): void {
+it('defaults the optional arguments', function (): void {
     $this->tool->handle(new Request([
         'prompt' => 'A post about coffee',
         'format' => 'threads_post',
@@ -125,7 +126,9 @@ it('defaults the optional arguments the way the create wizard did', function ():
         return $job->imageCount === 0
             && $job->date === null
             && $job->socialAccountId === null
-            && $job->applyBrandVisuals === true;
+            && $job->applyBrandVisuals === true
+            && $job->useBrandReferences === true
+            && $job->languageCode === null;
     });
 });
 
@@ -137,6 +140,51 @@ it('carries the date and the brand visuals choice through to the job', function 
 
     Bus::assertDispatched(StreamPostCreation::class, function (StreamPostCreation $job): bool {
         return $job->date === '2026-06-15' && $job->applyBrandVisuals === false;
+    });
+});
+
+it('carries the language and brand references choices through to the job', function (): void {
+    BrandVariant::factory()->for($this->workspace)->create([
+        'language_code' => 'pt-BR',
+        'label' => 'Português (Brasil)',
+    ]);
+
+    $this->tool->handle(new Request(generatePostPayload([
+        'language_code' => 'pt-BR',
+        'use_brand_references' => false,
+    ])));
+
+    Bus::assertDispatched(StreamPostCreation::class, function (StreamPostCreation $job): bool {
+        return $job->languageCode === 'pt-BR' && $job->useBrandReferences === false;
+    });
+});
+
+it('rejects a language this workspace does not offer', function (): void {
+    $output = json_decode($this->tool->handle(new Request(generatePostPayload([
+        'language_code' => 'pt-BR',
+    ]))), true);
+
+    expect($output)->toHaveKey('error')
+        ->and($output['error'])->toContain('pt-BR')
+        ->and($output['error'])->toContain('en');
+
+    Bus::assertNotDispatched(StreamPostCreation::class);
+});
+
+it('accepts a language the workspace offers through a brand variant', function (): void {
+    BrandVariant::factory()->for($this->workspace)->create([
+        'language_code' => 'pt-BR',
+        'label' => 'Português (Brasil)',
+    ]);
+
+    $output = json_decode($this->tool->handle(new Request(generatePostPayload([
+        'language_code' => 'pt-BR',
+    ]))), true);
+
+    expect($output)->toHaveKey('data');
+
+    Bus::assertDispatched(StreamPostCreation::class, function (StreamPostCreation $job): bool {
+        return $job->languageCode === 'pt-BR';
     });
 });
 

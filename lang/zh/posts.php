@@ -257,13 +257,8 @@ return [
         'image_regenerate' => [
             'button' => '调整',
             'title' => '调整 AI 图片',
-            'description' => '描述需要修正的地方。新图片会替换当前图片，并保留其在轮播中的位置。',
             'instruction_label' => '指令',
-            'instruction_placeholder' => '例如 修正标题中的错别字，并让背景更亮一些。',
-            'processing' => '正在重新生成图片…这可能需要几秒钟。',
-            'submit' => '重新生成图片',
             'cancel' => '取消',
-            'success' => '图片已更新。新版本已替换帖子中的旧版本。',
             'fallback_title' => '优化这张图片的文案',
             'errors' => [
                 'required' => '指令为必填项。',
@@ -273,6 +268,48 @@ return [
                 'media_not_found' => '未找到该媒体项。',
                 'not_ai_media' => '只有 AI 生成的媒体才能重新生成。',
             ],
+            'descriptions' => [
+                'text_only' => '描述需要修正的文本。当前视觉和轮播位置将保持不变。',
+                'image_only' => '描述新的视觉。它将替换当前视觉并保持其在轮播中的位置。',
+                'both' => '描述文本和视觉的更改。更新后的图片将保持其在轮播中的位置。',
+            ],
+            'modes' => [
+                'text_only' => [
+                    'label' => '仅文本',
+                    'description' => '保留当前视觉并更新图片上的文本。',
+                ],
+                'image_only' => [
+                    'label' => '新视觉',
+                    'description' => '生成新背景,同时保持图片文本不变。',
+                ],
+                'both' => [
+                    'label' => '文本和视觉',
+                    'description' => '生成新背景并更新图片文本。',
+                ],
+            ],
+            'instruction_placeholders' => [
+                'text_only' => '例如: 将标题中的“ECP”改为“ICP”。',
+                'image_only' => '例如: 将背景替换为日出时的森林。',
+                'both' => '例如: 更新标题并使用更明亮的办公室背景。',
+            ],
+            'processing' => [
+                'text_only' => '正在更新图片文本...这可能需要几秒钟。',
+                'image_only' => '正在生成新视觉...这可能需要几秒钟。',
+                'both' => '正在更新图片文本和视觉...这可能需要几秒钟。',
+            ],
+            'submit' => [
+                'text_only' => '更新文本',
+                'image_only' => '生成新视觉',
+                'both' => '更新文本和视觉',
+            ],
+            'success' => [
+                'text_only' => '图片文本已更新。',
+                'image_only' => '新视觉已应用。',
+                'both' => '图片文本和视觉已更新。',
+            ],
+            'mode_label' => '需要更改什么?',
+            'continue_in_background' => '在后台继续',
+            'background_notice' => '重新生成将在后台继续。',
         ],
         'templates' => [
             'image_card' => [
@@ -291,6 +328,16 @@ return [
                 'name' => '带照片的推文卡片',
                 'description' => '将你的帖子呈现为叠加在模糊照片上的 X/Twitter 卡片。',
             ],
+        ],
+        'regenerate_caption' => [
+            'button_tooltip' => '重新生成字幕',
+            'title' => '重新生成字幕',
+            'description' => '创建新的字幕,同时由你决定将哪些内容应用到草稿。',
+            'instruction_placeholder' => '可选: 例如让它更简洁',
+            'start' => '生成',
+            'apply' => '应用字幕',
+            'retry' => '重新生成',
+            'cancel' => '取消',
         ],
     ],
 
@@ -468,6 +515,7 @@ return [
             'supports_up_to_images' => ':platform 最多支持 :count 张图片',
             'does_not_support_videos' => ':platform 不支持视频',
         ],
+        'preview_disabled' => '不会发布 — 此帖子已禁用。',
     ],
 
     'content_types' => [
@@ -605,5 +653,7 @@ return [
         'facebook_post' => 'Facebook 帖子',
         'pinterest_pin' => 'Pinterest Pin',
         'instagram_story' => 'Instagram 快拍',
+        'telegram_post' => 'Telegram 帖子',
+        'discord_message' => 'Discord 消息',
     ],
 ];

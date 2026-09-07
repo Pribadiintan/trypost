@@ -257,13 +257,8 @@ return [
         'image_regenerate' => [
             'button' => 'Regola',
             'title' => 'Regola immagine IA',
-            'description' => 'Descrivi la correzione. La nuova immagine sostituisce quella attuale e mantiene la sua posizione nel carosello.',
             'instruction_label' => 'Istruzione',
-            'instruction_placeholder' => 'es. Correggi il refuso nel titolo e schiarisci lo sfondo.',
-            'processing' => 'Rigenerazione dell\'immagine... può richiedere alcuni secondi.',
-            'submit' => 'Rigenera immagine',
             'cancel' => 'Annulla',
-            'success' => 'Immagine aggiornata. La nuova versione ha sostituito quella precedente nel tuo post.',
             'fallback_title' => 'Migliora il testo di questa immagine',
             'errors' => [
                 'required' => 'L\'istruzione è obbligatoria.',
@@ -273,6 +268,48 @@ return [
                 'media_not_found' => 'Elemento multimediale non trovato.',
                 'not_ai_media' => 'Solo i media generati dall\'IA possono essere rigenerati.',
             ],
+            'descriptions' => [
+                'text_only' => 'Descrivi la correzione del testo. L’immagine attuale e la posizione nel carosello resteranno invariate.',
+                'image_only' => 'Descrivi la nuova immagine. Sostituirà quella attuale mantenendo la posizione nel carosello.',
+                'both' => 'Descrivi le modifiche a testo e immagine. L’immagine aggiornata manterrà la posizione nel carosello.',
+            ],
+            'modes' => [
+                'text_only' => [
+                    'label' => 'Solo testo',
+                    'description' => 'Mantieni l’immagine attuale e aggiorna il testo sull’immagine.',
+                ],
+                'image_only' => [
+                    'label' => 'Nuova immagine',
+                    'description' => 'Genera un nuovo sfondo mantenendo invariato il testo dell’immagine.',
+                ],
+                'both' => [
+                    'label' => 'Testo e immagine',
+                    'description' => 'Genera un nuovo sfondo e aggiorna il testo dell’immagine.',
+                ],
+            ],
+            'instruction_placeholders' => [
+                'text_only' => 'es. cambia «ECP» in «ICP» nel titolo.',
+                'image_only' => 'es. sostituisci lo sfondo con una foresta all’alba.',
+                'both' => 'es. aggiorna il titolo e usa uno sfondo da ufficio più luminoso.',
+            ],
+            'processing' => [
+                'text_only' => 'Aggiornamento del testo dell’immagine… potrebbe richiedere qualche secondo.',
+                'image_only' => 'Generazione di una nuova immagine… potrebbe richiedere qualche secondo.',
+                'both' => 'Aggiornamento di testo e immagine… potrebbe richiedere qualche secondo.',
+            ],
+            'submit' => [
+                'text_only' => 'Aggiorna testo',
+                'image_only' => 'Genera nuova immagine',
+                'both' => 'Aggiorna testo e immagine',
+            ],
+            'success' => [
+                'text_only' => 'Testo dell’immagine aggiornato.',
+                'image_only' => 'Nuova immagine applicata.',
+                'both' => 'Testo e immagine aggiornati.',
+            ],
+            'mode_label' => 'Cosa deve cambiare?',
+            'continue_in_background' => 'Continua in background',
+            'background_notice' => 'La rigenerazione continuerà in background.',
         ],
         'templates' => [
             'image_card' => [
@@ -291,6 +328,16 @@ return [
                 'name' => 'Tweet card con foto',
                 'description' => 'Il tuo post come card X/Twitter su una foto sfocata.',
             ],
+        ],
+        'regenerate_caption' => [
+            'button_tooltip' => 'Rigenera didascalia',
+            'title' => 'Rigenera didascalia',
+            'description' => 'Crea una nuova didascalia mantenendo il controllo su ciò che viene applicato alla bozza.',
+            'instruction_placeholder' => 'Facoltativo: es. rendila più concisa',
+            'start' => 'Genera',
+            'apply' => 'Applica didascalia',
+            'retry' => 'Rigenera di nuovo',
+            'cancel' => 'Annulla',
         ],
     ],
 
@@ -468,6 +515,7 @@ return [
             'supports_up_to_images' => ':platform supporta fino a :count immagini',
             'does_not_support_videos' => ':platform non supporta i video',
         ],
+        'preview_disabled' => 'Non verrà pubblicato — disattivato per questo post.',
     ],
 
     'content_types' => [
@@ -605,5 +653,7 @@ return [
         'facebook_post' => 'Post Facebook',
         'pinterest_pin' => 'Pin Pinterest',
         'instagram_story' => 'Storia Instagram',
+        'telegram_post' => 'Post Telegram',
+        'discord_message' => 'Messaggio Discord',
     ],
 ];

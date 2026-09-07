@@ -286,14 +286,20 @@ export interface ChatPostGenerationCopy {
     images_question: string;
     images_none: string;
     account_question: string;
+    language_question: string;
     posting_to: string;
     brand_colors_label: string;
     brand_colors_description: string;
+    brand_references_label: string;
+    brand_references_description: string;
     change: string;
     submit: string;
     sent: string;
     sentence: string;
     sentence_with_brand: string;
+    sentence_language: string;
+    sentence_references_on: string;
+    sentence_references_off: string;
     sentence_images_none: string;
     sentence_images_one: string;
     sentence_images_other: string;
@@ -310,6 +316,12 @@ export interface ChatPostGenerationStyle {
     needs_account: boolean;
     supported_formats: string[];
     applies_brand_visuals: boolean;
+}
+
+/** One language `start_post_generation` offers. */
+export interface ChatPostGenerationLanguage {
+    language_code: string;
+    label: string;
 }
 
 /**
@@ -374,6 +386,13 @@ export interface ChatPostGenerationCatalog {
      * "accounts connected, but AI generation does not support them yet".
      */
     connected_platforms?: string[];
+    /**
+     * The workspace's default content language. The card pre-selects the
+     * matching language variant when one exists.
+     */
+    content_language?: string | null;
+    languages?: ChatPostGenerationLanguage[];
+    brand_reference_count?: number;
     /**
      * The locale every string in this payload was resolved in — the language
      * the user is writing in, which the model reported, or the app locale

@@ -10,8 +10,6 @@ use App\Actions\Post\DuplicatePost;
 use App\Actions\Post\SyncPostPlatforms;
 use App\Actions\Post\UpdatePost;
 use App\Actions\SocialAccount\ListPinterestBoards;
-use App\Ai\Templates\AiContentTemplate;
-use App\Ai\Templates\AiTemplateRegistry;
 use App\Enums\Post\Action as PostAction;
 use App\Enums\Post\CreatedVia;
 use App\Enums\Post\Status as PostStatus;
@@ -19,7 +17,6 @@ use App\Enums\SocialAccount\Platform;
 use App\Http\Requests\App\Post\StorePostRequest;
 use App\Http\Requests\App\Post\UpdatePostRequest;
 use App\Http\Resources\Api\PostResource;
-use App\Http\Resources\App\MediaResource;
 use App\Http\Resources\App\PlatformConfigResource;
 use App\Http\Resources\App\SocialAccountResource;
 use App\Models\Post;
@@ -141,37 +138,6 @@ class PostController extends Controller
             'currentWeekStart' => $weekStart->format('Y-m-d'),
             'currentMonth' => $monthDate->format('Y-m-d'),
             'view' => $view,
-        ]);
-    }
-
-    public function create(Request $request): Response
-    {
-        $workspace = $request->user()->currentWorkspace;
-
-        $this->authorize('createPost', $workspace);
-
-        $registry = app(AiTemplateRegistry::class);
-
-        $templates = array_map(fn (AiContentTemplate $t) => [
-            'key' => $t->key(),
-            'name' => trans($t->name()),
-            'description' => trans($t->description()),
-            'preview' => $t->previewAsset(),
-            'needs_account' => $t->needsAccount(),
-            'supported_formats' => $t->supportedFormats(),
-            'applies_brand_visuals' => $t->appliesBrandVisuals(),
-        ], $registry->all());
-
-        return Inertia::render('posts/Create', [
-            'date' => $request->query('date'),
-            'socialAccounts' => SocialAccountResource::collection(
-                $workspace->socialAccounts()->active()->get()
-            ),
-            'templates' => $templates,
-            'brandReferences' => MediaResource::collection(
-                $workspace->getMedia('brand_references')->latest()->get()
-            ),
-            'canManageBrandReferences' => $request->user()->can('update', $workspace),
         ]);
     }
 

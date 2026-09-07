@@ -257,13 +257,8 @@ return [
         'image_regenerate' => [
             'button' => 'Ajustar',
             'title' => 'Ajustar imagem com IA',
-            'description' => 'Descreva a correção. A nova imagem substitui a atual e mantém a posição no carrossel.',
             'instruction_label' => 'Instrução',
-            'instruction_placeholder' => 'ex: Corrigir o erro no título e deixar o fundo mais claro.',
-            'processing' => 'Regenerando imagem... isso pode levar alguns segundos.',
-            'submit' => 'Regenerar imagem',
             'cancel' => 'Cancelar',
-            'success' => 'Imagem atualizada. A nova versão substituiu a anterior no post.',
             'fallback_title' => 'Melhore esta copy da imagem',
             'errors' => [
                 'required' => 'A instrução é obrigatória.',
@@ -273,6 +268,48 @@ return [
                 'media_not_found' => 'Mídia não encontrada.',
                 'not_ai_media' => 'Só é possível regenerar mídia gerada por IA.',
             ],
+            'descriptions' => [
+                'text_only' => 'Descreva a correção do texto. O visual atual e a posição no carrossel permanecerão iguais.',
+                'image_only' => 'Descreva o novo visual. Ele substituirá o visual atual e manterá sua posição no carrossel.',
+                'both' => 'Descreva as alterações de texto e visual. A imagem atualizada manterá sua posição no carrossel.',
+            ],
+            'modes' => [
+                'text_only' => [
+                    'label' => 'Somente texto',
+                    'description' => 'Manter o visual atual e atualizar o texto na imagem.',
+                ],
+                'image_only' => [
+                    'label' => 'Novo visual',
+                    'description' => 'Gerar um novo fundo mantendo o texto da imagem inalterado.',
+                ],
+                'both' => [
+                    'label' => 'Texto e visual',
+                    'description' => 'Gerar um novo fundo e atualizar o texto da imagem.',
+                ],
+            ],
+            'instruction_placeholders' => [
+                'text_only' => 'ex.: alterar “ECP” para “ICP” no título.',
+                'image_only' => 'ex.: substituir o fundo por uma floresta ao amanhecer.',
+                'both' => 'ex.: atualizar o título e usar um fundo de escritório mais claro.',
+            ],
+            'processing' => [
+                'text_only' => 'Atualizando o texto da imagem… isso pode levar alguns segundos.',
+                'image_only' => 'Gerando um novo visual… isso pode levar alguns segundos.',
+                'both' => 'Atualizando o texto e o visual da imagem… isso pode levar alguns segundos.',
+            ],
+            'submit' => [
+                'text_only' => 'Atualizar texto',
+                'image_only' => 'Gerar novo visual',
+                'both' => 'Atualizar texto e visual',
+            ],
+            'success' => [
+                'text_only' => 'Texto da imagem atualizado.',
+                'image_only' => 'Novo visual aplicado.',
+                'both' => 'Texto e visual da imagem atualizados.',
+            ],
+            'mode_label' => 'O que deve mudar?',
+            'continue_in_background' => 'Continuar em segundo plano',
+            'background_notice' => 'A regeneração continuará em segundo plano.',
         ],
         'templates' => [
             'image_card' => [
@@ -291,6 +328,16 @@ return [
                 'name' => 'Card de tweet com foto',
                 'description' => 'Seu post como card do X/Twitter sobre uma foto desfocada.',
             ],
+        ],
+        'regenerate_caption' => [
+            'button_tooltip' => 'Regenerar legenda',
+            'title' => 'Regenerar legenda',
+            'description' => 'Crie uma nova legenda mantendo o controle do que é aplicado ao rascunho.',
+            'instruction_placeholder' => 'Opcional: ex.: deixe mais conciso',
+            'start' => 'Gerar',
+            'apply' => 'Aplicar legenda',
+            'retry' => 'Gerar novamente',
+            'cancel' => 'Cancelar',
         ],
     ],
 
@@ -468,6 +515,7 @@ return [
             'supports_up_to_images' => ':platform suporta até :count imagens',
             'does_not_support_videos' => ':platform não suporta vídeos',
         ],
+        'preview_disabled' => 'Não será publicado — desativado para esta publicação.',
     ],
 
     'content_types' => [
@@ -605,5 +653,7 @@ return [
         'facebook_post' => 'Post no Facebook',
         'pinterest_pin' => 'Pin no Pinterest',
         'instagram_story' => 'Story do Instagram',
+        'telegram_post' => 'Postagem no Telegram',
+        'discord_message' => 'Mensagem no Discord',
     ],
 ];

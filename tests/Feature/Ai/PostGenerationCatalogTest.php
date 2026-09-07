@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Models\BrandVariant;
 use App\Models\SocialAccount;
 use App\Models\Workspace;
 use App\Services\Ai\PostGenerationCardCopy;
@@ -172,4 +173,29 @@ it('ships the unsupported-platforms copy line for the empty-catalog card', funct
 
     expect($copy)->toHaveKey('unavailable_unsupported')
         ->and($copy['unavailable_unsupported'])->toContain(':platforms');
+});
+
+it('lists the default content language first, then variant languages', function (): void {
+    $workspace = Workspace::factory()->create(['content_language' => 'en']);
+    BrandVariant::factory()->for($workspace)->create([
+        'language_code' => 'pt-BR',
+        'label' => 'Português (Brasil)',
+    ]);
+
+    $catalog = PostGenerationCatalog::forWorkspace($workspace);
+
+    expect($catalog['content_language'])->toBe('en')
+        ->and($catalog['languages'])->toHaveCount(2)
+        ->and($catalog['languages'][0]['language_code'])->toBe('en')
+        ->and($catalog['languages'][0]['label'])->toBe('English')
+        ->and($catalog['languages'][1]['language_code'])->toBe('pt-BR')
+        ->and($catalog['languages'][1]['label'])->toBe('Português (Brasil)');
+});
+
+it('reports how many brand reference photos the workspace has', function (): void {
+    $workspace = Workspace::factory()->create();
+
+    $catalog = PostGenerationCatalog::forWorkspace($workspace);
+
+    expect($catalog['brand_reference_count'])->toBe(0);
 });
