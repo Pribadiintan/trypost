@@ -45,6 +45,16 @@ it('defines all required wizard translation keys inside the wizard array', funct
         'credits_exhausted',
         'brand_references_select_all',
         'brand_references_clear',
+        'language_variant_label',
+        'language_variant_description',
+        'language_variant_default',
+        'brand_references_title',
+        'brand_references_description',
+        'brand_references_attach',
+        'brand_references_uploading',
+        'brand_references_empty',
+        'media_none',
+        'media_images',
     ];
 
     foreach ($requiredKeys as $key) {

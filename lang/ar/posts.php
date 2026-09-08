@@ -239,6 +239,8 @@ return [
             'errors' => [
                 'start_failed' => 'تعذّر بدء الإنشاء.',
                 'generation_failed' => 'فشل الإنشاء بالذكاء الاصطناعي.',
+                'timeout' => 'انتهت مهلة التوليد بالذكاء الاصطناعي. يرجى المحاولة مرة أخرى.',
+                'channel_failed' => 'تعذر الاتصال ببث التوليد.',
             ],
         ],
         'review' => [
@@ -686,5 +688,15 @@ return [
         'detached' => 'توقفنا عن الانتظار. قد يكتمل المنشور — تحقق من المسودات.',
         'brand_references_select_all' => 'تحديد الكل',
         'brand_references_clear' => 'مسح',
+        'language_variant_label' => 'متغير اللغة',
+        'language_variant_description' => 'حدد متغير اللغة وهوية العلامة التجارية المرئية لهذا المنشور.',
+        'language_variant_default' => 'افتراضي',
+        'brand_references_title' => 'مراجع العلامة التجارية',
+        'brand_references_description' => 'أرفق صوراً مرجعية لتوجيه التوليد بالذكاء الاصطناعي (مثل الشعار، المنتج، الأسلوب).',
+        'brand_references_attach' => 'إرفاق صورة',
+        'brand_references_uploading' => 'جارٍ الرفع…',
+        'brand_references_empty' => 'لم يتم رفع صور مرجعية بعد. أرفق شعارك أو منتجك أو لقطات شخصية.',
+        'media_none' => 'بدون (نص فقط)',
+        'media_images' => 'صور',
     ],
 ];

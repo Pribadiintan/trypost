@@ -241,6 +241,8 @@ return [
             'errors' => [
                 'start_failed' => 'Oluşturma başlatılamadı.',
                 'generation_failed' => 'AI oluşturma başarısız oldu.',
+                'timeout' => 'Yapay zeka oluşturma zaman aşımına uğradı. Lütfen tekrar deneyin.',
+                'channel_failed' => 'Oluşturma akışına bağlanılamadı.',
             ],
         ],
         'review' => [
@@ -688,5 +690,15 @@ return [
         'detached' => 'Beklemeyi bıraktık. Gönderi tamamlanabilir — taslaklarınızı kontrol edin.',
         'brand_references_select_all' => 'Tümünü seç',
         'brand_references_clear' => 'Temizle',
+        'language_variant_label' => 'Dil varyantı',
+        'language_variant_description' => 'Bu gönderi için dili ve görsel marka varyantını seçin.',
+        'language_variant_default' => 'Varsayılan',
+        'brand_references_title' => 'Marka referansları',
+        'brand_references_description' => 'Yapay zeka üretimini yönlendirmek için referans görseller ekleyin (örn. logo, ürün, stil).',
+        'brand_references_attach' => 'Fotoğraf ekle',
+        'brand_references_uploading' => 'Yükleniyor…',
+        'brand_references_empty' => 'Henüz referans fotoğrafı yüklenmedi. Logonuzu, ürününüzü veya portrenizi ekleyin.',
+        'media_none' => 'Yok (yalnızca metin)',
+        'media_images' => 'Görseller',
     ],
 ];

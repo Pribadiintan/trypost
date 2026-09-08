@@ -239,6 +239,8 @@ return [
             'errors' => [
                 'start_failed' => 'Impossible de démarrer la génération.',
                 'generation_failed' => 'Échec de la génération par l\'IA.',
+                'timeout' => 'Le délai de génération par IA a expiré. Veuillez réessayer.',
+                'channel_failed' => 'Impossible de se connecter au flux de génération.',
             ],
         ],
         'review' => [
@@ -686,5 +688,15 @@ return [
         'detached' => 'Nous avons arrêté d’attendre. La publication peut encore aboutir — consultez vos brouillons.',
         'brand_references_select_all' => 'Tout sélectionner',
         'brand_references_clear' => 'Effacer',
+        'language_variant_label' => 'Variante de langue',
+        'language_variant_description' => 'Sélectionnez la langue et la variante visuelle de marque pour cette publication.',
+        'language_variant_default' => 'Par défaut',
+        'brand_references_title' => 'Références de marque',
+        'brand_references_description' => 'Joignez des images de référence pour guider la génération IA (ex. logo, produit, style).',
+        'brand_references_attach' => 'Joindre une photo',
+        'brand_references_uploading' => 'Téléversement…',
+        'brand_references_empty' => 'Aucune photo de référence téléversée pour le moment. Joignez votre logo, produit ou portraits.',
+        'media_none' => 'Aucune (texte seul)',
+        'media_images' => 'Images',
     ],
 ];

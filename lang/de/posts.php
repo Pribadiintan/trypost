@@ -241,6 +241,8 @@ return [
             'errors' => [
                 'start_failed' => 'Generierung konnte nicht gestartet werden.',
                 'generation_failed' => 'KI-Generierung fehlgeschlagen.',
+                'timeout' => 'Zeitüberschreitung bei der KI-Generierung. Bitte versuche es erneut.',
+                'channel_failed' => 'Verbindung zum Generierungs-Stream konnte nicht hergestellt werden.',
             ],
         ],
         'review' => [
@@ -688,5 +690,15 @@ return [
         'detached' => 'Wir haben das Warten beendet. Der Beitrag kann noch fertig werden — prüfen Sie Ihre Entwürfe.',
         'brand_references_select_all' => 'Alle auswählen',
         'brand_references_clear' => 'Leeren',
+        'language_variant_label' => 'Sprachvariante',
+        'language_variant_description' => 'Wählen Sie die Sprache und die visuelle Markenvariante für diesen Beitrag.',
+        'language_variant_default' => 'Standard',
+        'brand_references_title' => 'Markenreferenzen',
+        'brand_references_description' => 'Fügen Sie Referenzbilder hinzu, um die KI-Generierung zu leiten (z. B. Logo, Produkt, Stil).',
+        'brand_references_attach' => 'Foto anhängen',
+        'brand_references_uploading' => 'Wird hochgeladen…',
+        'brand_references_empty' => 'Noch keine Referenzfotos hochgeladen. Fügen Sie Ihr Logo, Produkt oder Porträts hinzu.',
+        'media_none' => 'Keine (nur Text)',
+        'media_images' => 'Bilder',
     ],
 ];

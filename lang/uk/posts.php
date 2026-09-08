@@ -239,6 +239,8 @@ return [
             'errors' => [
                 'start_failed' => 'Не вдалося розпочати генерацію.',
                 'generation_failed' => 'Не вдалося згенерувати за допомогою AI.',
+                'timeout' => 'Час очікування генерації ШІ вичерпано. Будь ласка, спробуйте ще раз.',
+                'channel_failed' => 'Не вдалося підключитися до потоку генерації.',
             ],
         ],
         'review' => [
@@ -686,5 +688,15 @@ return [
         'detached' => 'Ми припинили очікування. Пост може ще завершитися — перевірте чернетки.',
         'brand_references_select_all' => 'Вибрати всі',
         'brand_references_clear' => 'Очистити',
+        'language_variant_label' => 'Мовний варіант',
+        'language_variant_description' => 'Оберіть мову та візуальний варіант бренду для цієї публікації.',
+        'language_variant_default' => 'За замовчуванням',
+        'brand_references_title' => 'Референси бренду',
+        'brand_references_description' => 'Додайте зображення-орієнтири для генерації ШІ (наприклад, логотип, продукт, стиль).',
+        'brand_references_attach' => 'Додати фото',
+        'brand_references_uploading' => 'Завантаження…',
+        'brand_references_empty' => 'Фотографії ще не завантажені. Додайте логотип, продукт або портрети.',
+        'media_none' => 'Немає (тільки текст)',
+        'media_images' => 'Зображення',
     ],
 ];

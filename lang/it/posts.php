@@ -239,6 +239,8 @@ return [
             'errors' => [
                 'start_failed' => 'Impossibile avviare la generazione.',
                 'generation_failed' => 'Generazione IA non riuscita.',
+                'timeout' => 'Timeout della generazione AI. Riprova più tardi.',
+                'channel_failed' => 'Impossibile connettersi al flusso di generazione.',
             ],
         ],
         'review' => [
@@ -686,5 +688,15 @@ return [
         'detached' => 'Abbiamo smesso di attendere. Il post potrebbe completarsi — controlla le bozze.',
         'brand_references_select_all' => 'Seleziona tutto',
         'brand_references_clear' => 'Cancella',
+        'language_variant_label' => 'Variante di lingua',
+        'language_variant_description' => 'Seleziona la lingua e la variante visiva del brand per questo post.',
+        'language_variant_default' => 'Predefinito',
+        'brand_references_title' => 'Riferimenti del brand',
+        'brand_references_description' => 'Allega immagini di riferimento per guidare la generazione AI (es. logo, prodotto, stile).',
+        'brand_references_attach' => 'Allega foto',
+        'brand_references_uploading' => 'Caricamento…',
+        'brand_references_empty' => 'Nessuna foto di riferimento ancora caricata. Allega il tuo logo, prodotto o ritratti.',
+        'media_none' => 'Nessuna (solo testo)',
+        'media_images' => 'Immagini',
     ],
 ];

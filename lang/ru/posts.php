@@ -239,6 +239,8 @@ return [
             'errors' => [
                 'start_failed' => 'Не удалось начать генерацию.',
                 'generation_failed' => 'Не удалось сгенерировать с помощью ИИ.',
+                'timeout' => 'Время ожидания генерации ИИ истекло. Пожалуйста, попробуйте снова.',
+                'channel_failed' => 'Не удалось подключиться к потоку генерации.',
             ],
         ],
         'review' => [
@@ -686,5 +688,15 @@ return [
         'detached' => 'Мы перестали ждать. Пост может ещё завершиться — проверьте черновики.',
         'brand_references_select_all' => 'Выбрать все',
         'brand_references_clear' => 'Очистить',
+        'language_variant_label' => 'Языковой вариант',
+        'language_variant_description' => 'Выберите язык и визуальный вариант бренда для этой публикации.',
+        'language_variant_default' => 'По умолчанию',
+        'brand_references_title' => 'Референсы бренда',
+        'brand_references_description' => 'Прикрепите изображения для ориентира генерации ИИ (например, логотип, продукт, стиль).',
+        'brand_references_attach' => 'Прикрепить фото',
+        'brand_references_uploading' => 'Загрузка…',
+        'brand_references_empty' => 'Фотографии еще не загружены. Прикрепите логотип, продукт или портреты.',
+        'media_none' => 'Нет (только текст)',
+        'media_images' => 'Изображения',
     ],
 ];

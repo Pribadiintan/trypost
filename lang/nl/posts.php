@@ -239,6 +239,8 @@ return [
             'errors' => [
                 'start_failed' => 'Kan generatie niet starten.',
                 'generation_failed' => 'AI-generatie mislukt.',
+                'timeout' => 'AI-generatie is verlopen. Probeer het opnieuw.',
+                'channel_failed' => 'Kon geen verbinding maken met de generatiestream.',
             ],
         ],
         'review' => [
@@ -686,5 +688,15 @@ return [
         'detached' => 'We zijn gestopt met wachten. Het bericht kan nog voltooien — controleer je concepten.',
         'brand_references_select_all' => 'Alles selecteren',
         'brand_references_clear' => 'Wissen',
+        'language_variant_label' => 'Taalvariant',
+        'language_variant_description' => 'Selecteer de taal en visuele merkvariant voor dit bericht.',
+        'language_variant_default' => 'Standaard',
+        'brand_references_title' => 'Merkreferenties',
+        'brand_references_description' => 'Voeg referentieafbeeldingen toe om de AI-generatie te sturen (bijv. logo, product, stijl).',
+        'brand_references_attach' => 'Foto bijvoegen',
+        'brand_references_uploading' => 'Bezig met uploaden…',
+        'brand_references_empty' => 'Nog geen referentiefoto’s geüpload. Voeg je logo, product of portretten toe.',
+        'media_none' => 'Geen (alleen tekst)',
+        'media_images' => 'Afbeeldingen',
     ],
 ];

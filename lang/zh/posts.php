@@ -239,6 +239,8 @@ return [
             'errors' => [
                 'start_failed' => '无法开始生成。',
                 'generation_failed' => 'AI 生成失败。',
+                'timeout' => 'AI 生成超时。请重试。',
+                'channel_failed' => '无法连接到生成流。',
             ],
         ],
         'review' => [
@@ -686,5 +688,15 @@ return [
         'detached' => '我们已停止等待。帖子可能仍会完成 — 请查看草稿。',
         'brand_references_select_all' => '全选',
         'brand_references_clear' => '清除',
+        'language_variant_label' => '语言变体',
+        'language_variant_description' => '为此帖子选择语言和视觉品牌变体。',
+        'language_variant_default' => '默认',
+        'brand_references_title' => '品牌参考',
+        'brand_references_description' => '附加参考图片以引导 AI 生成（例如标志、产品、风格）。',
+        'brand_references_attach' => '附加照片',
+        'brand_references_uploading' => '正在上传…',
+        'brand_references_empty' => '尚未上传参考照片。附加您的标志、产品或人像照片。',
+        'media_none' => '无（仅文本）',
+        'media_images' => '图片',
     ],
 ];

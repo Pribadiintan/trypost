@@ -239,6 +239,8 @@ return [
             'errors' => [
                 'start_failed' => '생성을 시작할 수 없습니다.',
                 'generation_failed' => 'AI 생성에 실패했습니다.',
+                'timeout' => 'AI 생성 시간이 초과되었습니다. 다시 시도해 주세요.',
+                'channel_failed' => '생성 스트림에 연결할 수 없습니다.',
             ],
         ],
         'review' => [
@@ -686,5 +688,15 @@ return [
         'detached' => '대기를 중단했습니다. 게시물이 완료될 수 있습니다 — 초안을 확인하세요.',
         'brand_references_select_all' => '전체 선택',
         'brand_references_clear' => '지우기',
+        'language_variant_label' => '언어 변형',
+        'language_variant_description' => '이 게시물의 언어 및 시각적 브랜드 변형을 선택하세요.',
+        'language_variant_default' => '기본값',
+        'brand_references_title' => '브랜드 참조',
+        'brand_references_description' => 'AI 생성을 가이드할 참조 이미지(로고, 제품, 스타일 등)를 첨부하세요.',
+        'brand_references_attach' => '사진 첨부',
+        'brand_references_uploading' => '업로드 중…',
+        'brand_references_empty' => '아직 업로드된 참조 사진이 없습니다. 로고, 제품 또는 프로필 사진을 첨부하세요.',
+        'media_none' => '없음 (텍스트 전용)',
+        'media_images' => '이미지',
     ],
 ];

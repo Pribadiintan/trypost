@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { router } from '@inertiajs/vue3';
+import { IconArrowLeft, IconCheck, IconSparkles } from '@tabler/icons-vue';
 import { trans } from 'laravel-vue-i18n';
 import { computed, ref, watch } from 'vue';
 
@@ -7,9 +8,12 @@ import { start as startRoute } from '@/actions/App/Http/Controllers/App/PostCrea
 import BrandReferencePicker from '@/components/posts/create/BrandReferencePicker.vue';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { usePostCreation } from '@/composables/echo/usePostCreation';
+import {
+    getPlatformLabel,
+    getPlatformLogo,
+} from '@/composables/usePlatformLogo';
 import { edit as editPost } from '@/routes/app/posts';
 import {
     credits as creditsRoute,
@@ -21,7 +25,12 @@ interface CatalogFormat {
     value: string;
     platform: string;
     label: string;
-    accounts: Array<{ id: string; label: string; username: string | null }>;
+    accounts: Array<{
+        id: string;
+        label: string;
+        username: string | null;
+        platform: string;
+    }>;
 }
 
 interface CatalogStyle {
@@ -56,20 +65,20 @@ const props = withDefaults(defineProps<Props>(), {
 
 const emit = defineEmits<{ cancel: [] }>();
 
-const MAX_IMAGES = 10;
 const PROMPT_MIN = 3;
+const PROMPT_MAX = 2000;
 
 const prompt = ref('');
 const format = ref<string | null>(null);
 const accountId = ref<string | null>(null);
 const style = ref('image_card');
 const imageCount = ref(1);
-const useBrandColors = ref(props.catalog.applies_brand_visuals_default);
-const useBrandReferences = ref(true);
+const languageCode = ref<string | null>(props.catalog.content_language);
+
+const localReferences = ref<MediaItem[]>([...props.brandReferences]);
 const selectedReferenceIds = ref<string[]>(
     props.brandReferences.map((reference) => reference.id),
 );
-const languageCode = ref<string | null>(props.catalog.content_language);
 
 const submitting = ref(false);
 const failed = ref<string | null>(null);
@@ -96,8 +105,6 @@ const saveState = () => {
         accountId: accountId.value,
         style: style.value,
         imageCount: imageCount.value,
-        useBrandColors: useBrandColors.value,
-        useBrandReferences: useBrandReferences.value,
         selectedReferenceIds: selectedReferenceIds.value,
         languageCode: languageCode.value,
     };
@@ -115,15 +122,12 @@ const restoreState = () => {
         if (state.style) style.value = state.style;
         if (typeof state.imageCount === 'number')
             imageCount.value = state.imageCount;
-        if (typeof state.useBrandColors === 'boolean')
-            useBrandColors.value = state.useBrandColors;
-        if (typeof state.useBrandReferences === 'boolean')
-            useBrandReferences.value = state.useBrandReferences;
-        if (Array.isArray(state.selectedReferenceIds))
+        if (Array.isArray(state.selectedReferenceIds)) {
             selectedReferenceIds.value = state.selectedReferenceIds.filter(
                 (id: string) =>
-                    props.brandReferences.some((ref) => ref.id === id),
+                    localReferences.value.some((ref) => ref.id === id),
             );
+        }
         if (state.languageCode) languageCode.value = state.languageCode;
     } catch {
         sessionStorage.removeItem(STORAGE_KEY);
@@ -139,8 +143,6 @@ watch(
         accountId,
         style,
         imageCount,
-        useBrandColors,
-        useBrandReferences,
         selectedReferenceIds,
         languageCode,
     ],
@@ -150,7 +152,7 @@ watch(
 
 restoreState();
 
-/** One card per format, with every platform's accounts merged into it. */
+/** Deduplicate formats while preserving all linked accounts. */
 const formats = computed(() => {
     const byValue = new Map<string, CatalogFormat>();
 
@@ -159,7 +161,6 @@ const formats = computed(() => {
 
         if (existing) {
             existing.accounts.push(...entry.accounts);
-
             continue;
         }
 
@@ -182,28 +183,46 @@ const accountsForFormat = computed(
 
 const languages = computed(() => props.catalog.languages);
 
-const showReferences = computed(
-    () => props.brandReferences.length > 0 && imageCount.value > 0,
-);
+const isCarousel = computed(() => format.value === 'instagram_carousel');
 
-const showLanguage = computed(() => languages.value.length > 1);
+const selectFormat = (value: string): void => {
+    format.value = value;
+
+    if (value === 'instagram_carousel') {
+        imageCount.value = 5;
+    } else if (
+        imageCount.value === 0 &&
+        (value === 'instagram_story' || value === 'pinterest_pin')
+    ) {
+        imageCount.value = 1;
+    }
+
+    const accounts =
+        formats.value.find((entry) => entry.value === value)?.accounts ?? [];
+    accountId.value = accounts.length === 1 ? accounts[0].id : null;
+};
+
+const onReferenceAdded = (newItem: MediaItem) => {
+    localReferences.value = [newItem, ...localReferences.value];
+    if (!selectedReferenceIds.value.includes(newItem.id)) {
+        selectedReferenceIds.value = [
+            ...selectedReferenceIds.value,
+            newItem.id,
+        ];
+    }
+};
+
+const promptLength = computed(() => [...prompt.value.trim()].length);
 
 const canContinue = computed(() => {
     return (
         format.value !== null &&
         accountId.value !== null &&
         style.value !== null &&
-        prompt.value.trim().length >= PROMPT_MIN
+        promptLength.value >= PROMPT_MIN &&
+        promptLength.value <= PROMPT_MAX
     );
 });
-
-const selectFormat = (value: string): void => {
-    format.value = value;
-
-    const accounts =
-        formats.value.find((entry) => entry.value === value)?.accounts ?? [];
-    accountId.value = accounts.length === 1 ? accounts[0].id : null;
-};
 
 const { watchCreation } = usePostCreation({
     onReady: (postId: string) => {
@@ -233,11 +252,14 @@ const { watchCreation } = usePostCreation({
 });
 
 const generate = (): void => {
-    if (submitting.value) return;
+    if (submitting.value || !canContinue.value) return;
 
     submitting.value = true;
     failed.value = null;
     detached.value = false;
+
+    const hasReferences =
+        imageCount.value > 0 && selectedReferenceIds.value.length > 0;
 
     router.post(
         startRoute.url(),
@@ -248,13 +270,11 @@ const generate = (): void => {
             image_count: imageCount.value,
             social_account_id: accountId.value,
             date: props.date,
-            apply_brand_visuals: useBrandColors.value,
-            use_brand_references:
-                useBrandReferences.value && showReferences.value,
-            reference_media_ids:
-                useBrandReferences.value && showReferences.value
-                    ? selectedReferenceIds.value
-                    : [],
+            apply_brand_visuals: true, // Brand colors are always applied
+            use_brand_references: hasReferences,
+            reference_media_ids: hasReferences
+                ? selectedReferenceIds.value
+                : [],
             language_code: languageCode.value,
         },
         {
@@ -271,7 +291,6 @@ const generate = (): void => {
 
                 if (payload.channel) {
                     void watchCreation(payload.channel);
-
                     return;
                 }
 
@@ -321,7 +340,6 @@ const checkStatus = async (): Promise<void> => {
             return;
         }
 
-        // Still in progress — keep the detached message but allow another check.
         checkingStatus.value = false;
     } catch {
         failed.value = trans('posts.wizard.status_check_failed');
@@ -363,152 +381,337 @@ void checkCredits();
 </script>
 
 <template>
-    <div class="space-y-6">
-        <div class="space-y-2">
-            <Label class="text-sm font-bold">{{
-                $t('posts.wizard.format_label')
-            }}</Label>
-            <div class="grid gap-2 sm:grid-cols-2">
+    <div class="space-y-8">
+        <!-- Header Back Action -->
+        <div>
+            <button
+                type="button"
+                class="group inline-flex cursor-pointer items-center gap-2 text-sm font-semibold text-foreground/70 transition-colors hover:text-foreground"
+                @click="emit('cancel')"
+            >
+                <span
+                    class="inline-flex size-7 items-center justify-center rounded-lg border-2 border-foreground bg-card shadow-2xs transition-transform group-hover:-translate-x-0.5"
+                >
+                    <IconArrowLeft
+                        class="size-3.5 text-foreground"
+                        stroke-width="2.5"
+                    />
+                </span>
+                {{ $t('common.back') }}
+            </button>
+        </div>
+
+        <!-- 1. Format Selection with Social Media Icons -->
+        <div class="space-y-3">
+            <Label class="text-sm font-bold">
+                {{ $t('posts.wizard.format_label') }}
+            </Label>
+            <div class="grid gap-2.5 sm:grid-cols-2">
                 <button
                     v-for="entry in formats"
                     :key="entry.value"
                     type="button"
-                    class="rounded-xl border-2 bg-card p-3 text-left text-sm transition-colors"
-                    :class="
-                        format === entry.value
-                            ? 'border-foreground'
-                            : 'border-foreground/20 hover:border-foreground/50'
-                    "
+                    class="group flex cursor-pointer items-center gap-3 rounded-xl border-2 border-foreground bg-card p-3.5 text-left text-sm shadow-2xs transition-all hover:-translate-y-0.5 hover:shadow-md"
+                    :class="{
+                        '!bg-violet-100 shadow-md ring-2 ring-foreground':
+                            format === entry.value,
+                    }"
                     @click="selectFormat(entry.value)"
                 >
-                    {{ entry.label }}
+                    <span
+                        class="inline-flex size-7 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-foreground bg-card shadow-2xs"
+                    >
+                        <img
+                            :src="getPlatformLogo(entry.platform)"
+                            :alt="getPlatformLabel(entry.platform)"
+                            class="size-full object-cover"
+                            loading="lazy"
+                        />
+                    </span>
+                    <span class="flex-1 font-semibold text-foreground">
+                        {{ entry.label }}
+                    </span>
+                    <IconCheck
+                        v-if="format === entry.value"
+                        class="size-4 shrink-0 text-foreground"
+                        stroke-width="3"
+                    />
                 </button>
             </div>
         </div>
 
-        <div v-if="accountsForFormat.length > 1" class="space-y-2">
-            <Label class="text-sm font-bold">{{
-                $t('posts.wizard.account_label')
-            }}</Label>
-            <div class="grid gap-2">
+        <!-- 1b. Account Selection (when multiple accounts match format) -->
+        <div v-if="accountsForFormat.length > 1" class="space-y-3">
+            <Label class="text-sm font-bold">
+                {{ $t('posts.wizard.account_label') }}
+            </Label>
+            <div class="grid gap-2 sm:grid-cols-2">
                 <button
                     v-for="account in accountsForFormat"
                     :key="account.id"
                     type="button"
-                    class="rounded-xl border-2 bg-card p-3 text-left text-sm transition-colors"
-                    :class="
-                        accountId === account.id
-                            ? 'border-foreground'
-                            : 'border-foreground/20 hover:border-foreground/50'
-                    "
+                    class="group flex cursor-pointer items-center gap-3 rounded-xl border-2 border-foreground bg-card p-3 text-left text-sm shadow-2xs transition-all hover:-translate-y-0.5 hover:shadow-md"
+                    :class="{
+                        '!bg-violet-100 shadow-md ring-2 ring-foreground':
+                            accountId === account.id,
+                    }"
                     @click="accountId = account.id"
                 >
-                    {{ account.label }}
                     <span
-                        v-if="account.username"
-                        class="text-xs text-foreground/60"
-                        >@{{ account.username }}</span
+                        class="inline-flex size-8 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-foreground bg-card shadow-2xs"
                     >
+                        <img
+                            :src="getPlatformLogo(account.platform)"
+                            :alt="account.platform"
+                            class="size-full object-cover"
+                            loading="lazy"
+                        />
+                    </span>
+                    <div class="min-w-0 flex-1">
+                        <p
+                            class="truncate text-xs leading-tight font-bold text-foreground"
+                        >
+                            {{ account.label }}
+                        </p>
+                        <p
+                            v-if="account.username"
+                            class="truncate text-xs font-medium text-foreground/60"
+                        >
+                            @{{ account.username }}
+                        </p>
+                    </div>
+                    <IconCheck
+                        v-if="accountId === account.id"
+                        class="size-4 shrink-0 text-foreground"
+                        stroke-width="3"
+                    />
                 </button>
             </div>
         </div>
 
-        <div class="space-y-2">
-            <Label class="text-sm font-bold">{{
-                $t('posts.wizard.style_label')
-            }}</Label>
-            <div class="grid gap-2 sm:grid-cols-2">
+        <!-- 2. Visual Style (Image Cards Preview) -->
+        <div class="space-y-3">
+            <Label class="text-sm font-bold">
+                {{ $t('posts.wizard.style_label') }}
+            </Label>
+            <div class="grid gap-3 sm:grid-cols-3">
                 <button
                     v-for="entry in catalog.styles"
                     :key="entry.key"
                     type="button"
-                    class="rounded-xl border-2 bg-card p-3 text-left transition-colors"
-                    :class="
-                        style === entry.key
-                            ? 'border-foreground'
-                            : 'border-foreground/20 hover:border-foreground/50'
-                    "
+                    class="group relative flex cursor-pointer flex-col overflow-hidden rounded-xl border-2 border-foreground bg-card text-left shadow-2xs transition-all hover:-translate-y-0.5 hover:shadow-md"
+                    :class="{
+                        '!bg-violet-100 shadow-md ring-2 ring-foreground':
+                            style === entry.key,
+                    }"
                     @click="style = entry.key"
                 >
-                    <p class="text-sm font-semibold">{{ entry.name }}</p>
-                    <p class="text-xs text-foreground/60">
-                        {{ entry.description }}
-                    </p>
+                    <div class="aspect-video w-full overflow-hidden bg-muted">
+                        <img
+                            :src="entry.preview"
+                            :alt="entry.name"
+                            class="size-full object-cover transition-transform group-hover:scale-102"
+                            loading="lazy"
+                        />
+                    </div>
+                    <div class="flex items-start gap-2 p-3">
+                        <div class="min-w-0 flex-1">
+                            <p
+                                class="truncate text-sm font-bold text-foreground"
+                            >
+                                {{ entry.name }}
+                            </p>
+                            <p
+                                v-if="entry.description"
+                                class="mt-0.5 text-xs leading-snug text-foreground/60"
+                            >
+                                {{ entry.description }}
+                            </p>
+                        </div>
+                        <IconCheck
+                            v-if="style === entry.key"
+                            class="mt-0.5 size-4 shrink-0 text-foreground"
+                            stroke-width="3"
+                        />
+                    </div>
                 </button>
             </div>
         </div>
 
-        <div class="space-y-2">
-            <Label class="text-sm font-bold">{{
-                $t('posts.wizard.images_label')
-            }}</Label>
-            <input
-                v-model.number="imageCount"
-                type="range"
-                min="0"
-                :max="MAX_IMAGES"
-                class="w-full"
-            />
-            <p class="text-xs text-foreground/60">{{ imageCount }}</p>
-        </div>
-
-        <div
-            class="flex items-center justify-between rounded-xl border-2 border-foreground/20 bg-card p-3"
-        >
-            <Label>{{ $t('posts.wizard.brand_colors_label') }}</Label>
-            <Switch v-model:checked="useBrandColors" />
-        </div>
-
-        <div v-if="showReferences" class="space-y-3">
-            <div
-                class="flex items-center justify-between rounded-xl border-2 border-foreground/20 bg-card p-3"
-            >
-                <Label>{{ $t('posts.wizard.brand_references_label') }}</Label>
-                <Switch v-model:checked="useBrandReferences" />
+        <!-- 3. Media / Image Count (Ergonomic Pill Buttons) -->
+        <div class="space-y-3">
+            <div class="flex items-center justify-between">
+                <Label class="text-sm font-bold">
+                    {{ $t('posts.wizard.images_label') }}
+                </Label>
+                <span class="text-xs font-semibold text-foreground/70">
+                    {{
+                        imageCount === 0
+                            ? $t('posts.wizard.media_none')
+                            : `${imageCount} ${$t('posts.wizard.media_images')}`
+                    }}
+                </span>
             </div>
-            <BrandReferencePicker
-                v-if="useBrandReferences"
-                v-model:selected-ids="selectedReferenceIds"
-                :references="brandReferences"
-            />
+
+            <!-- Carousel pills (2 to 10) -->
+            <div v-if="isCarousel" class="flex flex-wrap gap-2">
+                <Button
+                    v-for="n in [2, 3, 4, 5, 6, 7, 8, 9, 10]"
+                    :key="n"
+                    type="button"
+                    size="sm"
+                    class="h-9 min-w-9 font-bold"
+                    :variant="imageCount === n ? 'default' : 'outline'"
+                    @click="imageCount = n"
+                >
+                    {{ n }}
+                </Button>
+            </div>
+
+            <!-- Standard feed pills (None, 1 to 4) -->
+            <div v-else class="flex flex-wrap items-center gap-2">
+                <Button
+                    type="button"
+                    size="sm"
+                    class="h-9 font-semibold"
+                    :variant="imageCount === 0 ? 'default' : 'outline'"
+                    @click="imageCount = 0"
+                >
+                    {{ $t('posts.wizard.media_none') }}
+                </Button>
+                <Button
+                    v-for="n in [1, 2, 3, 4]"
+                    :key="n"
+                    type="button"
+                    size="sm"
+                    class="h-9 min-w-9 font-bold"
+                    :variant="imageCount === n ? 'default' : 'outline'"
+                    @click="imageCount = n"
+                >
+                    {{ n }}
+                </Button>
+            </div>
         </div>
 
-        <div v-if="showLanguage" class="space-y-2">
-            <Label class="text-sm font-bold">{{
-                $t('posts.wizard.language_label')
-            }}</Label>
-            <div class="grid gap-2 sm:grid-cols-2">
+        <!-- 4. Language Variant Selection -->
+        <div class="space-y-3">
+            <div class="space-y-0.5">
+                <Label class="text-sm font-bold">
+                    {{ $t('posts.wizard.language_variant_label') }}
+                </Label>
+                <p class="text-xs text-foreground/60">
+                    {{ $t('posts.wizard.language_variant_description') }}
+                </p>
+            </div>
+
+            <!-- If multiple language variants exist -->
+            <div v-if="languages.length > 1" class="grid gap-2 sm:grid-cols-2">
                 <button
                     v-for="entry in languages"
                     :key="entry.language_code"
                     type="button"
-                    class="rounded-xl border-2 bg-card p-3 text-left text-sm transition-colors"
-                    :class="
-                        languageCode === entry.language_code
-                            ? 'border-foreground'
-                            : 'border-foreground/20 hover:border-foreground/50'
-                    "
+                    class="flex cursor-pointer items-center justify-between rounded-xl border-2 border-foreground bg-card p-3 text-left text-sm shadow-2xs transition-all hover:-translate-y-0.5 hover:shadow-md"
+                    :class="{
+                        '!bg-violet-100 shadow-md ring-2 ring-foreground':
+                            languageCode === entry.language_code,
+                    }"
                     @click="languageCode = entry.language_code"
                 >
-                    {{ entry.label }}
+                    <div class="flex items-center gap-2">
+                        <span
+                            class="inline-flex size-6 items-center justify-center rounded-md border border-foreground/30 bg-muted text-[11px] font-bold text-foreground uppercase"
+                        >
+                            {{ entry.language_code }}
+                        </span>
+                        <span class="font-semibold text-foreground">
+                            {{ entry.label }}
+                        </span>
+                    </div>
+                    <IconCheck
+                        v-if="languageCode === entry.language_code"
+                        class="size-4 shrink-0 text-foreground"
+                        stroke-width="3"
+                    />
                 </button>
+            </div>
+
+            <!-- Single default variant badge -->
+            <div
+                v-else-if="languages.length === 1"
+                class="flex items-center justify-between rounded-xl border-2 border-foreground/20 bg-card p-3.5"
+            >
+                <div class="flex items-center gap-2.5">
+                    <span
+                        class="inline-flex size-7 items-center justify-center rounded-lg border border-foreground/30 bg-muted text-xs font-bold text-foreground uppercase"
+                    >
+                        {{ languages[0].language_code }}
+                    </span>
+                    <div>
+                        <p class="text-sm font-bold text-foreground">
+                            {{ languages[0].label }}
+                        </p>
+                        <p class="text-xs text-foreground/60">
+                            {{ $t('posts.wizard.language_variant_default') }}
+                        </p>
+                    </div>
+                </div>
+                <span
+                    class="rounded-md border border-foreground/20 bg-muted/60 px-2 py-1 text-[11px] font-semibold text-foreground/70"
+                >
+                    {{ $t('posts.wizard.language_variant_default') }}
+                </span>
             </div>
         </div>
 
-        <div class="space-y-2">
-            <Label class="text-sm font-bold">{{
-                $t('posts.wizard.prompt_label')
-            }}</Label>
-            <Textarea
-                v-model="prompt"
-                rows="5"
-                :placeholder="$t('posts.wizard.prompt_placeholder')"
+        <!-- 5. Brand References (shown when image count > 0) -->
+        <div v-if="imageCount > 0" class="space-y-3">
+            <Label class="text-sm font-bold">
+                {{ $t('posts.wizard.brand_references_title') }}
+            </Label>
+            <BrandReferencePicker
+                v-model:selected-ids="selectedReferenceIds"
+                :references="localReferences"
+                :can-manage="props.canManageBrandReferences"
+                @reference-added="onReferenceAdded"
             />
         </div>
 
-        <p v-if="failed" class="text-sm text-destructive">{{ failed }}</p>
-        <div v-if="detached" class="space-y-2">
-            <p class="text-sm text-muted-foreground">
+        <!-- 6. Prompt Input -->
+        <div class="space-y-2">
+            <div class="flex items-center justify-between">
+                <Label for="wizard-prompt" class="text-sm font-bold">
+                    {{ $t('posts.wizard.prompt_label') }}
+                </Label>
+                <span
+                    class="text-xs tabular-nums"
+                    :class="
+                        promptLength > PROMPT_MAX
+                            ? 'font-bold text-destructive'
+                            : 'text-muted-foreground'
+                    "
+                >
+                    {{ promptLength }}/{{ PROMPT_MAX }}
+                </span>
+            </div>
+            <Textarea
+                id="wizard-prompt"
+                v-model="prompt"
+                rows="4"
+                :placeholder="$t('posts.wizard.prompt_placeholder')"
+                class="resize-none"
+            />
+        </div>
+
+        <!-- Error & Detached Status Alerts -->
+        <p v-if="failed" class="text-sm font-medium text-destructive">
+            {{ failed }}
+        </p>
+
+        <div
+            v-if="detached"
+            class="space-y-2 rounded-xl border border-foreground/20 bg-muted/40 p-4"
+        >
+            <p class="text-sm text-foreground/80">
                 {{ $t('posts.wizard.detached') }}
             </p>
             <Button
@@ -521,16 +724,22 @@ void checkCredits();
             </Button>
         </div>
 
-        <p v-if="credits && !credits.allowed" class="text-sm text-destructive">
+        <p
+            v-if="credits && !credits.allowed"
+            class="text-sm font-medium text-destructive"
+        >
             {{ credits.message ?? $t('posts.wizard.credits_exhausted') }}
         </p>
 
-        <div class="flex items-center justify-between gap-3">
+        <!-- Generation Actions -->
+        <div class="flex items-center justify-between gap-3 pt-2">
             <Button variant="ghost" @click="emit('cancel')">
                 {{ $t('common.back') }}
             </Button>
 
             <Button
+                size="lg"
+                class="gap-2 font-bold"
                 :disabled="
                     !canContinue ||
                     submitting ||
@@ -538,28 +747,38 @@ void checkCredits();
                 "
                 @click="generate"
             >
+                <IconSparkles class="size-4" />
                 {{ $t('posts.wizard.generate') }}
             </Button>
         </div>
 
-        <p v-if="submitting" class="text-sm text-muted-foreground">
-            <template v-if="phase === 'pending_text'">
-                {{ $t('posts.wizard.generating_text') }}
-            </template>
-            <template v-else-if="phase === 'text_ready'">
-                {{ $t('posts.wizard.text_ready') }}
-            </template>
-            <template v-else-if="progress">
-                {{
-                    $t('chat.post_generation.result_images_progress', {
-                        done: String(progress.done),
-                        total: String(progress.total),
-                    })
-                }}
-            </template>
-            <template v-else>
-                {{ $t('posts.wizard.submitting') }}
-            </template>
-        </p>
+        <!-- Realtime Progress Indicator -->
+        <div
+            v-if="submitting"
+            class="flex items-center gap-2 rounded-xl border border-foreground/20 bg-card p-3.5 text-sm text-foreground/80 shadow-2xs"
+        >
+            <div
+                class="size-4 animate-spin rounded-full border-2 border-foreground border-t-transparent"
+            />
+            <span class="font-medium">
+                <template v-if="phase === 'pending_text'">
+                    {{ $t('posts.wizard.generating_text') }}
+                </template>
+                <template v-else-if="phase === 'text_ready'">
+                    {{ $t('posts.wizard.text_ready') }}
+                </template>
+                <template v-else-if="progress">
+                    {{
+                        $t('chat.post_generation.result_images_progress', {
+                            done: String(progress.done),
+                            total: String(progress.total),
+                        })
+                    }}
+                </template>
+                <template v-else>
+                    {{ $t('posts.wizard.submitting') }}
+                </template>
+            </span>
+        </div>
     </div>
 </template>

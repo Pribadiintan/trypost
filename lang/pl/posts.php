@@ -239,6 +239,8 @@ return [
             'errors' => [
                 'start_failed' => 'Nie udało się rozpocząć generowania.',
                 'generation_failed' => 'Generowanie przez AI nie powiodło się.',
+                'timeout' => 'Przekroczono limit czasu generowania AI. Spróbuj ponownie.',
+                'channel_failed' => 'Nie udało się połączyć ze strumieniem generowania.',
             ],
         ],
         'review' => [
@@ -686,5 +688,15 @@ return [
         'detached' => 'Przestaliśmy czekać. Post może jeszcze zostać ukończony — sprawdź szkice.',
         'brand_references_select_all' => 'Zaznacz wszystkie',
         'brand_references_clear' => 'Wyczyść',
+        'language_variant_label' => 'Wariant językowy',
+        'language_variant_description' => 'Wybierz język i wizualny wariant marki dla tego posta.',
+        'language_variant_default' => 'Domyślny',
+        'brand_references_title' => 'Materiały referencyjne marki',
+        'brand_references_description' => 'Załącz obrazy referencyjne, aby pokierować generowaniem AI (np. logo, produkt, styl).',
+        'brand_references_attach' => 'Załącz zdjęcie',
+        'brand_references_uploading' => 'Przesyłanie…',
+        'brand_references_empty' => 'Nie przesłano jeszcze zdjęć referencyjnych. Załącz logo, produkt lub zdjęcia profilowe.',
+        'media_none' => 'Brak (tylko tekst)',
+        'media_images' => 'Obrazy',
     ],
 ];

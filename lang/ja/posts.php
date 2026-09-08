@@ -239,6 +239,8 @@ return [
             'errors' => [
                 'start_failed' => '生成を開始できませんでした。',
                 'generation_failed' => 'AI生成に失敗しました。',
+                'timeout' => 'AI生成がタイムアウトしました。もう一度お試しください。',
+                'channel_failed' => '生成ストリームに接続できませんでした。',
             ],
         ],
         'review' => [
@@ -686,5 +688,15 @@ return [
         'detached' => '待機を中止しました。投稿は完了する可能性があります — 下書きを確認してください。',
         'brand_references_select_all' => 'すべて選択',
         'brand_references_clear' => 'クリア',
+        'language_variant_label' => '言語バリアント',
+        'language_variant_description' => 'この投稿の言語とブランドビジュアルバリアントを選択します。',
+        'language_variant_default' => 'デフォルト',
+        'brand_references_title' => 'ブランド参照',
+        'brand_references_description' => 'AI生成の参考となる画像（ロゴ、商品、スタイルなど）を添付します。',
+        'brand_references_attach' => '写真を添付',
+        'brand_references_uploading' => 'アップロード中…',
+        'brand_references_empty' => '参照用写真がまだありません。ロゴや商品、顔写真を添付してください。',
+        'media_none' => 'なし（テキストのみ）',
+        'media_images' => '画像',
     ],
 ];

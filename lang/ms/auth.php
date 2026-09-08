@@ -24,30 +24,28 @@ return [
 
     'legal' => 'Dengan meneruskan, anda bersetuju dengan <a href=":terms_url" target="_blank">Syarat Perkhidmatan</a> dan <a href=":privacy_url" target="_blank">Dasar Privasi</a> kami.',
 
-    'slides' => [
-        'calendar' => [
-            'title' => 'Kalendar Visual',
-            'description' => 'Rancang dan jadualkan kandungan anda dengan kalendar seret-dan-lepas yang intuitif merentasi semua akaun sosial anda.',
+    'reviews' => [
+        'eyebrow' => '5/5 di G2',
+        'heading' => 'Disukai oleh mereka yang menerbitkan setiap hari',
+        'paulo_dantas' => [
+            'role' => 'Pengasas, chatadv.com.br',
+            'quote' => 'Kesederhanaan mencipta, mengatur dan mengedarkan kandungan merentasi setiap rangkaian sosial. Dengan MCP, kami boleh menggunakan AI pilihan kami, seperti Claude atau ChatGPT, untuk mencipta kandungan dan menjadualkannya dari situ.',
         ],
-        'scheduling' => [
-            'title' => 'Penjadualan Pintar',
-            'description' => 'Jadualkan hantaran merentasi LinkedIn, X, Instagram, TikTok, YouTube dan banyak lagi — semuanya dari satu tempat.',
+        'diego' => [
+            'role' => 'CEO, Globalfy.com',
+            'quote' => 'Saya suka betapa mudahnya menggunakan TryPost. Saya boleh mencipta hantaran terus dalam Claude, kemudian menggunakan MCP untuk menerbitkannya dan menjadualkannya untuk masa hadapan. Saya menyediakannya dalam masa lima minit.',
         ],
-        'media' => [
-            'title' => 'Media Kaya',
-            'description' => 'Terbitkan imej, karusel, cerita dan reels. Setiap platform mendapat format yang betul secara automatik.',
+        'luiz' => [
+            'role' => 'Pencipta Kandungan',
+            'quote' => 'Saya sangat suka betapa mudahnya menyambungkan alatan dan ejen AI saya dan menjadualkan hantaran saya merentasi 9 platform media sosial dalam beberapa minit sahaja.',
         ],
-        'video' => [
-            'title' => 'Penerbitan Video',
-            'description' => 'Muat naik video sekali dan terbitkan ke TikTok, YouTube Shorts, Instagram Reels dan Facebook Reels.',
+        'pedro' => [
+            'role' => 'Pengasas, templated.io',
+            'quote' => 'Sangat mudah untuk digunakan dan diintegrasikan. Dengan MCP, saya hanya memerlukan antara muka untuk menyambungkan akaun media sosial.',
         ],
-        'team' => [
-            'title' => 'Ruang Kerja Pasukan',
-            'description' => 'Jemput pasukan anda, tetapkan peranan dan urus pelbagai jenama dari ruang kerja berasingan.',
-        ],
-        'signatures' => [
-            'title' => 'Tandatangan',
-            'description' => 'Simpan tandatangan yang boleh diguna semula (tanda pagar, pautan, penutup kata) dan lampirkan pada hantaran dengan satu klik.',
+        'paulo_castellano' => [
+            'role' => 'Pengasas, changelogfy.com',
+            'quote' => 'Saya sangat menyukai integrasi MCP kerana ia membolehkan saya menyusun semua akaun media sosial saya dari Claude atau ChatGPT.',
         ],
     ],
 
