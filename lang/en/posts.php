@@ -670,6 +670,8 @@ return [
         'generating_text' => 'Writing your draft…',
         'text_ready' => 'Draft ready — rendering images…',
         'submitting' => 'Starting generation…',
+        'check_status' => 'Check status',
+        'status_check_failed' => 'Could not check generation status. Please try again.',
     ],
     'prompt_label' => 'What do you want to post?',
     'prompt_placeholder' => 'e.g. announce our new pricing page',

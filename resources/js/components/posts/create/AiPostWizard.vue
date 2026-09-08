@@ -11,6 +11,7 @@ import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { usePostCreation } from '@/composables/echo/usePostCreation';
 import { edit as editPost } from '@/routes/app/posts';
+import { status as statusRoute } from '@/routes/app/posts/ai';
 import type { MediaItem } from '@/types/media';
 
 interface CatalogFormat {
@@ -74,6 +75,8 @@ const detached = ref(false);
 const progress = ref<{ done: number; total: number } | null>(null);
 const phase = ref<string | null>(null);
 const readyPostId = ref<string | null>(null);
+const creationId = ref<string | null>(null);
+const checkingStatus = ref(false);
 
 const STORAGE_KEY = 'trypost:wizard:state';
 
@@ -244,6 +247,10 @@ const generate = (): void => {
                     }
                 ).props;
 
+                if (payload.creation_id) {
+                    creationId.value = payload.creation_id;
+                }
+
                 if (payload.channel) {
                     void watchCreation(payload.channel);
 
@@ -258,6 +265,51 @@ const generate = (): void => {
             },
         },
     );
+};
+
+const checkStatus = async (): Promise<void> => {
+    if (!creationId.value || checkingStatus.value) return;
+
+    checkingStatus.value = true;
+
+    try {
+        const response = await fetch(
+            statusRoute.url(creationId.value),
+            { headers: { Accept: 'application/json' } },
+        );
+
+        if (!response.ok) {
+            failed.value = trans('posts.wizard.status_check_failed');
+            checkingStatus.value = false;
+            return;
+        }
+
+        const data = (await response.json()) as {
+            status?: string;
+            post_id?: string | null;
+            error?: string | null;
+        };
+
+        if (data.post_id) {
+            clearState();
+            router.visit(editPost(data.post_id).url);
+            return;
+        }
+
+        if (data.error) {
+            failed.value = data.error;
+            detached.value = false;
+            checkingStatus.value = false;
+            clearState();
+            return;
+        }
+
+        // Still in progress — keep the detached message but allow another check.
+        checkingStatus.value = false;
+    } catch {
+        failed.value = trans('posts.wizard.status_check_failed');
+        checkingStatus.value = false;
+    }
 };
 </script>
 
@@ -422,9 +474,19 @@ const generate = (): void => {
         </div>
 
         <p v-if="failed" class="text-sm text-destructive">{{ failed }}</p>
-        <p v-if="detached" class="text-sm text-muted-foreground">
-            {{ $t('posts.wizard.detached') }}
-        </p>
+        <div v-if="detached" class="space-y-2">
+            <p class="text-sm text-muted-foreground">
+                {{ $t('posts.wizard.detached') }}
+            </p>
+            <Button
+                variant="outline"
+                size="sm"
+                :disabled="checkingStatus"
+                @click="checkStatus"
+            >
+                {{ $t('posts.wizard.check_status') }}
+            </Button>
+        </div>
 
         <div class="flex items-center justify-between gap-3">
             <Button

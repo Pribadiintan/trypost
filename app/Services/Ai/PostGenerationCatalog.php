@@ -12,6 +12,7 @@ use App\Models\BrandVariant;
 use App\Models\SocialAccount;
 use App\Models\Workspace;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Cache;
 
 /**
  * Builds the AI post-generation catalog (formats, styles, and brand-visuals
@@ -49,20 +50,26 @@ final class PostGenerationCatalog
      *     brand_reference_count: int,
      * }
      */
+    private const CACHE_TTL_SECONDS = 60;
+
     public static function forWorkspace(Workspace $workspace, ?string $locale = null): array
     {
-        $accountsByPlatform = $workspace->socialAccounts()->active()->get()
-            ->groupBy(fn (SocialAccount $account): string => $account->platform->value);
+        $cacheKey = "post_generation_catalog:{$workspace->id}:" . ($locale ?? 'default');
 
-        return [
-            'formats' => self::buildFormats($accountsByPlatform, $locale),
-            'styles' => self::buildStyles($locale),
-            'applies_brand_visuals_default' => true,
-            'connected_platforms' => $accountsByPlatform->keys()->all(),
-            'content_language' => $workspace->content_language,
-            'languages' => self::buildLanguages($workspace),
-            'brand_reference_count' => $workspace->getMedia('brand_references')->count(),
-        ];
+        return Cache::remember($cacheKey, self::CACHE_TTL_SECONDS, function () use ($workspace, $locale) {
+            $accountsByPlatform = $workspace->socialAccounts()->active()->get()
+                ->groupBy(fn (SocialAccount $account): string => $account->platform->value);
+
+            return [
+                'formats' => self::buildFormats($accountsByPlatform, $locale),
+                'styles' => self::buildStyles($locale),
+                'applies_brand_visuals_default' => true,
+                'connected_platforms' => $accountsByPlatform->keys()->all(),
+                'content_language' => $workspace->content_language,
+                'languages' => self::buildLanguages($workspace),
+                'brand_reference_count' => $workspace->getMedia('brand_references')->count(),
+            ];
+        });
     }
 
     /**
@@ -212,6 +219,19 @@ final class PostGenerationCatalog
         }
 
         return $languages;
+    }
+
+    /**
+     * Clear the cached catalog for a workspace. Call this when social
+     * accounts, brand references, or brand variants change.
+     */
+    public static function clearCache(Workspace $workspace): void
+    {
+        $pattern = "post_generation_catalog:{$workspace->id}:*";
+
+        // File/array cache drivers do not support tags or pattern deletes,
+        // so we build the two keys we actually use.
+        Cache::forget("post_generation_catalog:{$workspace->id}:default");
     }
 
     private static function languageLabel(string $languageCode): string
