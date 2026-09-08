@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { usePage } from '@inertiajs/vue3';
 import {
     IconCalendar,
     IconClock,
@@ -10,19 +11,19 @@ import {
 import { trans } from 'laravel-vue-i18n';
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 
+import AuthLanguageSwitcher from '@/components/auth/AuthLanguageSwitcher.vue';
+import type { Auth } from '@/types';
+
 defineProps<{
     title?: string;
     description?: string;
 }>();
 
-const slideKeys = [
-    'calendar',
-    'scheduling',
-    'media',
-    'video',
-    'team',
-    'signatures',
-] as const;
+const page = usePage();
+
+const isGuest = computed(() => !(page.props.auth as Auth).user);
+
+const slideKeys = ['calendar', 'scheduling', 'media', 'video', 'team', 'signatures'] as const;
 
 const slideIcons = {
     calendar: IconCalendar,
@@ -94,12 +95,14 @@ const platforms = [
 <template>
     <div class="grid min-h-svh grid-cols-1 lg:grid-cols-2">
         <div class="flex min-w-0 flex-col gap-4 p-6 md:p-10">
-            <div class="flex items-start">
+            <div class="flex items-start justify-between gap-4">
                 <img
                     src="/images/trypost/logo-light.png"
                     alt="TryPost"
                     class="h-7"
                 />
+
+                <AuthLanguageSwitcher v-if="isGuest" />
             </div>
 
             <div class="flex flex-1 items-center justify-center">
