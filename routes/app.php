@@ -237,6 +237,7 @@ Route::middleware(['auth', EnsureAccountReady::class, EnsureHasWorkspace::class]
     Route::get('posts/create', [PostCreateController::class, 'create'])->name('app.posts.create');
     Route::post('posts/ai/start', [PostCreateController::class, 'start'])->name('app.posts.ai.start');
     Route::get('posts/ai/{creationId}/status', [PostCreateController::class, 'status'])->name('app.posts.ai.status');
+    Route::get('posts/ai/credits', [PostCreateController::class, 'credits'])->name('app.posts.ai.credits');
 
     // Posts
     Route::get('posts/{status?}', [PostController::class, 'index'])->name('app.posts.index')->where('status', 'draft|scheduled|published');

@@ -672,6 +672,7 @@ return [
         'submitting' => 'Starting generation…',
         'check_status' => 'Check status',
         'status_check_failed' => 'Could not check generation status. Please try again.',
+        'credits_exhausted' => 'AI credits exhausted. Upgrade your plan to continue.',
     ],
     'prompt_label' => 'What do you want to post?',
     'prompt_placeholder' => 'e.g. announce our new pricing page',

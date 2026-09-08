@@ -11,7 +11,7 @@ import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { usePostCreation } from '@/composables/echo/usePostCreation';
 import { edit as editPost } from '@/routes/app/posts';
-import { status as statusRoute } from '@/routes/app/posts/ai';
+import { credits as creditsRoute, status as statusRoute } from '@/routes/app/posts/ai';
 import type { MediaItem } from '@/types/media';
 
 interface CatalogFormat {
@@ -77,6 +77,8 @@ const phase = ref<string | null>(null);
 const readyPostId = ref<string | null>(null);
 const creationId = ref<string | null>(null);
 const checkingStatus = ref(false);
+const credits = ref<{ allowed: boolean; remaining?: number; limit?: number; message?: string } | null>(null);
+const checkingCredits = ref(false);
 
 const STORAGE_KEY = 'trypost:wizard:state';
 
@@ -311,6 +313,42 @@ const checkStatus = async (): Promise<void> => {
         checkingStatus.value = false;
     }
 };
+
+const checkCredits = async (): Promise<void> => {
+    if (checkingCredits.value) return;
+
+    checkingCredits.value = true;
+
+    try {
+        const response = await fetch(creditsRoute.url(), {
+            headers: { Accept: 'application/json' },
+        });
+
+        if (!response.ok) {
+            credits.value = { allowed: true };
+            checkingCredits.value = false;
+            return;
+        }
+
+        credits.value = (await response.json()) as {
+            allowed: boolean;
+            remaining?: number;
+            limit?: number;
+            message?: string;
+        };
+    } catch {
+        credits.value = { allowed: true };
+    }
+
+    checkingCredits.value = false;
+};
+
+// Pre-flight credit check when the user reaches the final step.
+watch(step, (newStep) => {
+    if (newStep === 3) {
+        void checkCredits();
+    }
+});
 </script>
 
 <template>
@@ -488,6 +526,13 @@ const checkStatus = async (): Promise<void> => {
             </Button>
         </div>
 
+        <p
+            v-if="step === 3 && credits && !credits.allowed"
+            class="text-sm text-destructive"
+        >
+            {{ credits.message ?? $t('posts.wizard.credits_exhausted') }}
+        </p>
+
         <div class="flex items-center justify-between gap-3">
             <Button
                 variant="ghost"
@@ -501,7 +546,7 @@ const checkStatus = async (): Promise<void> => {
             </Button>
             <Button
                 v-else
-                :disabled="!canContinue || submitting"
+                :disabled="!canContinue || submitting || (credits !== null && !credits.allowed)"
                 @click="generate"
             >
                 {{ $t('posts.wizard.generate') }}

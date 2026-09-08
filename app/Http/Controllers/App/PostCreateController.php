@@ -8,6 +8,7 @@ use App\Actions\Ai\StartPostGeneration;
 use App\Models\AiGeneration;
 use App\Models\Workspace;
 use App\Services\Ai\PostGenerationCatalog;
+use App\Support\BillingCycle;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -80,6 +81,39 @@ class PostCreateController extends Controller
             'status' => $generation->status->value,
             'post_id' => $generation->post_id,
             'error' => $generation->error,
+        ]);
+    }
+
+    /**
+     * Pre-flight credit check for the AI post wizard.
+     *
+     * Returns remaining credits so the frontend can disable the Generate
+     * button or show a warning before the user commits to a generation.
+     */
+    public function credits(Request $request): JsonResponse
+    {
+        $workspace = $request->user()->currentWorkspace;
+
+        if (! $workspace) {
+            return response()->json(['allowed' => false, 'reason' => 'no_workspace']);
+        }
+
+        $gate = Gate::inspect('useAi', $workspace->account);
+
+        if ($gate->denied()) {
+            return response()->json([
+                'allowed' => false,
+                'reason' => 'credits_exhausted',
+                'message' => $gate->message(),
+            ]);
+        }
+
+        $cycle = BillingCycle::for($workspace->account);
+
+        return response()->json([
+            'allowed' => true,
+            'remaining' => max(0, $cycle->creditAllotment() - $cycle->usedCredits()),
+            'limit' => $cycle->creditAllotment(),
         ]);
     }
 }
