@@ -23,9 +23,9 @@ import { activeLocale } from '@/language';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { calendar } from '@/routes/app';
 import {
+    create as createPostRoute,
     edit as editPost,
     show as showPost,
-    store as storePost,
 } from '@/routes/app/posts';
 import { PostStatus } from '@/types/post';
 
@@ -76,11 +76,15 @@ const createPost = (isoDate: string | null = null) => {
     if (creatingPost.value) return;
 
     creatingPost.value = true;
-    router.post(storePost.url(), isoDate ? { date: isoDate } : {}, {
-        onFinish: () => {
-            creatingPost.value = false;
+    router.get(
+        createPostRoute.url(isoDate ? { query: { date: isoDate } } : undefined),
+        {},
+        {
+            onFinish: () => {
+                creatingPost.value = false;
+            },
         },
-    });
+    );
 };
 const checkMobile = () => {
     isMobile.value = window.innerWidth < 1024;

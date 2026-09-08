@@ -17,8 +17,8 @@ import {
     edit as editPost,
     index as postsIndex,
     show as showPost,
-    store as storePost,
 } from '@/actions/App/Http/Controllers/App/PostController';
+import { create as createPostRoute } from '@/routes/app/posts';
 import ConfirmDeleteModal from '@/components/ConfirmDeleteModal.vue';
 import EmptyState from '@/components/EmptyState.vue';
 import LabelBadge from '@/components/labels/LabelBadge.vue';
@@ -229,8 +229,8 @@ const createPost = () => {
     if (creatingPost.value) return;
 
     creatingPost.value = true;
-    router.post(
-        storePost.url(),
+    router.get(
+        createPostRoute.url(),
         {},
         {
             onFinish: () => {
