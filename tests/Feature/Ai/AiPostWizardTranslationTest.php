@@ -89,3 +89,36 @@ it('does not leak wizard keys to the root posts array', function (string $locale
         expect($posts)->not->toHaveKey($key);
     }
 })->with('wizard_locales');
+
+it('defines all required loading translation keys inside create.steps', function (string $locale): void {
+    $file = dirname(__DIR__, 3)."/lang/{$locale}/posts.php";
+    $posts = require $file;
+
+    expect($posts)->toHaveKey('create');
+    expect($posts['create'])->toHaveKey('steps');
+
+    $steps = $posts['create']['steps'];
+    $loadingKeys = [
+        'loading_page_title',
+        'loading_eta',
+        'loading_eta_minute_one',
+        'loading_eta_minute_other',
+        'loading_leave_title',
+        'loading_leave_body',
+        'loading_leave_cta',
+        'loading_create_another_cta',
+        'loading_tip_credits',
+        'loading_tip_edit',
+        'loading_tip_draft',
+        'loading_tip_brand',
+        'loading_tip_carousel',
+        'loading_tip_quality',
+        'preview_error',
+    ];
+
+    foreach ($loadingKeys as $key) {
+        expect($steps)->toHaveKey($key);
+        expect($steps[$key])->toBeString();
+        expect(trim($steps[$key]))->not->toBeEmpty();
+    }
+})->with('wizard_locales');

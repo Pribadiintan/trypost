@@ -3,22 +3,18 @@ import { router } from '@inertiajs/vue3';
 import { IconArrowLeft, IconCheck, IconSparkles } from '@tabler/icons-vue';
 import { trans } from 'laravel-vue-i18n';
 import { computed, ref, watch } from 'vue';
+import { toast } from 'vue-sonner';
 
-import { start as startRoute } from '@/actions/App/Http/Controllers/App/PostCreateController';
+import { loading as loadingRoute } from '@/actions/App/Http/Controllers/App/PostCreateController';
 import BrandReferencePicker from '@/components/posts/create/BrandReferencePicker.vue';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { usePostCreation } from '@/composables/echo/usePostCreation';
 import {
     getPlatformLabel,
     getPlatformLogo,
 } from '@/composables/usePlatformLogo';
-import { edit as editPost } from '@/routes/app/posts';
-import {
-    credits as creditsRoute,
-    status as statusRoute,
-} from '@/routes/app/posts/ai';
+import { credits as creditsRoute } from '@/routes/app/posts/ai';
 import type { MediaItem } from '@/types/media';
 
 interface CatalogFormat {
@@ -82,12 +78,6 @@ const selectedReferenceIds = ref<string[]>(
 
 const submitting = ref(false);
 const failed = ref<string | null>(null);
-const detached = ref(false);
-const progress = ref<{ done: number; total: number } | null>(null);
-const phase = ref<string | null>(null);
-const readyPostId = ref<string | null>(null);
-const creationId = ref<string | null>(null);
-const checkingStatus = ref(false);
 const credits = ref<{
     allowed: boolean;
     remaining?: number;
@@ -224,127 +214,40 @@ const canContinue = computed(() => {
     );
 });
 
-const { watchCreation } = usePostCreation({
-    onReady: (postId: string) => {
-        readyPostId.value = postId;
-        clearState();
-        router.visit(editPost(postId).url);
-    },
-    onProgress: (event) => {
-        phase.value = event.phase ?? null;
-        if (event.image_expected) {
-            progress.value = {
-                done: event.image_done ?? 0,
-                total: event.image_expected,
-            };
-        }
-    },
-    onFailed: (message) => {
-        failed.value = message ?? trans('posts.wizard.failed');
-        submitting.value = false;
-        clearState();
-    },
-    onDetached: () => {
-        detached.value = true;
-        submitting.value = false;
-        clearState();
-    },
-});
-
 const generate = (): void => {
     if (submitting.value || !canContinue.value) return;
 
     submitting.value = true;
     failed.value = null;
-    detached.value = false;
 
     const hasReferences =
         imageCount.value > 0 && selectedReferenceIds.value.length > 0;
 
-    router.post(
-        startRoute.url(),
-        {
-            prompt: prompt.value.trim(),
-            format: format.value,
-            style: style.value,
-            image_count: imageCount.value,
-            social_account_id: accountId.value,
-            date: props.date,
-            apply_brand_visuals: true, // Brand colors are always applied
-            use_brand_references: hasReferences,
-            reference_media_ids: hasReferences
-                ? selectedReferenceIds.value
-                : [],
-            language_code: languageCode.value,
-        },
-        {
-            onSuccess: (page) => {
-                const payload = (
-                    page as unknown as {
-                        props: { creation_id?: string; channel?: string };
-                    }
-                ).props;
-
-                if (payload.creation_id) {
-                    creationId.value = payload.creation_id;
-                }
-
-                if (payload.channel) {
-                    void watchCreation(payload.channel);
-                    return;
-                }
-
-                submitting.value = false;
-            },
-            onError: () => {
-                failed.value = trans('posts.wizard.failed');
-                submitting.value = false;
-            },
-        },
-    );
-};
-
-const checkStatus = async (): Promise<void> => {
-    if (!creationId.value || checkingStatus.value) return;
-
-    checkingStatus.value = true;
-
-    try {
-        const response = await fetch(statusRoute.url(creationId.value), {
-            headers: { Accept: 'application/json' },
-        });
-
-        if (!response.ok) {
-            failed.value = trans('posts.wizard.status_check_failed');
-            checkingStatus.value = false;
-            return;
-        }
-
-        const data = (await response.json()) as {
-            status?: string;
-            post_id?: string | null;
-            error?: string | null;
-        };
-
-        if (data.post_id) {
-            clearState();
-            router.visit(editPost(data.post_id).url);
-            return;
-        }
-
-        if (data.error) {
-            failed.value = data.error;
-            detached.value = false;
-            checkingStatus.value = false;
-            clearState();
-            return;
-        }
-
-        checkingStatus.value = false;
-    } catch {
-        failed.value = trans('posts.wizard.status_check_failed');
-        checkingStatus.value = false;
+    const creationId = crypto.randomUUID();
+    const query: Record<string, string> = {
+        images: String(imageCount.value),
+        format: format.value ?? '',
+        style: style.value ?? '',
+        template: style.value ?? '',
+        prompt: prompt.value.trim(),
+        apply_brand_visuals: '1',
+    };
+    if (accountId.value) query.social_account_id = accountId.value;
+    if (props.date) query.date = props.date;
+    if (languageCode.value) query.language_code = languageCode.value;
+    if (hasReferences) {
+        query.use_brand_references = '1';
+        query.reference_media_ids = selectedReferenceIds.value.join(',');
     }
+
+    clearState();
+
+    router.visit(loadingRoute({ creationId }, { query }).url, {
+        onError: () => {
+            toast.error(trans('posts.wizard.failed'));
+            submitting.value = false;
+        },
+    });
 };
 
 const checkCredits = async (): Promise<void> => {
@@ -707,23 +610,6 @@ void checkCredits();
             {{ failed }}
         </p>
 
-        <div
-            v-if="detached"
-            class="space-y-2 rounded-xl border border-foreground/20 bg-muted/40 p-4"
-        >
-            <p class="text-sm text-foreground/80">
-                {{ $t('posts.wizard.detached') }}
-            </p>
-            <Button
-                variant="outline"
-                size="sm"
-                :disabled="checkingStatus"
-                @click="checkStatus"
-            >
-                {{ $t('posts.wizard.check_status') }}
-            </Button>
-        </div>
-
         <p
             v-if="credits && !credits.allowed"
             class="text-sm font-medium text-destructive"
@@ -733,7 +619,11 @@ void checkCredits();
 
         <!-- Generation Actions -->
         <div class="flex items-center justify-between gap-3 pt-2">
-            <Button variant="ghost" @click="emit('cancel')">
+            <Button
+                variant="ghost"
+                :disabled="submitting"
+                @click="emit('cancel')"
+            >
                 {{ $t('common.back') }}
             </Button>
 
@@ -748,37 +638,12 @@ void checkCredits();
                 @click="generate"
             >
                 <IconSparkles class="size-4" />
-                {{ $t('posts.wizard.generate') }}
+                {{
+                    submitting
+                        ? $t('posts.wizard.submitting')
+                        : $t('posts.wizard.generate')
+                }}
             </Button>
-        </div>
-
-        <!-- Realtime Progress Indicator -->
-        <div
-            v-if="submitting"
-            class="flex items-center gap-2 rounded-xl border border-foreground/20 bg-card p-3.5 text-sm text-foreground/80 shadow-2xs"
-        >
-            <div
-                class="size-4 animate-spin rounded-full border-2 border-foreground border-t-transparent"
-            />
-            <span class="font-medium">
-                <template v-if="phase === 'pending_text'">
-                    {{ $t('posts.wizard.generating_text') }}
-                </template>
-                <template v-else-if="phase === 'text_ready'">
-                    {{ $t('posts.wizard.text_ready') }}
-                </template>
-                <template v-else-if="progress">
-                    {{
-                        $t('chat.post_generation.result_images_progress', {
-                            done: String(progress.done),
-                            total: String(progress.total),
-                        })
-                    }}
-                </template>
-                <template v-else>
-                    {{ $t('posts.wizard.submitting') }}
-                </template>
-            </span>
         </div>
     </div>
 </template>

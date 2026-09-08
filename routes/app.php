@@ -235,8 +235,13 @@ Route::middleware(['auth', EnsureAccountReady::class, EnsureHasWorkspace::class]
     // Post creation (AI wizard + scratch). Declared before the `posts/{post}`
     // wildcard so `posts/create` is not captured as a post id.
     Route::get('posts/create', [PostCreateController::class, 'create'])->name('app.posts.create');
+    Route::get('posts/ai/{creationId}/loading', [PostCreateController::class, 'loading'])
+        ->name('app.posts.ai.loading')
+        ->whereUuid('creationId');
     Route::post('posts/ai/start', [PostCreateController::class, 'start'])->name('app.posts.ai.start');
-    Route::get('posts/ai/{creationId}/status', [PostCreateController::class, 'status'])->name('app.posts.ai.status');
+    Route::get('posts/ai/{creationId}/status', [PostCreateController::class, 'status'])
+        ->name('app.posts.ai.status')
+        ->whereUuid('creationId');
     Route::get('posts/ai/credits', [PostCreateController::class, 'credits'])->name('app.posts.ai.credits');
 
     // Posts

@@ -42,7 +42,50 @@ class PostCreateController extends Controller
         ]);
     }
 
-    public function start(Request $request): JsonResponse
+    public function loading(Request $request, string $creationId): InertiaResponse|RedirectResponse
+    {
+        $workspace = $request->user()->currentWorkspace;
+
+        if (! $workspace instanceof Workspace) {
+            abort(Response::HTTP_FORBIDDEN);
+        }
+
+        $this->authorize('createPost', $workspace);
+
+        $existing = AiGeneration::query()
+            ->where('creation_id', $creationId)
+            ->where('workspace_id', $workspace->id)
+            ->first();
+
+        if ($existing && $existing->post_id && $existing->status->isTerminal() && ! $existing->error) {
+            return redirect()->route('app.posts.edit', $existing->post_id);
+        }
+
+        $referenceMediaIds = array_values(array_filter(
+            is_array($request->query('reference_media_ids'))
+                ? $request->query('reference_media_ids')
+                : explode(',', (string) $request->query('reference_media_ids', ''))
+        ));
+
+        return Inertia::render('posts/ai/Loading', [
+            'creationId' => $creationId,
+            'channel' => "user.{$request->user()->id}.ai-creation.{$creationId}",
+            'imageCount' => (int) $request->query('images', '0'),
+            'format' => (string) $request->query('format', ''),
+            'prompt' => (string) $request->query('prompt', ''),
+            'socialAccountId' => $request->query('social_account_id') ?: null,
+            'date' => $request->query('date') ?: null,
+            'style' => (string) ($request->query('style') ?: $request->query('template', 'image_card')),
+            'template' => (string) ($request->query('template') ?: $request->query('style', 'image_card')),
+            'applyBrandVisuals' => $request->boolean('apply_brand_visuals', true),
+            'languageCode' => $request->query('language_code') ?: null,
+            'useBrandReferences' => $request->boolean('use_brand_references', false),
+            'referenceMediaIds' => $referenceMediaIds,
+            'alreadyStarted' => $existing !== null,
+        ]);
+    }
+
+    public function start(Request $request): JsonResponse|RedirectResponse
     {
         $workspace = $request->user()->currentWorkspace;
 
@@ -57,6 +100,12 @@ class PostCreateController extends Controller
             $workspace,
             $request->all(),
         );
+
+        if ($request->header('X-Inertia')) {
+            return redirect()->route('app.posts.ai.loading', [
+                'creationId' => $result['creation_id'],
+            ]);
+        }
 
         return response()->json($result, Response::HTTP_ACCEPTED);
     }

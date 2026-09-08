@@ -35,9 +35,14 @@ final class StartPostGeneration
             ]);
         }
 
+        if (empty($data['style']) && ! empty($data['template'])) {
+            $data['style'] = $data['template'];
+        }
+
         $catalog = PostGenerationCatalog::forWorkspace($workspace);
 
         $validator = Validator::make($data, self::rules($workspace, $catalog), attributes: [
+            'creation_id' => 'creation_id',
             'format' => 'format',
             'style' => 'style',
             'social_account_id' => 'account',
@@ -49,7 +54,9 @@ final class StartPostGeneration
         ]);
 
         $validated = $validator->validate();
-        $creationId = (string) Str::uuid();
+        $creationId = ! empty($validated['creation_id']) && Str::isUuid((string) $validated['creation_id'])
+            ? (string) $validated['creation_id']
+            : (string) Str::uuid();
 
         StreamPostCreation::dispatch(
             userId: $user->id,
@@ -103,6 +110,7 @@ final class StartPostGeneration
         $labelIds = $workspace->labels()->pluck('id')->all();
 
         return array_filter([
+            'creation_id' => ['nullable', 'uuid'],
             'format' => ['required', 'string', 'in:'.implode(',', $formatValues)],
             'style' => $styleKeys === [] ? null : ['required', 'string', 'in:'.implode(',', $styleKeys)],
             'social_account_id' => ['nullable', 'uuid', 'in:'.implode(',', $accountIds)],
