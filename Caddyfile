@@ -2,10 +2,5 @@
 # APP_DOMAIN is provided by the caddy service in compose.prod.yaml.
 # reverse_proxy transparently passes through WebSocket upgrades (Reverb on /app).
 {$APP_DOMAIN} {
-	# Reverb WebSocket endpoint — must reach the Reverb server (port 8080),
-	# not the HTTP app (port 80), or the WS upgrade will fail with 500.
-	reverse_proxy /app/* app:8080
-
-	# Everything else goes to the Laravel HTTP server.
 	reverse_proxy app:80
 }
