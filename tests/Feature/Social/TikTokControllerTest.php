@@ -19,6 +19,14 @@ beforeEach(function () {
     $this->workspace->members()->attach($this->user->id, ['role' => Role::Member->value]);
 });
 
+test('tiktok authorize url disables auto auth', function () {
+    $response = $this->actingAs($this->user)->get(route('app.social.tiktok.connect'));
+
+    expect(urldecode((string) $response->headers->get('Location')))
+        ->toStartWith('https://www.tiktok.com/v2/auth/authorize')
+        ->toContain('disable_auto_auth=1');
+});
+
 test('tiktok connect redirects to oauth provider', function () {
     $driverMock = Mockery::mock();
     $driverMock->shouldReceive('scopes')->andReturnSelf();
@@ -32,10 +40,9 @@ test('tiktok connect redirects to oauth provider', function () {
         ->andReturn($driverMock);
 
     $response = $this->actingAs($this->user)
-        ->withHeader('X-Inertia', 'true')
         ->get(route('app.social.tiktok.connect'));
 
-    $response->assertStatus(409); // Inertia::location returns 409 with X-Inertia header
+    $response->assertRedirect('https://www.tiktok.com/v2/auth/authorize?test=1');
 
     expect(session('social_connect_workspace'))->toBe($this->workspace->id);
 });
@@ -202,9 +209,8 @@ test('tiktok connect carries a reconnect id into the session', function () {
     Socialite::shouldReceive('driver')->with('tiktok')->andReturn($driverMock);
 
     $this->actingAs($this->user)
-        ->withHeader('X-Inertia', 'true')
         ->get(route('app.social.tiktok.connect', ['reconnect' => $account->id]))
-        ->assertStatus(409);
+        ->assertRedirect('https://www.tiktok.com/v2/auth/authorize?test=1');
 
     expect(session('social_reconnect_id'))->toBe($account->id);
 });
