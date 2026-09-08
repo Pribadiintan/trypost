@@ -206,7 +206,7 @@ class SocialController extends Controller
         )->values()->all();
     }
 
-    protected function redirectToProvider(Request $request, string $driver, array $scopes): SymfonyResponse
+    protected function redirectToProvider(Request $request, string $driver, array $scopes, array $parameters = []): SymfonyResponse
     {
         $workspace = $request->user()->currentWorkspace;
 
@@ -215,6 +215,7 @@ class SocialController extends Controller
         return Inertia::location(
             Socialite::driver($driver)
                 ->scopes($scopes)
+                ->with($parameters)
                 ->redirect()
                 ->getTargetUrl()
         );
