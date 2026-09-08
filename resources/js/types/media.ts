@@ -10,7 +10,12 @@ export type BrandReferenceKind =
     | 'style'
     | 'other';
 
-export type SourceMetaValue = string | number | boolean | null | SourceMetaValue[];
+export type SourceMetaValue =
+    | string
+    | number
+    | boolean
+    | null
+    | SourceMetaValue[];
 
 export interface MediaItem {
     id: string;

@@ -77,8 +77,8 @@ const createPost = (isoDate: string | null = null) => {
 
     creatingPost.value = true;
     router.get(
-        createPostRoute.url(isoDate ? { query: { date: isoDate } } : undefined),
-        {},
+        createPostRoute.url(),
+        isoDate ? { date: isoDate } : {},
         {
             onFinish: () => {
                 creatingPost.value = false;
