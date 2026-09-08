@@ -12,6 +12,7 @@ use App\Support\BillingCycle;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 use Inertia\Response as InertiaResponse;
 use Symfony\Component\HttpFoundation\Response;
@@ -34,7 +35,7 @@ class PostCreateController extends Controller
             'date' => $request->query('date'),
             'brandReferences' => $workspace->getMedia('brand_references')->get()->map(fn ($media) => [
                 'id' => $media->id,
-                'url' => $media->getUrl(),
+                'url' => $media->url,
                 'name' => $media->name,
             ])->values()->all(),
             'canManageBrandReferences' => $request->user()->can('update', $workspace),
