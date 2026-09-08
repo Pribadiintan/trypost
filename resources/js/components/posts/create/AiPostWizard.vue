@@ -61,12 +61,12 @@ const format = ref<string | null>(null);
 const accountId = ref<string | null>(null);
 const style = ref('image_card');
 const imageCount = ref(1);
-const useBrandColors = ref(true);
+const useBrandColors = ref(props.catalog.applies_brand_visuals_default);
 const useBrandReferences = ref(true);
 const selectedReferenceIds = ref<string[]>(
     props.brandReferences.map((reference) => reference.id),
 );
-const languageCode = ref<string | null>(null);
+const languageCode = ref<string | null>(props.catalog.content_language);
 
 const submitting = ref(false);
 const failed = ref<string | null>(null);
@@ -116,6 +116,7 @@ const canContinue = computed(() => {
     if (step.value === 1) return prompt.value.trim().length >= PROMPT_MIN;
     if (step.value === 2)
         return format.value !== null && accountId.value !== null;
+    if (step.value === 3) return style.value !== null;
 
     return true;
 });

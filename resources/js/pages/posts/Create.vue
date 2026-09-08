@@ -54,7 +54,7 @@ const startFromScratch = (): void => {
     });
 };
 
-const hasConnectedAccounts = computed(() => true);
+const hasConnectedAccounts = computed(() => props.catalog.formats.length > 0);
 </script>
 
 <template>
