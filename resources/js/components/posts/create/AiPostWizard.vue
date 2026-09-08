@@ -11,7 +11,10 @@ import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { usePostCreation } from '@/composables/echo/usePostCreation';
 import { edit as editPost } from '@/routes/app/posts';
-import { credits as creditsRoute, status as statusRoute } from '@/routes/app/posts/ai';
+import {
+    credits as creditsRoute,
+    status as statusRoute,
+} from '@/routes/app/posts/ai';
 import type { MediaItem } from '@/types/media';
 
 interface CatalogFormat {
@@ -56,7 +59,6 @@ const emit = defineEmits<{ cancel: [] }>();
 const MAX_IMAGES = 10;
 const PROMPT_MIN = 3;
 
-const step = ref(1);
 const prompt = ref('');
 const format = ref<string | null>(null);
 const accountId = ref<string | null>(null);
@@ -77,14 +79,18 @@ const phase = ref<string | null>(null);
 const readyPostId = ref<string | null>(null);
 const creationId = ref<string | null>(null);
 const checkingStatus = ref(false);
-const credits = ref<{ allowed: boolean; remaining?: number; limit?: number; message?: string } | null>(null);
+const credits = ref<{
+    allowed: boolean;
+    remaining?: number;
+    limit?: number;
+    message?: string;
+} | null>(null);
 const checkingCredits = ref(false);
 
 const STORAGE_KEY = 'trypost:wizard:state';
 
 const saveState = () => {
     const state = {
-        step: step.value,
         prompt: prompt.value,
         format: format.value,
         accountId: accountId.value,
@@ -114,11 +120,11 @@ const restoreState = () => {
         if (typeof state.useBrandReferences === 'boolean')
             useBrandReferences.value = state.useBrandReferences;
         if (Array.isArray(state.selectedReferenceIds))
-            selectedReferenceIds.value = state.selectedReferenceIds.filter((id: string) =>
-                props.brandReferences.some((ref) => ref.id === id),
+            selectedReferenceIds.value = state.selectedReferenceIds.filter(
+                (id: string) =>
+                    props.brandReferences.some((ref) => ref.id === id),
             );
         if (state.languageCode) languageCode.value = state.languageCode;
-        if (state.step > 1) step.value = state.step;
     } catch {
         sessionStorage.removeItem(STORAGE_KEY);
     }
@@ -127,7 +133,17 @@ const restoreState = () => {
 const clearState = () => sessionStorage.removeItem(STORAGE_KEY);
 
 watch(
-    [step, prompt, format, accountId, style, imageCount, useBrandColors, useBrandReferences, selectedReferenceIds, languageCode],
+    [
+        prompt,
+        format,
+        accountId,
+        style,
+        imageCount,
+        useBrandColors,
+        useBrandReferences,
+        selectedReferenceIds,
+        languageCode,
+    ],
     saveState,
     { deep: true },
 );
@@ -173,12 +189,12 @@ const showReferences = computed(
 const showLanguage = computed(() => languages.value.length > 1);
 
 const canContinue = computed(() => {
-    if (step.value === 1) return prompt.value.trim().length >= PROMPT_MIN;
-    if (step.value === 2)
-        return format.value !== null && accountId.value !== null;
-    if (step.value === 3) return style.value !== null;
-
-    return true;
+    return (
+        format.value !== null &&
+        accountId.value !== null &&
+        style.value !== null &&
+        prompt.value.trim().length >= PROMPT_MIN
+    );
 });
 
 const selectFormat = (value: string): void => {
@@ -275,10 +291,9 @@ const checkStatus = async (): Promise<void> => {
     checkingStatus.value = true;
 
     try {
-        const response = await fetch(
-            statusRoute.url(creationId.value),
-            { headers: { Accept: 'application/json' } },
-        );
+        const response = await fetch(statusRoute.url(creationId.value), {
+            headers: { Accept: 'application/json' },
+        });
 
         if (!response.ok) {
             failed.value = trans('posts.wizard.status_check_failed');
@@ -343,27 +358,144 @@ const checkCredits = async (): Promise<void> => {
     checkingCredits.value = false;
 };
 
-// Pre-flight credit check when the user reaches the final step.
-watch(step, (newStep) => {
-    if (newStep === 3) {
-        void checkCredits();
-    }
-});
+// Pre-flight credit check on mount.
+void checkCredits();
 </script>
 
 <template>
     <div class="space-y-6">
-        <div
-            class="flex items-center gap-2 text-xs font-semibold text-foreground/60"
-        >
-            <span :class="step >= 1 ? 'text-foreground' : ''">1</span>
-            <span>—</span>
-            <span :class="step >= 2 ? 'text-foreground' : ''">2</span>
-            <span>—</span>
-            <span :class="step >= 3 ? 'text-foreground' : ''">3</span>
+        <div class="space-y-2">
+            <Label class="text-sm font-bold">{{
+                $t('posts.wizard.format_label')
+            }}</Label>
+            <div class="grid gap-2 sm:grid-cols-2">
+                <button
+                    v-for="entry in formats"
+                    :key="entry.value"
+                    type="button"
+                    class="rounded-xl border-2 bg-card p-3 text-left text-sm transition-colors"
+                    :class="
+                        format === entry.value
+                            ? 'border-foreground'
+                            : 'border-foreground/20 hover:border-foreground/50'
+                    "
+                    @click="selectFormat(entry.value)"
+                >
+                    {{ entry.label }}
+                </button>
+            </div>
         </div>
 
-        <div v-if="step === 1" class="space-y-2">
+        <div v-if="accountsForFormat.length > 1" class="space-y-2">
+            <Label class="text-sm font-bold">{{
+                $t('posts.wizard.account_label')
+            }}</Label>
+            <div class="grid gap-2">
+                <button
+                    v-for="account in accountsForFormat"
+                    :key="account.id"
+                    type="button"
+                    class="rounded-xl border-2 bg-card p-3 text-left text-sm transition-colors"
+                    :class="
+                        accountId === account.id
+                            ? 'border-foreground'
+                            : 'border-foreground/20 hover:border-foreground/50'
+                    "
+                    @click="accountId = account.id"
+                >
+                    {{ account.label }}
+                    <span
+                        v-if="account.username"
+                        class="text-xs text-foreground/60"
+                        >@{{ account.username }}</span
+                    >
+                </button>
+            </div>
+        </div>
+
+        <div class="space-y-2">
+            <Label class="text-sm font-bold">{{
+                $t('posts.wizard.style_label')
+            }}</Label>
+            <div class="grid gap-2 sm:grid-cols-2">
+                <button
+                    v-for="entry in catalog.styles"
+                    :key="entry.key"
+                    type="button"
+                    class="rounded-xl border-2 bg-card p-3 text-left transition-colors"
+                    :class="
+                        style === entry.key
+                            ? 'border-foreground'
+                            : 'border-foreground/20 hover:border-foreground/50'
+                    "
+                    @click="style = entry.key"
+                >
+                    <p class="text-sm font-semibold">{{ entry.name }}</p>
+                    <p class="text-xs text-foreground/60">
+                        {{ entry.description }}
+                    </p>
+                </button>
+            </div>
+        </div>
+
+        <div class="space-y-2">
+            <Label class="text-sm font-bold">{{
+                $t('posts.wizard.images_label')
+            }}</Label>
+            <input
+                v-model.number="imageCount"
+                type="range"
+                min="0"
+                :max="MAX_IMAGES"
+                class="w-full"
+            />
+            <p class="text-xs text-foreground/60">{{ imageCount }}</p>
+        </div>
+
+        <div
+            class="flex items-center justify-between rounded-xl border-2 border-foreground/20 bg-card p-3"
+        >
+            <Label>{{ $t('posts.wizard.brand_colors_label') }}</Label>
+            <Switch v-model:checked="useBrandColors" />
+        </div>
+
+        <div v-if="showReferences" class="space-y-3">
+            <div
+                class="flex items-center justify-between rounded-xl border-2 border-foreground/20 bg-card p-3"
+            >
+                <Label>{{ $t('posts.wizard.brand_references_label') }}</Label>
+                <Switch v-model:checked="useBrandReferences" />
+            </div>
+            <BrandReferencePicker
+                v-if="useBrandReferences"
+                v-model:selected-ids="selectedReferenceIds"
+                :references="brandReferences"
+            />
+        </div>
+
+        <div v-if="showLanguage" class="space-y-2">
+            <Label class="text-sm font-bold">{{
+                $t('posts.wizard.language_label')
+            }}</Label>
+            <div class="grid gap-2 sm:grid-cols-2">
+                <button
+                    v-for="entry in languages"
+                    :key="entry.language_code"
+                    type="button"
+                    class="rounded-xl border-2 bg-card p-3 text-left text-sm transition-colors"
+                    :class="
+                        languageCode === entry.language_code
+                            ? 'border-foreground'
+                            : 'border-foreground/20 hover:border-foreground/50'
+                    "
+                    @click="languageCode = entry.language_code"
+                >
+                    {{ entry.label }}
+                </button>
+            </div>
+        </div>
+
+        <div class="space-y-2">
             <Label class="text-sm font-bold">{{
                 $t('posts.wizard.prompt_label')
             }}</Label>
@@ -372,143 +504,6 @@ watch(step, (newStep) => {
                 rows="5"
                 :placeholder="$t('posts.wizard.prompt_placeholder')"
             />
-        </div>
-
-        <div v-else-if="step === 2" class="space-y-5">
-            <div class="space-y-2">
-                <Label class="text-sm font-bold">{{
-                    $t('posts.wizard.format_label')
-                }}</Label>
-                <div class="grid gap-2 sm:grid-cols-2">
-                    <button
-                        v-for="entry in formats"
-                        :key="entry.value"
-                        type="button"
-                        class="rounded-xl border-2 bg-card p-3 text-left text-sm transition-colors"
-                        :class="
-                            format === entry.value
-                                ? 'border-foreground'
-                                : 'border-foreground/20 hover:border-foreground/50'
-                        "
-                        @click="selectFormat(entry.value)"
-                    >
-                        {{ entry.label }}
-                    </button>
-                </div>
-            </div>
-
-            <div v-if="accountsForFormat.length > 1" class="space-y-2">
-                <Label class="text-sm font-bold">{{
-                    $t('posts.wizard.account_label')
-                }}</Label>
-                <div class="grid gap-2">
-                    <button
-                        v-for="account in accountsForFormat"
-                        :key="account.id"
-                        type="button"
-                        class="rounded-xl border-2 bg-card p-3 text-left text-sm transition-colors"
-                        :class="
-                            accountId === account.id
-                                ? 'border-foreground'
-                                : 'border-foreground/20 hover:border-foreground/50'
-                        "
-                        @click="accountId = account.id"
-                    >
-                        {{ account.label }}
-                        <span
-                            v-if="account.username"
-                            class="text-xs text-foreground/60"
-                            >@{{ account.username }}</span
-                        >
-                    </button>
-                </div>
-            </div>
-        </div>
-
-        <div v-else class="space-y-5">
-            <div class="space-y-2">
-                <Label class="text-sm font-bold">{{
-                    $t('posts.wizard.style_label')
-                }}</Label>
-                <div class="grid gap-2 sm:grid-cols-2">
-                    <button
-                        v-for="entry in catalog.styles"
-                        :key="entry.key"
-                        type="button"
-                        class="rounded-xl border-2 bg-card p-3 text-left transition-colors"
-                        :class="
-                            style === entry.key
-                                ? 'border-foreground'
-                                : 'border-foreground/20 hover:border-foreground/50'
-                        "
-                        @click="style = entry.key"
-                    >
-                        <p class="text-sm font-semibold">{{ entry.name }}</p>
-                        <p class="text-xs text-foreground/60">
-                            {{ entry.description }}
-                        </p>
-                    </button>
-                </div>
-            </div>
-
-            <div class="space-y-2">
-                <Label class="text-sm font-bold">{{
-                    $t('posts.wizard.images_label')
-                }}</Label>
-                <input
-                    v-model.number="imageCount"
-                    type="range"
-                    min="0"
-                    :max="MAX_IMAGES"
-                    class="w-full"
-                />
-                <p class="text-xs text-foreground/60">{{ imageCount }}</p>
-            </div>
-
-            <div
-                class="flex items-center justify-between rounded-xl border-2 border-foreground/20 bg-card p-3"
-            >
-                <Label>{{ $t('posts.wizard.brand_colors_label') }}</Label>
-                <Switch v-model:checked="useBrandColors" />
-            </div>
-
-            <div v-if="showReferences" class="space-y-3">
-                <div
-                    class="flex items-center justify-between rounded-xl border-2 border-foreground/20 bg-card p-3"
-                >
-                    <Label>{{
-                        $t('posts.wizard.brand_references_label')
-                    }}</Label>
-                    <Switch v-model:checked="useBrandReferences" />
-                </div>
-                <BrandReferencePicker
-                    v-if="useBrandReferences"
-                    v-model:selected-ids="selectedReferenceIds"
-                    :references="brandReferences"
-                />
-            </div>
-
-            <div v-if="showLanguage" class="space-y-2">
-                <Label class="text-sm font-bold">{{
-                    $t('posts.wizard.language_label')
-                }}</Label>
-                <div class="grid gap-2 sm:grid-cols-2">
-                    <button
-                        v-for="entry in languages"
-                        :key="entry.language_code"
-                        type="button"
-                        class="rounded-xl border-2 bg-card p-3 text-left text-sm transition-colors"
-                        :class="
-                            languageCode === entry.language_code
-                                ? 'border-foreground'
-                                : 'border-foreground/20 hover:border-foreground/50'
-                        "
-                        @click="languageCode = entry.language_code"
-                    >
-                        {{ entry.label }}
-                    </button>
-                </div>
-            </div>
         </div>
 
         <p v-if="failed" class="text-sm text-destructive">{{ failed }}</p>
@@ -526,27 +521,21 @@ watch(step, (newStep) => {
             </Button>
         </div>
 
-        <p
-            v-if="step === 3 && credits && !credits.allowed"
-            class="text-sm text-destructive"
-        >
+        <p v-if="credits && !credits.allowed" class="text-sm text-destructive">
             {{ credits.message ?? $t('posts.wizard.credits_exhausted') }}
         </p>
 
         <div class="flex items-center justify-between gap-3">
-            <Button
-                variant="ghost"
-                @click="step === 1 ? emit('cancel') : step--"
-            >
+            <Button variant="ghost" @click="emit('cancel')">
                 {{ $t('common.back') }}
             </Button>
 
-            <Button v-if="step < 3" :disabled="!canContinue" @click="step++">
-                {{ $t('posts.wizard.next') }}
-            </Button>
             <Button
-                v-else
-                :disabled="!canContinue || submitting || (credits !== null && !credits.allowed)"
+                :disabled="
+                    !canContinue ||
+                    submitting ||
+                    (credits !== null && !credits.allowed)
+                "
                 @click="generate"
             >
                 {{ $t('posts.wizard.generate') }}

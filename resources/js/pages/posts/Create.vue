@@ -144,6 +144,10 @@ const hasConnectedAccounts = computed(() => props.catalog.formats.length > 0);
                     v-else
                     :catalog="catalog"
                     :date="props.date"
+                    :brand-references="props.brandReferences"
+                    :can-manage-brand-references="
+                        props.canManageBrandReferences
+                    "
                     @cancel="view = 'choice'"
                 />
             </div>

@@ -22,14 +22,16 @@ beforeEach(function (): void {
     ]);
 });
 
-it('renders the create page with the workspace generation catalog', function (): void {
+it('renders the create page with the workspace generation catalog and brand references', function (): void {
     $this->get(route('app.posts.create'))
         ->assertOk()
         ->assertInertia(fn (AssertableInertia $page) => $page
             ->component('posts/Create')
             ->has('catalog.formats')
             ->has('catalog.styles')
-            ->has('catalog.languages'));
+            ->has('catalog.languages')
+            ->has('brandReferences')
+            ->has('canManageBrandReferences'));
 });
 
 it('starts a generation and returns a creation id and channel', function (): void {
