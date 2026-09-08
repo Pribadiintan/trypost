@@ -38,6 +38,15 @@ function linkedInSocialiteUser(string $id = 'person-123'): SocialiteUser
     return $socialiteUser;
 }
 
+test('linkedin authorize url carries the member and organization scopes', function () {
+    $response = $this->actingAs($this->user)->get(route('app.social.linkedin.connect'));
+
+    expect(urldecode((string) $response->headers->get('Location')))
+        ->toStartWith('https://www.linkedin.com/oauth/v2/authorization')
+        ->toContain('w_member_social')
+        ->toContain('rw_organization_admin');
+});
+
 test('linkedin connect redirects to oauth provider via the openid driver', function () {
     $driverMock = Mockery::mock();
     $driverMock->shouldReceive('scopes')->andReturnSelf();
@@ -50,10 +59,9 @@ test('linkedin connect redirects to oauth provider via the openid driver', funct
         ->andReturn($driverMock);
 
     $response = $this->actingAs($this->user)
-        ->withHeader('X-Inertia', 'true')
         ->get(route('app.social.linkedin.connect'));
 
-    $response->assertStatus(409); // Inertia::location returns 409 with X-Inertia header
+    $response->assertRedirect('https://www.linkedin.com/oauth/v2/authorization?test=1');
 
     expect(session('social_connect_workspace'))->toBe($this->workspace->id);
 });
@@ -82,7 +90,6 @@ function captureLinkedInConnectScopes(object $test): array
     Socialite::shouldReceive('driver')->with('linkedin-openid')->andReturn($driverMock);
 
     $test->actingAs($test->user)
-        ->withHeader('X-Inertia', 'true')
         ->get(route('app.social.linkedin.connect'));
 
     return $captured;
