@@ -46,6 +46,13 @@ const toolLabel = computed<string>(() => {
     return label === key ? toolName.value : label;
 });
 
+const toolActionLabel = computed<string>(() => {
+    const key = `chat.tool_actions.${toolName.value}`;
+    const label = trans(key);
+
+    return label === key ? `${toolLabel.value}…` : label;
+});
+
 const toolEntry = computed(() => resolveToolComponent(toolName.value));
 
 const toolComponent = computed(() => toolEntry.value?.component ?? null);
@@ -125,7 +132,7 @@ const onDecide = (decision: ChatApprovalDecision): void =>
             data-testid="chat-tool-part-running"
         >
             <IconLoader2 class="size-4 shrink-0 animate-spin" />
-            <span>{{ toolLabel }} — {{ $t('chat.tool_card.running') }}</span>
+            <span>{{ toolActionLabel }}</span>
         </div>
 
         <ChatApprovalCard

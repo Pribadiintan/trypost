@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { router } from '@inertiajs/vue3';
 import { trans } from 'laravel-vue-i18n';
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 
 import { start as startRoute } from '@/actions/App/Http/Controllers/App/PostCreateController';
 import BrandReferencePicker from '@/components/posts/create/BrandReferencePicker.vue';
@@ -72,7 +72,62 @@ const submitting = ref(false);
 const failed = ref<string | null>(null);
 const detached = ref(false);
 const progress = ref<{ done: number; total: number } | null>(null);
+const phase = ref<string | null>(null);
 const readyPostId = ref<string | null>(null);
+
+const STORAGE_KEY = 'trypost:wizard:state';
+
+const saveState = () => {
+    const state = {
+        step: step.value,
+        prompt: prompt.value,
+        format: format.value,
+        accountId: accountId.value,
+        style: style.value,
+        imageCount: imageCount.value,
+        useBrandColors: useBrandColors.value,
+        useBrandReferences: useBrandReferences.value,
+        selectedReferenceIds: selectedReferenceIds.value,
+        languageCode: languageCode.value,
+    };
+    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+};
+
+const restoreState = () => {
+    const raw = sessionStorage.getItem(STORAGE_KEY);
+    if (!raw) return;
+    try {
+        const state = JSON.parse(raw);
+        if (state.prompt) prompt.value = state.prompt;
+        if (state.format) format.value = state.format;
+        if (state.accountId) accountId.value = state.accountId;
+        if (state.style) style.value = state.style;
+        if (typeof state.imageCount === 'number')
+            imageCount.value = state.imageCount;
+        if (typeof state.useBrandColors === 'boolean')
+            useBrandColors.value = state.useBrandColors;
+        if (typeof state.useBrandReferences === 'boolean')
+            useBrandReferences.value = state.useBrandReferences;
+        if (Array.isArray(state.selectedReferenceIds))
+            selectedReferenceIds.value = state.selectedReferenceIds.filter((id: string) =>
+                props.brandReferences.some((ref) => ref.id === id),
+            );
+        if (state.languageCode) languageCode.value = state.languageCode;
+        if (state.step > 1) step.value = state.step;
+    } catch {
+        sessionStorage.removeItem(STORAGE_KEY);
+    }
+};
+
+const clearState = () => sessionStorage.removeItem(STORAGE_KEY);
+
+watch(
+    [step, prompt, format, accountId, style, imageCount, useBrandColors, useBrandReferences, selectedReferenceIds, languageCode],
+    saveState,
+    { deep: true },
+);
+
+restoreState();
 
 /** One card per format, with every platform's accounts merged into it. */
 const formats = computed(() => {
@@ -132,9 +187,11 @@ const selectFormat = (value: string): void => {
 const { watchCreation } = usePostCreation({
     onReady: (postId: string) => {
         readyPostId.value = postId;
+        clearState();
         router.visit(editPost(postId).url);
     },
     onProgress: (event) => {
+        phase.value = event.phase ?? null;
         if (event.image_expected) {
             progress.value = {
                 done: event.image_done ?? 0,
@@ -145,10 +202,12 @@ const { watchCreation } = usePostCreation({
     onFailed: (message) => {
         failed.value = message ?? trans('posts.wizard.failed');
         submitting.value = false;
+        clearState();
     },
     onDetached: () => {
         detached.value = true;
         submitting.value = false;
+        clearState();
     },
 });
 
@@ -388,14 +447,23 @@ const generate = (): void => {
         </div>
 
         <p v-if="submitting" class="text-sm text-muted-foreground">
-            {{
-                progress
-                    ? $t('chat.post_generation.result_images_progress', {
-                          done: String(progress.done),
-                          total: String(progress.total),
-                      })
-                    : $t('chat.post_generation.result_text_ready')
-            }}
+            <template v-if="phase === 'pending_text'">
+                {{ $t('posts.wizard.generating_text') }}
+            </template>
+            <template v-else-if="phase === 'text_ready'">
+                {{ $t('posts.wizard.text_ready') }}
+            </template>
+            <template v-else-if="progress">
+                {{
+                    $t('chat.post_generation.result_images_progress', {
+                        done: String(progress.done),
+                        total: String(progress.total),
+                    })
+                }}
+            </template>
+            <template v-else>
+                {{ $t('posts.wizard.submitting') }}
+            </template>
         </p>
     </div>
 </template>
