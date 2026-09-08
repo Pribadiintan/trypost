@@ -1,0 +1,400 @@
+<script setup lang="ts">
+import { router } from '@inertiajs/vue3';
+import { trans } from 'laravel-vue-i18n';
+import { computed, ref } from 'vue';
+
+import { start as startRoute } from '@/actions/App/Http/Controllers/App/PostCreateController';
+import BrandReferencePicker from '@/components/posts/create/BrandReferencePicker.vue';
+import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
+import { Textarea } from '@/components/ui/textarea';
+import { usePostCreation } from '@/composables/echo/usePostCreation';
+import { edit as editPost } from '@/routes/app/posts';
+import type { MediaItem } from '@/types/media';
+
+interface CatalogFormat {
+    value: string;
+    platform: string;
+    label: string;
+    accounts: Array<{ id: string; label: string; username: string | null }>;
+}
+
+interface CatalogStyle {
+    key: string;
+    name: string;
+    description: string;
+    preview: string;
+    needs_account: boolean;
+    supported_formats: string[];
+    applies_brand_visuals: boolean;
+}
+
+interface Props {
+    catalog: {
+        formats: CatalogFormat[];
+        styles: CatalogStyle[];
+        applies_brand_visuals_default: boolean;
+        content_language: string | null;
+        languages: Array<{ language_code: string; label: string }>;
+        brand_reference_count: number;
+    };
+    date?: string | null;
+    brandReferences?: MediaItem[];
+    canManageBrandReferences?: boolean;
+}
+
+const props = withDefaults(defineProps<Props>(), {
+    date: null,
+    brandReferences: () => [],
+    canManageBrandReferences: false,
+});
+
+const emit = defineEmits<{ cancel: [] }>();
+
+const MAX_IMAGES = 10;
+const PROMPT_MIN = 3;
+
+const step = ref(1);
+const prompt = ref('');
+const format = ref<string | null>(null);
+const accountId = ref<string | null>(null);
+const style = ref('image_card');
+const imageCount = ref(1);
+const useBrandColors = ref(true);
+const useBrandReferences = ref(true);
+const selectedReferenceIds = ref<string[]>(
+    props.brandReferences.map((reference) => reference.id),
+);
+const languageCode = ref<string | null>(null);
+
+const submitting = ref(false);
+const failed = ref<string | null>(null);
+const detached = ref(false);
+const progress = ref<{ done: number; total: number } | null>(null);
+const readyPostId = ref<string | null>(null);
+
+/** One card per format, with every platform's accounts merged into it. */
+const formats = computed(() => {
+    const byValue = new Map<string, CatalogFormat>();
+
+    for (const entry of props.catalog.formats) {
+        const existing = byValue.get(entry.value);
+
+        if (existing) {
+            existing.accounts.push(...entry.accounts);
+
+            continue;
+        }
+
+        byValue.set(entry.value, {
+            value: entry.value,
+            platform: entry.platform,
+            label: entry.label,
+            accounts: [...entry.accounts],
+        });
+    }
+
+    return [...byValue.values()];
+});
+
+const accountsForFormat = computed(
+    () =>
+        formats.value.find((entry) => entry.value === format.value)?.accounts ??
+        [],
+);
+
+const languages = computed(() => props.catalog.languages);
+
+const showReferences = computed(
+    () => props.brandReferences.length > 0 && imageCount.value > 0,
+);
+
+const showLanguage = computed(() => languages.value.length > 1);
+
+const canContinue = computed(() => {
+    if (step.value === 1) return prompt.value.trim().length >= PROMPT_MIN;
+    if (step.value === 2)
+        return format.value !== null && accountId.value !== null;
+
+    return true;
+});
+
+const selectFormat = (value: string): void => {
+    format.value = value;
+
+    const accounts =
+        formats.value.find((entry) => entry.value === value)?.accounts ?? [];
+    accountId.value = accounts.length === 1 ? accounts[0].id : null;
+};
+
+const { watchCreation } = usePostCreation({
+    onReady: (postId: string) => {
+        readyPostId.value = postId;
+        router.visit(editPost(postId).url);
+    },
+    onProgress: (event) => {
+        if (event.image_expected) {
+            progress.value = {
+                done: event.image_done ?? 0,
+                total: event.image_expected,
+            };
+        }
+    },
+    onFailed: (message) => {
+        failed.value = message ?? trans('posts.wizard.failed');
+        submitting.value = false;
+    },
+    onDetached: () => {
+        detached.value = true;
+        submitting.value = false;
+    },
+});
+
+const generate = (): void => {
+    if (submitting.value) return;
+
+    submitting.value = true;
+    failed.value = null;
+    detached.value = false;
+
+    router.post(
+        startRoute.url(),
+        {
+            prompt: prompt.value.trim(),
+            format: format.value,
+            style: style.value,
+            image_count: imageCount.value,
+            social_account_id: accountId.value,
+            date: props.date,
+            apply_brand_visuals: useBrandColors.value,
+            use_brand_references:
+                useBrandReferences.value && showReferences.value,
+            reference_media_ids:
+                useBrandReferences.value && showReferences.value
+                    ? selectedReferenceIds.value
+                    : [],
+            language_code: languageCode.value,
+        },
+        {
+            onSuccess: (page) => {
+                const payload = (
+                    page as unknown as {
+                        props: { creation_id?: string; channel?: string };
+                    }
+                ).props;
+
+                if (payload.channel) {
+                    void watchCreation(payload.channel);
+
+                    return;
+                }
+
+                submitting.value = false;
+            },
+            onError: () => {
+                failed.value = trans('posts.wizard.failed');
+                submitting.value = false;
+            },
+        },
+    );
+};
+</script>
+
+<template>
+    <div class="space-y-6">
+        <div
+            class="flex items-center gap-2 text-xs font-semibold text-foreground/60"
+        >
+            <span :class="step >= 1 ? 'text-foreground' : ''">1</span>
+            <span>—</span>
+            <span :class="step >= 2 ? 'text-foreground' : ''">2</span>
+            <span>—</span>
+            <span :class="step >= 3 ? 'text-foreground' : ''">3</span>
+        </div>
+
+        <div v-if="step === 1" class="space-y-2">
+            <Label class="text-sm font-bold">{{
+                $t('posts.wizard.prompt_label')
+            }}</Label>
+            <Textarea
+                v-model="prompt"
+                rows="5"
+                :placeholder="$t('posts.wizard.prompt_placeholder')"
+            />
+        </div>
+
+        <div v-else-if="step === 2" class="space-y-5">
+            <div class="space-y-2">
+                <Label class="text-sm font-bold">{{
+                    $t('posts.wizard.format_label')
+                }}</Label>
+                <div class="grid gap-2 sm:grid-cols-2">
+                    <button
+                        v-for="entry in formats"
+                        :key="entry.value"
+                        type="button"
+                        class="rounded-xl border-2 bg-card p-3 text-left text-sm transition-colors"
+                        :class="
+                            format === entry.value
+                                ? 'border-foreground'
+                                : 'border-foreground/20 hover:border-foreground/50'
+                        "
+                        @click="selectFormat(entry.value)"
+                    >
+                        {{ entry.label }}
+                    </button>
+                </div>
+            </div>
+
+            <div v-if="accountsForFormat.length > 1" class="space-y-2">
+                <Label class="text-sm font-bold">{{
+                    $t('posts.wizard.account_label')
+                }}</Label>
+                <div class="grid gap-2">
+                    <button
+                        v-for="account in accountsForFormat"
+                        :key="account.id"
+                        type="button"
+                        class="rounded-xl border-2 bg-card p-3 text-left text-sm transition-colors"
+                        :class="
+                            accountId === account.id
+                                ? 'border-foreground'
+                                : 'border-foreground/20 hover:border-foreground/50'
+                        "
+                        @click="accountId = account.id"
+                    >
+                        {{ account.label }}
+                        <span
+                            v-if="account.username"
+                            class="text-xs text-foreground/60"
+                            >@{{ account.username }}</span
+                        >
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div v-else class="space-y-5">
+            <div class="space-y-2">
+                <Label class="text-sm font-bold">{{
+                    $t('posts.wizard.style_label')
+                }}</Label>
+                <div class="grid gap-2 sm:grid-cols-2">
+                    <button
+                        v-for="entry in catalog.styles"
+                        :key="entry.key"
+                        type="button"
+                        class="rounded-xl border-2 bg-card p-3 text-left transition-colors"
+                        :class="
+                            style === entry.key
+                                ? 'border-foreground'
+                                : 'border-foreground/20 hover:border-foreground/50'
+                        "
+                        @click="style = entry.key"
+                    >
+                        <p class="text-sm font-semibold">{{ entry.name }}</p>
+                        <p class="text-xs text-foreground/60">
+                            {{ entry.description }}
+                        </p>
+                    </button>
+                </div>
+            </div>
+
+            <div class="space-y-2">
+                <Label class="text-sm font-bold">{{
+                    $t('posts.wizard.images_label')
+                }}</Label>
+                <input
+                    v-model.number="imageCount"
+                    type="range"
+                    min="0"
+                    :max="MAX_IMAGES"
+                    class="w-full"
+                />
+                <p class="text-xs text-foreground/60">{{ imageCount }}</p>
+            </div>
+
+            <div
+                class="flex items-center justify-between rounded-xl border-2 border-foreground/20 bg-card p-3"
+            >
+                <Label>{{ $t('posts.wizard.brand_colors_label') }}</Label>
+                <Switch v-model:checked="useBrandColors" />
+            </div>
+
+            <div v-if="showReferences" class="space-y-3">
+                <div
+                    class="flex items-center justify-between rounded-xl border-2 border-foreground/20 bg-card p-3"
+                >
+                    <Label>{{
+                        $t('posts.wizard.brand_references_label')
+                    }}</Label>
+                    <Switch v-model:checked="useBrandReferences" />
+                </div>
+                <BrandReferencePicker
+                    v-if="useBrandReferences"
+                    v-model:selected-ids="selectedReferenceIds"
+                    :references="brandReferences"
+                />
+            </div>
+
+            <div v-if="showLanguage" class="space-y-2">
+                <Label class="text-sm font-bold">{{
+                    $t('posts.wizard.language_label')
+                }}</Label>
+                <div class="grid gap-2 sm:grid-cols-2">
+                    <button
+                        v-for="entry in languages"
+                        :key="entry.language_code"
+                        type="button"
+                        class="rounded-xl border-2 bg-card p-3 text-left text-sm transition-colors"
+                        :class="
+                            languageCode === entry.language_code
+                                ? 'border-foreground'
+                                : 'border-foreground/20 hover:border-foreground/50'
+                        "
+                        @click="languageCode = entry.language_code"
+                    >
+                        {{ entry.label }}
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <p v-if="failed" class="text-sm text-destructive">{{ failed }}</p>
+        <p v-if="detached" class="text-sm text-muted-foreground">
+            {{ $t('posts.wizard.detached') }}
+        </p>
+
+        <div class="flex items-center justify-between gap-3">
+            <Button
+                variant="ghost"
+                @click="step === 1 ? emit('cancel') : step--"
+            >
+                {{ $t('common.back') }}
+            </Button>
+
+            <Button v-if="step < 3" :disabled="!canContinue" @click="step++">
+                {{ $t('posts.wizard.next') }}
+            </Button>
+            <Button
+                v-else
+                :disabled="!canContinue || submitting"
+                @click="generate"
+            >
+                {{ $t('posts.wizard.generate') }}
+            </Button>
+        </div>
+
+        <p v-if="submitting" class="text-sm text-muted-foreground">
+            {{
+                progress
+                    ? $t('chat.post_generation.result_images_progress', {
+                          done: String(progress.done),
+                          total: String(progress.total),
+                      })
+                    : $t('chat.post_generation.result_text_ready')
+            }}
+        </p>
+    </div>
+</template>

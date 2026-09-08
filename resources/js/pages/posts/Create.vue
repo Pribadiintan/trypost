@@ -4,20 +4,44 @@ import { IconPencil, IconSparkles } from '@tabler/icons-vue';
 import { computed, ref } from 'vue';
 
 import PageHeader from '@/components/PageHeader.vue';
-import { Button } from '@/components/ui/button';
+import AiPostWizard from '@/components/posts/create/AiPostWizard.vue';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { store as storePost } from '@/routes/app/posts';
 
 interface Props {
     date?: string | null;
-    brandReferenceCount?: number;
+    catalog: {
+        formats: Array<{
+            value: string;
+            platform: string;
+            label: string;
+            accounts: Array<{
+                id: string;
+                label: string;
+                username: string | null;
+            }>;
+        }>;
+        styles: Array<{
+            key: string;
+            name: string;
+            description: string;
+            preview: string;
+            needs_account: boolean;
+            supported_formats: string[];
+            applies_brand_visuals: boolean;
+        }>;
+        applies_brand_visuals_default: boolean;
+        content_language: string | null;
+        languages: Array<{ language_code: string; label: string }>;
+        brand_reference_count: number;
+    };
+    brandReferences?: Array<{ id: string; url: string; name: string }>;
+    canManageBrandReferences?: boolean;
 }
 
-const props = withDefaults(defineProps<Props>(), {
-    date: null,
-    brandReferenceCount: 0,
-});
+const props = defineProps<Props>();
 
+const view = ref<'choice' | 'ai'>('choice');
 const submitting = ref(false);
 
 const startFromScratch = (): void => {
@@ -25,11 +49,9 @@ const startFromScratch = (): void => {
 
     submitting.value = true;
 
-    router.post(
-        storePost.url(),
-        props.date ? { date: props.date } : {},
-        { onFinish: () => (submitting.value = false) },
-    );
+    router.post(storePost.url(), props.date ? { date: props.date } : {}, {
+        onFinish: () => (submitting.value = false),
+    });
 };
 
 const hasConnectedAccounts = computed(() => true);
@@ -46,65 +68,75 @@ const hasConnectedAccounts = computed(() => true);
                     :description="$t('posts.wizard.description')"
                 />
 
-                <div class="grid gap-4 sm:grid-cols-2">
-                    <button
-                        type="button"
-                        class="group flex flex-col items-start gap-4 rounded-2xl border-2 border-foreground bg-card p-5 text-left shadow-2xs transition-all hover:-translate-y-0.5 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-50"
-                        :disabled="submitting"
-                        @click="startFromScratch"
-                    >
-                        <div
-                            class="inline-flex size-12 -rotate-2 items-center justify-center rounded-2xl border-2 border-foreground bg-violet-200 shadow-2xs transition-transform group-hover:rotate-0"
+                <template v-if="view === 'choice'">
+                    <div class="grid gap-4 sm:grid-cols-2">
+                        <button
+                            type="button"
+                            class="group flex flex-col items-start gap-4 rounded-2xl border-2 border-foreground bg-card p-5 text-left shadow-2xs transition-all hover:-translate-y-0.5 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-50"
+                            :disabled="submitting"
+                            @click="startFromScratch"
                         >
-                            <IconPencil
-                                class="size-6 text-foreground"
-                                stroke-width="2"
-                            />
-                        </div>
-                        <div class="space-y-1">
-                            <p class="text-base font-bold text-foreground">
-                                {{ $t('posts.wizard.scratch_title') }}
-                            </p>
-                            <p
-                                class="text-xs leading-relaxed text-foreground/70"
+                            <div
+                                class="inline-flex size-12 -rotate-2 items-center justify-center rounded-2xl border-2 border-foreground bg-violet-200 shadow-2xs transition-transform group-hover:rotate-0"
                             >
-                                {{ $t('posts.wizard.scratch_description') }}
-                            </p>
-                        </div>
-                    </button>
+                                <IconPencil
+                                    class="size-6 text-foreground"
+                                    stroke-width="2"
+                                />
+                            </div>
+                            <div class="space-y-1">
+                                <p class="text-base font-bold text-foreground">
+                                    {{ $t('posts.wizard.scratch_title') }}
+                                </p>
+                                <p
+                                    class="text-xs leading-relaxed text-foreground/70"
+                                >
+                                    {{ $t('posts.wizard.scratch_description') }}
+                                </p>
+                            </div>
+                        </button>
 
-                    <button
-                        type="button"
-                        class="group flex flex-col items-start gap-4 rounded-2xl border-2 border-foreground bg-card p-5 text-left shadow-2xs transition-all hover:-translate-y-0.5 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-50"
-                        disabled
-                    >
-                        <div
-                            class="inline-flex size-12 rotate-1 items-center justify-center rounded-2xl border-2 border-foreground bg-amber-200 shadow-2xs transition-transform group-hover:rotate-0"
+                        <button
+                            type="button"
+                            class="group flex flex-col items-start gap-4 rounded-2xl border-2 border-foreground bg-card p-5 text-left shadow-2xs transition-all hover:-translate-y-0.5 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-50"
+                            :disabled="!hasConnectedAccounts"
+                            @click="view = 'ai'"
                         >
-                            <IconSparkles
-                                class="size-6 text-foreground"
-                                stroke-width="2"
-                            />
-                        </div>
-                        <div class="space-y-1">
-                            <p class="text-base font-bold text-foreground">
-                                {{ $t('posts.wizard.ai_title') }}
-                            </p>
-                            <p
-                                class="text-xs leading-relaxed text-foreground/70"
+                            <div
+                                class="inline-flex size-12 rotate-1 items-center justify-center rounded-2xl border-2 border-foreground bg-amber-200 shadow-2xs transition-transform group-hover:rotate-0"
                             >
-                                {{ $t('posts.wizard.ai_description') }}
-                            </p>
-                        </div>
-                    </button>
-                </div>
+                                <IconSparkles
+                                    class="size-6 text-foreground"
+                                    stroke-width="2"
+                                />
+                            </div>
+                            <div class="space-y-1">
+                                <p class="text-base font-bold text-foreground">
+                                    {{ $t('posts.wizard.ai_title') }}
+                                </p>
+                                <p
+                                    class="text-xs leading-relaxed text-foreground/70"
+                                >
+                                    {{ $t('posts.wizard.ai_description') }}
+                                </p>
+                            </div>
+                        </button>
+                    </div>
 
-                <p
-                    v-if="!hasConnectedAccounts"
-                    class="text-sm text-muted-foreground"
-                >
-                    {{ $t('posts.wizard.connect_first') }}
-                </p>
+                    <p
+                        v-if="!hasConnectedAccounts"
+                        class="text-sm text-muted-foreground"
+                    >
+                        {{ $t('posts.wizard.connect_first') }}
+                    </p>
+                </template>
+
+                <AiPostWizard
+                    v-else
+                    :catalog="catalog"
+                    :date="props.date"
+                    @cancel="view = 'choice'"
+                />
             </div>
         </div>
     </AppLayout>

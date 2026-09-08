@@ -17,6 +17,7 @@ use Intervention\Image\Encoders\WebpEncoder;
 use Intervention\Image\ImageManager;
 use Intervention\Image\Interfaces\ImageInterface;
 use Intervention\Image\Typography\FontFactory;
+use Laravel\Ai\Files\Image;
 
 class TemplateImageGenerator
 {
@@ -736,7 +737,7 @@ class TemplateImageGenerator
      * Falls back to a solid brand-color fill when the AI client returns null.
      *
      * @param  array<int, string>  $imageKeywords
-     * @param  array<int, string|\Laravel\Ai\Files\Image>  $referenceImages
+     * @param  array<int, string|Image>  $referenceImages
      */
     private function applyTweetCardImageBackground(
         ImageManager $manager,

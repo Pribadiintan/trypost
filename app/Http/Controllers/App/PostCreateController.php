@@ -31,7 +31,12 @@ class PostCreateController extends Controller
             'workspace' => $workspace,
             'catalog' => PostGenerationCatalog::forWorkspace($workspace),
             'date' => $request->query('date'),
-            'brandReferenceCount' => $workspace->getMedia('brand_references')->count(),
+            'brandReferences' => $workspace->getMedia('brand_references')->get()->map(fn ($media) => [
+                'id' => $media->id,
+                'url' => $media->getUrl(),
+                'name' => $media->name,
+            ])->values()->all(),
+            'canManageBrandReferences' => $request->user()->can('update', $workspace),
         ]);
     }
 

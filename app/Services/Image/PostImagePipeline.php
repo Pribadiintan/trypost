@@ -11,6 +11,7 @@ use App\Models\SocialAccount;
 use App\Models\Workspace;
 use App\Support\ResolvedBrand;
 use Illuminate\Support\Facades\Storage;
+use Laravel\Ai\Files\Image;
 
 class PostImagePipeline
 {
@@ -24,7 +25,7 @@ class PostImagePipeline
      * when the generator renders nothing.
      *
      * @param  array<string, mixed>  $structured
-     * @param  array<int, string|\Laravel\Ai\Files\Image>  $referenceImages
+     * @param  array<int, string|Image>  $referenceImages
      * @return array<int, array<string, mixed>>
      */
     public function forSingle(Workspace $workspace, SocialAccount $account, array $structured, ?ContentType $contentType, bool $applyBrandVisuals = true, ?ResolvedBrand $brand = null, array $referenceImages = []): array
@@ -56,7 +57,7 @@ class PostImagePipeline
      * that render nothing are skipped.
      *
      * @param  array<string, mixed>  $structured
-     * @param  array<int, string|\Laravel\Ai\Files\Image>  $referenceImages
+     * @param  array<int, string|Image>  $referenceImages
      * @return array<int, array<string, mixed>>
      */
     public function forCarousel(Workspace $workspace, SocialAccount $account, array $structured, ?ContentType $contentType, bool $applyBrandVisuals = true, ?ResolvedBrand $brand = null, array $referenceImages = []): array
@@ -95,7 +96,7 @@ class PostImagePipeline
      * (tweet_card_image); null produces the solid brand-color background (tweet_card).
      *
      * @param  array<int, string>|null  $imageKeywords
-     * @param  array<int, string|\Laravel\Ai\Files\Image>  $referenceImages
+     * @param  array<int, string|Image>  $referenceImages
      * @return array<int, array<string, mixed>>
      */
     public function forTweetCard(Workspace $workspace, SocialAccount $account, string $tweetText, ?array $imageKeywords = null, ?ResolvedBrand $brand = null, array $referenceImages = []): array
@@ -124,7 +125,7 @@ class PostImagePipeline
      * or an array with keys `tweet_text` and optionally `image_keywords` (image bg).
      *
      * @param  array<int, string|array<string, mixed>>  $slides
-     * @param  array<int, string|\Laravel\Ai\Files\Image>  $referenceImages
+     * @param  array<int, string|Image>  $referenceImages
      * @return array<int, array<string, mixed>>
      */
     public function forTweetCardCarousel(Workspace $workspace, SocialAccount $account, array $slides, ?ResolvedBrand $brand = null, array $referenceImages = []): array

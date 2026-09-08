@@ -7,6 +7,8 @@ export interface ChannelAccount {
     username: string;
     display_label: string;
     avatar_url: string | null;
+    is_active?: boolean;
+    status?: string;
 }
 
 export interface ChannelTikTokCreatorInfo {

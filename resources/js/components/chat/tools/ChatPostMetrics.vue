@@ -91,7 +91,8 @@ const unsupportedReasonKey = (reason: string | null): string =>
             </p>
             <PostPlatformMetrics
                 v-else-if="metricRows(platform.metrics).length"
-                :metrics="metricRows(platform.metrics)"
+                :post-id="data.post_id"
+                :post-platform-id="platform.post_platform_id"
             />
             <p v-else class="text-xs text-muted-foreground">
                 {{ $t('chat.metrics.empty') }}
