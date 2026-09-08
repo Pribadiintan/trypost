@@ -231,8 +231,6 @@ class StreamPostCreation implements ShouldBeUnique, ShouldQueue
                 'error' => $e->getMessage(),
             ]);
 
-            PostCreationReady::dispatch($this->userId, $this->creationId, $generation->post_id, $e->getMessage());
-
             throw $e;
         }
     }

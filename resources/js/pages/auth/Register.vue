@@ -75,7 +75,12 @@ const emailFormVisible = computed(
                 v-slot="{ errors, processing }"
                 class="flex flex-col gap-6"
             >
-                <input v-if="invite" type="hidden" name="invite" :value="invite" />
+                <input
+                    v-if="invite"
+                    type="hidden"
+                    name="invite"
+                    :value="invite"
+                />
                 <input type="hidden" name="locale" :value="locale" />
 
                 <div

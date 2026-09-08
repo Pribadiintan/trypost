@@ -9,8 +9,8 @@ import { createApp, h } from 'vue';
 
 import Toast from './components/Toast.vue';
 import { initializeDataLayer } from './datalayer';
-import AppShell from './layouts/AppShell.vue';
 import { bootLocale, i18nConfig, syncLocale } from './language';
+import AppShell from './layouts/AppShell.vue';
 import { usesAppShell } from './lib/appShell';
 import { syncContentTypeMediaRules } from './lib/contentTypeMediaRules';
 import {

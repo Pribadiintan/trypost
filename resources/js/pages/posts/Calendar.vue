@@ -104,7 +104,6 @@ const effectiveView = computed(() => {
     return isMobile.value ? 'day' : props.view;
 });
 
-
 /**
  * Every date on this screen goes through here: `dayjs.locale()` is global and
  * not reactive, so a computed built on a bare `dayjs()` keeps the previous

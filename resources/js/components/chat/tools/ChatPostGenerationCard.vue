@@ -1206,7 +1206,10 @@ const submit = (): void => {
                     dusk="chat-post-generation-references-step"
                 >
                     <div class="min-w-0 space-y-0.5">
-                        <Label :for="referencesId" class="text-sm font-semibold">
+                        <Label
+                            :for="referencesId"
+                            class="text-sm font-semibold"
+                        >
                             {{ line('brand_references_label') }}
                         </Label>
                         <p class="text-xs text-muted-foreground">

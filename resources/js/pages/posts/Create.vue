@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { Head, router } from '@inertiajs/vue3';
+import { Head, Link, router } from '@inertiajs/vue3';
 import { IconPencil, IconSparkles } from '@tabler/icons-vue';
 import { computed, ref } from 'vue';
 
 import PageHeader from '@/components/PageHeader.vue';
 import AiPostWizard from '@/components/posts/create/AiPostWizard.vue';
 import AppLayout from '@/layouts/AppLayout.vue';
+import { accounts } from '@/routes/app';
 import { store as storePost } from '@/routes/app/posts';
 
 interface Props {
@@ -123,12 +124,20 @@ const hasConnectedAccounts = computed(() => props.catalog.formats.length > 0);
                         </button>
                     </div>
 
-                    <p
+                    <div
                         v-if="!hasConnectedAccounts"
-                        class="text-sm text-muted-foreground"
+                        class="flex items-center gap-2 text-sm"
                     >
-                        {{ $t('posts.wizard.connect_first') }}
-                    </p>
+                        <span class="text-muted-foreground">
+                            {{ $t('posts.wizard.connect_first') }}
+                        </span>
+                        <Link
+                            :href="accounts.url()"
+                            class="font-semibold underline underline-offset-4"
+                        >
+                            {{ $t('posts.wizard.connect_cta') }}
+                        </Link>
+                    </div>
                 </template>
 
                 <AiPostWizard

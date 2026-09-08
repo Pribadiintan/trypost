@@ -23,7 +23,14 @@ const page = usePage();
 
 const isGuest = computed(() => !(page.props.auth as Auth).user);
 
-const slideKeys = ['calendar', 'scheduling', 'media', 'video', 'team', 'signatures'] as const;
+const slideKeys = [
+    'calendar',
+    'scheduling',
+    'media',
+    'video',
+    'team',
+    'signatures',
+] as const;
 
 const slideIcons = {
     calendar: IconCalendar,

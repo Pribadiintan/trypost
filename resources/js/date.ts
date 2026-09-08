@@ -6,7 +6,8 @@ import { activeLocale } from '@/language';
  * not reactive, so reading the ref here is what makes a computed re-run when the
  * language changes instead of serving the previous one from cache.
  */
-const localized = (value?: dayjs.ConfigType) => dayjs(value).locale(activeLocale.value.toLowerCase());
+const localized = (value?: dayjs.ConfigType) =>
+    dayjs(value).locale(activeLocale.value.toLowerCase());
 
 /**
  * Obtém o timezone do usuário

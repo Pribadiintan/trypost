@@ -193,8 +193,6 @@ class RenderPostImages implements ShouldBeUnique, ShouldQueue
                 'error' => $e->getMessage(),
             ]);
 
-            PostCreationReady::dispatch($this->userId, $this->creationId, $post->id, $e->getMessage());
-
             throw $e;
         }
     }

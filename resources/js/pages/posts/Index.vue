@@ -18,7 +18,6 @@ import {
     index as postsIndex,
     show as showPost,
 } from '@/actions/App/Http/Controllers/App/PostController';
-import { create as createPostRoute } from '@/routes/app/posts';
 import ConfirmDeleteModal from '@/components/ConfirmDeleteModal.vue';
 import EmptyState from '@/components/EmptyState.vue';
 import LabelBadge from '@/components/labels/LabelBadge.vue';
@@ -60,6 +59,7 @@ import date from '@/date';
 import debounce from '@/debounce';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { copyToClipboard } from '@/lib/utils';
+import { create as createPostRoute } from '@/routes/app/posts';
 import { PostStatus } from '@/types/post';
 interface SocialAccount {
     id: string;

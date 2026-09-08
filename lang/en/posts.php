@@ -239,6 +239,8 @@ return [
             'errors' => [
                 'start_failed' => 'Could not start generation.',
                 'generation_failed' => 'AI generation failed.',
+                'timeout' => 'AI generation timed out. Please try again.',
+                'channel_failed' => 'Could not connect to the generation stream.',
             ],
         ],
         'review' => [
@@ -664,6 +666,7 @@ return [
         'ai_title' => 'Generate with AI',
         'ai_description' => 'Describe your idea and AI will draft it for you.',
         'connect_first' => 'Connect a social account first.',
+        'connect_cta' => 'Connect now',
     ],
     'prompt_label' => 'What do you want to post?',
     'prompt_placeholder' => 'e.g. announce our new pricing page',
