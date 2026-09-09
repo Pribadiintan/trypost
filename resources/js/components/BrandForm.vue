@@ -327,6 +327,46 @@ const runAutofill = async () => {
             <InputError :message="errors.brand_font" />
         </div>
 
+        <div v-if="showDefaultVisuals" class="grid gap-2">
+            <Label>{{ $t('settings.brand.preview_label') }}</Label>
+            <p class="text-xs font-medium text-foreground/60">
+                {{ $t('settings.brand.preview_description') }}
+            </p>
+            <div
+                class="overflow-hidden rounded-xl border-2 border-foreground shadow-2xs"
+                data-testid="brand-preview"
+                :style="{
+                    backgroundColor: fields.background_color || '#ffffff',
+                    color: fields.text_color || '#0a0a0a',
+                    fontFamily: fields.brand_font
+                        ? `'${fields.brand_font}', sans-serif`
+                        : undefined,
+                }"
+            >
+                <div
+                    class="h-1.5 w-full"
+                    :style="{ backgroundColor: fields.brand_color || '#7c3aed' }"
+                />
+                <div class="space-y-2 p-5">
+                    <p class="text-lg font-bold">
+                        {{ $t('settings.brand.preview_headline') }}
+                    </p>
+                    <p class="text-sm opacity-90">
+                        {{ $t('settings.brand.preview_body') }}
+                    </p>
+                    <span
+                        class="mt-1 inline-block rounded-full px-3 py-1 text-xs font-bold"
+                        :style="{
+                            backgroundColor: fields.brand_color || '#7c3aed',
+                            color: fields.background_color || '#ffffff',
+                        }"
+                    >
+                        {{ $t('settings.brand.preview_cta') }}
+                    </span>
+                </div>
+            </div>
+        </div>
+
         <div class="grid gap-2">
             <Label>{{ $t('settings.brand.image_style') }}</Label>
             <p class="text-xs font-medium text-foreground/60">
