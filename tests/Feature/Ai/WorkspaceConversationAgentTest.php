@@ -111,3 +111,36 @@ test('the conversation window never drops below one', function () {
 
     expect($method->invoke($agent))->toBe(1);
 });
+
+test('the instructions carry the current date, time and timezone for relative scheduling', function () {
+    $agent = new WorkspaceConversationAgent(
+        Workspace::factory()->create(),
+        User::factory()->create(),
+        'Asia/Jakarta',
+    );
+
+    $instructions = $agent->instructions();
+
+    $expectedYear = now('Asia/Jakarta')->format('Y');
+
+    expect($instructions)->toContain('Current date & time')
+        ->and($instructions)->toContain('Asia/Jakarta')
+        ->and($instructions)->toContain($expectedYear)
+        // The +07:00 offset must be present so scheduled_at round-trips unambiguously.
+        ->and($instructions)->toContain('+07:00');
+});
+
+test('an unknown timezone falls back to the app default without throwing', function () {
+    config()->set('app.timezone', 'UTC');
+
+    $agent = new WorkspaceConversationAgent(
+        Workspace::factory()->create(),
+        User::factory()->create(),
+        'Not/AZone',
+    );
+
+    // Must not throw, and must anchor on the app default (UTC).
+    $instructions = $agent->instructions();
+
+    expect($instructions)->toContain('timezone UTC');
+});

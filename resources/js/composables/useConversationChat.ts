@@ -40,6 +40,19 @@ const readXsrfToken = (): string | null => {
         : decodeURIComponent(match.slice('XSRF-TOKEN='.length));
 };
 
+/**
+ * The caller's IANA timezone (e.g. "Asia/Jakarta"), sent with each message so
+ * the agent resolves relative dates ("tomorrow 10am") against the user's clock
+ * instead of UTC. Falls back to an empty string if the browser cannot report it.
+ */
+const browserTimezone = (): string => {
+    try {
+        return Intl.DateTimeFormat().resolvedOptions().timeZone ?? '';
+    } catch {
+        return '';
+    }
+};
+
 const requestHeaders = (): Record<string, string> => {
     const headers: Record<string, string> = {
         Accept: 'text/event-stream, application/json',
@@ -275,7 +288,10 @@ export const useConversationChat = (
             }
 
             return {
-                body: { message: latestMessageText(messages) },
+                body: {
+                    message: latestMessageText(messages),
+                    timezone: browserTimezone(),
+                },
                 headers: requestHeaders(),
             };
         },

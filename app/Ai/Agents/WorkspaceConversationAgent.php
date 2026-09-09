@@ -64,7 +64,24 @@ class WorkspaceConversationAgent implements Agent, Conversational, HasTools
     public function __construct(
         public Workspace $workspace,
         public User $user,
+        public ?string $timezone = null,
     ) {}
+
+    /**
+     * The timezone to resolve relative dates in: the caller-supplied IANA zone
+     * when it is a real one, else the application default. Guarded so an
+     * unknown/spoofed value never throws inside now().
+     */
+    private function resolveTimezone(): string
+    {
+        $tz = trim((string) $this->timezone);
+
+        if ($tz !== '' && in_array($tz, timezone_identifiers_list(), true)) {
+            return $tz;
+        }
+
+        return (string) config('app.timezone', 'UTC');
+    }
 
     /**
      * Ordered provider failover chain for the chat agent.
@@ -95,12 +112,21 @@ class WorkspaceConversationAgent implements Agent, Conversational, HasTools
 
     public function instructions(): string
     {
+        $timezone = $this->resolveTimezone();
+        $now = now($timezone);
+
         return view('prompts.conversation.assistant', [
             'brand_name' => $this->workspace->name ?? '',
             'brand_website' => $this->workspace->brand_website ?? '',
             'brand_description' => $this->workspace->brand_description ?? '',
             'brand_voice_traits' => $this->workspace->brand_voice_traits ?? [],
             'content_language' => $this->workspace->content_language,
+            // Give the model a clock: without a "now" and timezone it fabricates
+            // absolute dates for relative asks like "tomorrow 10am" and fails the
+            // after:now schedule validation. ISO 8601 with offset so a scheduled
+            // time round-trips through Carbon::parse unambiguously.
+            'current_datetime' => $now->toIso8601String(),
+            'current_timezone' => $timezone,
             'connected_platforms' => $this->workspace->socialAccounts()
                 ->active()
                 ->get()

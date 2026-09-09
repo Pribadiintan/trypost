@@ -30,6 +30,10 @@ class StoreChatMessageRequest extends FormRequest
             'decisions.*' => ['array'],
             'decisions.*.action' => ['required', Rule::in(['approve', 'reject'])],
             'decisions.*.result' => ['nullable', 'string', 'max:1000'],
+            // The caller's IANA timezone (e.g. "Asia/Jakarta"), so the agent can
+            // resolve relative dates like "tomorrow 10am" against the user's
+            // clock rather than UTC. Validated against PHP's known zones.
+            'timezone' => ['nullable', 'string', 'timezone'],
         ];
     }
 }
