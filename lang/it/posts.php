@@ -225,6 +225,8 @@ return [
     ],
 
     'ai' => [
+        'change_applied' => 'Modifica IA applicata.',
+        'undo' => 'Annulla',
         'generate' => [
             'button_tooltip' => 'Genera con l\'IA',
             'title' => 'Genera post con l\'IA',
@@ -257,6 +259,7 @@ return [
             'apply' => 'Applica',
             'apply_all' => 'Applica tutti',
             'applied' => 'Applicato',
+            'no_longer_matches' => 'Quel suggerimento non corrisponde più al testo attuale.',
             'cancel' => 'Annulla',
         ],
         'image_regenerate' => [

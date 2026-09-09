@@ -225,6 +225,8 @@ return [
     ],
 
     'ai' => [
+        'change_applied' => 'Cambio de IA aplicado.',
+        'undo' => 'Deshacer',
         'generate' => [
             'button_tooltip' => 'Generar con IA',
             'title' => 'Generar post con IA',
@@ -257,6 +259,7 @@ return [
             'apply' => 'Aplicar',
             'apply_all' => 'Aplicar todas',
             'applied' => 'Aplicada',
+            'no_longer_matches' => 'Esa sugerencia ya no coincide con tu texto actual.',
             'cancel' => 'Cancelar',
         ],
         'image_regenerate' => [

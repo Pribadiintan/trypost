@@ -225,6 +225,8 @@ return [
     ],
 
     'ai' => [
+        'change_applied' => 'Η αλλαγή AI εφαρμόστηκε.',
+        'undo' => 'Αναίρεση',
         'generate' => [
             'button_tooltip' => 'Δημιουργία με AI',
             'title' => 'Δημιουργία δημοσίευσης με AI',
@@ -257,6 +259,7 @@ return [
             'apply' => 'Εφαρμογή',
             'apply_all' => 'Εφαρμογή όλων',
             'applied' => 'Εφαρμόστηκε',
+            'no_longer_matches' => 'Αυτή η πρόταση δεν ταιριάζει πλέον με το τρέχον κείμενό σας.',
             'cancel' => 'Ακύρωση',
         ],
         'image_regenerate' => [

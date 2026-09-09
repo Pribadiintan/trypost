@@ -3,6 +3,7 @@ import { Head, router } from '@inertiajs/vue3';
 import { IconLoader2 } from '@tabler/icons-vue';
 import { trans } from 'laravel-vue-i18n';
 import { computed, onUnmounted, ref, watch } from 'vue';
+import { toast } from 'vue-sonner';
 
 import ConfirmDeleteModal from '@/components/ConfirmDeleteModal.vue';
 import AiGenerateDialog from '@/components/posts/ai/AiGenerateDialog.vue';
@@ -197,11 +198,21 @@ const isAiRegenerateImageOpen = ref(false);
 const selectedAiMediaId = ref<string | null>(null);
 
 const onAiGenerateApply = (newContent: string) => {
-    content.value = newContent;
+    applyAiChange(() => {
+        content.value = newContent;
+    });
 };
 
 const onAiReviewApply = (original: string, suggestion: string) => {
-    content.value = content.value.replace(original, suggestion);
+    if (!content.value.includes(original)) {
+        toast.error(trans('posts.ai.review.no_longer_matches'));
+
+        return;
+    }
+
+    applyAiChange(() => {
+        content.value = content.value.replace(original, suggestion);
+    });
 };
 
 const onOpenAiRegenerateImage = (mediaId: string) => {
@@ -220,9 +231,33 @@ const onAiMediaRegenerated = (payload: {
     media: MediaItem;
     targetMediaId: string;
 }) => {
-    media.value = media.value.map((item) =>
-        item.id === payload.targetMediaId ? payload.media : item,
-    );
+    applyAiChange(() => {
+        media.value = media.value.map((item) =>
+            item.id === payload.targetMediaId ? payload.media : item,
+        );
+    });
+};
+
+/**
+ * Run an AI-driven mutation of content/media, then offer a one-tap Undo. The
+ * pre-change snapshot is restored on Undo; because autosave is debounced (1.5s)
+ * the revert lands before the change is persisted when the user acts promptly.
+ */
+const applyAiChange = (mutate: () => void) => {
+    const previousContent = content.value;
+    const previousMedia = [...media.value];
+
+    mutate();
+
+    toast.success(trans('posts.ai.change_applied'), {
+        action: {
+            label: trans('posts.ai.undo'),
+            onClick: () => {
+                content.value = previousContent;
+                media.value = previousMedia;
+            },
+        },
+    });
 };
 
 const isPostActionDisabled = computed(
@@ -590,7 +625,7 @@ usePostEcho(post.value.id, '.post.comment.created', (e: any) => {
         v-model:open="isAiRegenerateCaptionOpen"
         :post-id="post.id"
         :content="content"
-        @apply="content = $event"
+        @apply="onAiGenerateApply"
     />
 
     <AiReviewDialog

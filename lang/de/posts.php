@@ -227,6 +227,8 @@ return [
     ],
 
     'ai' => [
+        'change_applied' => 'KI-Änderung angewendet.',
+        'undo' => 'Rückgängig',
         'generate' => [
             'button_tooltip' => 'Mit KI generieren',
             'title' => 'Beitrag mit KI generieren',
@@ -259,6 +261,7 @@ return [
             'apply' => 'Übernehmen',
             'apply_all' => 'Alle übernehmen',
             'applied' => 'Übernommen',
+            'no_longer_matches' => 'Dieser Vorschlag passt nicht mehr zu deinem aktuellen Text.',
             'cancel' => 'Abbrechen',
         ],
         'image_regenerate' => [

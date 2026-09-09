@@ -225,6 +225,8 @@ return [
     ],
 
     'ai' => [
+        'change_applied' => 'AI-wijziging toegepast.',
+        'undo' => 'Ongedaan maken',
         'generate' => [
             'button_tooltip' => 'Genereren met AI',
             'title' => 'Post genereren met AI',
@@ -257,6 +259,7 @@ return [
             'apply' => 'Toepassen',
             'apply_all' => 'Alles toepassen',
             'applied' => 'Toegepast',
+            'no_longer_matches' => 'Die suggestie komt niet meer overeen met je huidige tekst.',
             'cancel' => 'Annuleren',
         ],
         'image_regenerate' => [

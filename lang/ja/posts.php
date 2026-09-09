@@ -225,6 +225,8 @@ return [
     ],
 
     'ai' => [
+        'change_applied' => 'AIの変更を適用しました。',
+        'undo' => '元に戻す',
         'generate' => [
             'button_tooltip' => 'AI で生成',
             'title' => 'AI で投稿を生成',
@@ -257,6 +259,7 @@ return [
             'apply' => '適用',
             'apply_all' => 'すべて適用',
             'applied' => '適用済み',
+            'no_longer_matches' => 'その提案は現在のテキストと一致しなくなりました。',
             'cancel' => 'キャンセル',
         ],
         'image_regenerate' => [

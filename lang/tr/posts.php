@@ -227,6 +227,8 @@ return [
     ],
 
     'ai' => [
+        'change_applied' => 'Yapay zekâ değişikliği uygulandı.',
+        'undo' => 'Geri al',
         'generate' => [
             'button_tooltip' => 'AI ile oluştur',
             'title' => 'AI ile gönderi oluştur',
@@ -259,6 +261,7 @@ return [
             'apply' => 'Uygula',
             'apply_all' => 'Tümünü uygula',
             'applied' => 'Uygulandı',
+            'no_longer_matches' => 'Bu öneri artık mevcut metninizle eşleşmiyor.',
             'cancel' => 'İptal',
         ],
         'image_regenerate' => [

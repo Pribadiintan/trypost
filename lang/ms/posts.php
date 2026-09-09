@@ -225,6 +225,8 @@ return [
     ],
 
     'ai' => [
+        'change_applied' => 'Perubahan AI digunakan.',
+        'undo' => 'Buat asal',
         'generate' => [
             'button_tooltip' => 'Hasilkan dengan AI',
             'title' => 'Hasilkan hantaran dengan AI',
@@ -257,6 +259,7 @@ return [
             'apply' => 'Gunakan',
             'apply_all' => 'Gunakan semua',
             'applied' => 'Digunakan',
+            'no_longer_matches' => 'Cadangan itu tidak lagi sepadan dengan teks semasa anda.',
             'cancel' => 'Batal',
         ],
         'image_regenerate' => [

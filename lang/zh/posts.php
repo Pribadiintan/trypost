@@ -225,6 +225,8 @@ return [
     ],
 
     'ai' => [
+        'change_applied' => '已应用 AI 更改。',
+        'undo' => '撤销',
         'generate' => [
             'button_tooltip' => '用 AI 生成',
             'title' => '用 AI 生成帖子',
@@ -257,6 +259,7 @@ return [
             'apply' => '应用',
             'apply_all' => '全部应用',
             'applied' => '已应用',
+            'no_longer_matches' => '该建议已不再与您当前的文本匹配。',
             'cancel' => '取消',
         ],
         'image_regenerate' => [

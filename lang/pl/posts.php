@@ -225,6 +225,8 @@ return [
     ],
 
     'ai' => [
+        'change_applied' => 'Zastosowano zmianę AI.',
+        'undo' => 'Cofnij',
         'generate' => [
             'button_tooltip' => 'Wygeneruj z AI',
             'title' => 'Wygeneruj post z AI',
@@ -257,6 +259,7 @@ return [
             'apply' => 'Zastosuj',
             'apply_all' => 'Zastosuj wszystkie',
             'applied' => 'Zastosowano',
+            'no_longer_matches' => 'Ta sugestia nie pasuje już do bieżącego tekstu.',
             'cancel' => 'Anuluj',
         ],
         'image_regenerate' => [
