@@ -260,6 +260,8 @@ return [
             'apply_all' => '全部应用',
             'applied' => '已应用',
             'no_longer_matches' => '该建议已不再与您当前的文本匹配。',
+            'error' => '审阅时出现问题，请重试。',
+            'retry' => '重试',
             'cancel' => '取消',
         ],
         'image_regenerate' => [

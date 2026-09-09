@@ -260,6 +260,8 @@ return [
             'apply_all' => 'Aplicar todas',
             'applied' => 'Aplicada',
             'no_longer_matches' => 'Essa sugestão não corresponde mais ao seu texto atual.',
+            'error' => 'Algo deu errado durante a revisão. Tente novamente.',
+            'retry' => 'Tentar novamente',
             'cancel' => 'Cancelar',
         ],
         'image_regenerate' => [

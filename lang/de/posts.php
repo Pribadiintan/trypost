@@ -262,6 +262,8 @@ return [
             'apply_all' => 'Alle übernehmen',
             'applied' => 'Übernommen',
             'no_longer_matches' => 'Dieser Vorschlag passt nicht mehr zu deinem aktuellen Text.',
+            'error' => 'Bei der Überprüfung ist etwas schiefgelaufen. Bitte versuche es erneut.',
+            'retry' => 'Erneut versuchen',
             'cancel' => 'Abbrechen',
         ],
         'image_regenerate' => [

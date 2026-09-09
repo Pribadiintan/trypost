@@ -260,6 +260,8 @@ return [
             'apply_all' => 'Alles toepassen',
             'applied' => 'Toegepast',
             'no_longer_matches' => 'Die suggestie komt niet meer overeen met je huidige tekst.',
+            'error' => 'Er ging iets mis tijdens het beoordelen. Probeer het opnieuw.',
+            'retry' => 'Opnieuw proberen',
             'cancel' => 'Annuleren',
         ],
         'image_regenerate' => [

@@ -260,6 +260,8 @@ return [
             'apply_all' => 'Gunakan semua',
             'applied' => 'Digunakan',
             'no_longer_matches' => 'Cadangan itu tidak lagi sepadan dengan teks semasa anda.',
+            'error' => 'Sesuatu tidak kena semasa semakan. Sila cuba lagi.',
+            'retry' => 'Cuba lagi',
             'cancel' => 'Batal',
         ],
         'image_regenerate' => [

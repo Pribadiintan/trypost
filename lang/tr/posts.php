@@ -262,6 +262,8 @@ return [
             'apply_all' => 'Tümünü uygula',
             'applied' => 'Uygulandı',
             'no_longer_matches' => 'Bu öneri artık mevcut metninizle eşleşmiyor.',
+            'error' => 'İnceleme sırasında bir hata oluştu. Lütfen tekrar deneyin.',
+            'retry' => 'Tekrar dene',
             'cancel' => 'İptal',
         ],
         'image_regenerate' => [

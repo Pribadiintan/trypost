@@ -260,6 +260,8 @@ return [
             'apply_all' => '모두 적용',
             'applied' => '적용됨',
             'no_longer_matches' => '해당 제안이 현재 텍스트와 더 이상 일치하지 않습니다.',
+            'error' => '검토 중 문제가 발생했습니다. 다시 시도해 주세요.',
+            'retry' => '다시 시도',
             'cancel' => '취소',
         ],
         'image_regenerate' => [

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { useHttp } from '@inertiajs/vue3';
+import { trans } from 'laravel-vue-i18n';
 import { computed, ref, watch } from 'vue';
 
 import { Button } from '@/components/ui/button';
@@ -54,7 +55,7 @@ const startReview = async () => {
         status.value = 'completed';
     } catch {
         status.value = 'failed';
-        errorMessage.value = 'Network error';
+        errorMessage.value = trans('posts.ai.review.error');
     }
 };
 
@@ -181,6 +182,12 @@ watch(open, (isOpen) => {
             </div>
 
             <DialogFooter>
+                <Button
+                    v-if="status === 'failed'"
+                    @click="startReview"
+                >
+                    {{ $t('posts.ai.review.retry') }}
+                </Button>
                 <Button
                     v-if="hasSuggestions"
                     :disabled="allApplied"
