@@ -204,14 +204,67 @@ const onReferenceAdded = (newItem: MediaItem) => {
 
 const promptLength = computed(() => [...prompt.value.trim()].length);
 
+/**
+ * A style is usable for the chosen format when it declares no format
+ * restriction (empty supported_formats = universal) or explicitly lists the
+ * selected format. Before a format is picked, every style is allowed.
+ */
+const styleSupportsFormat = (entry: CatalogStyle): boolean => {
+    if (format.value === null) return true;
+    if (!entry.supported_formats || entry.supported_formats.length === 0) {
+        return true;
+    }
+
+    return entry.supported_formats.includes(format.value);
+};
+
+const selectedStyle = computed(
+    () => props.catalog.styles.find((entry) => entry.key === style.value) ?? null,
+);
+
+const styleCompatible = computed(
+    () => selectedStyle.value !== null && styleSupportsFormat(selectedStyle.value),
+);
+
+// When the chosen format no longer supports the selected style, fall back to
+// the first compatible style so the user is never stuck on an invalid combo.
+watch(format, () => {
+    if (selectedStyle.value && styleSupportsFormat(selectedStyle.value)) {
+        return;
+    }
+
+    const fallback = props.catalog.styles.find((entry) =>
+        styleSupportsFormat(entry),
+    );
+
+    if (fallback) {
+        style.value = fallback.key;
+    }
+});
+
 const canContinue = computed(() => {
     return (
         format.value !== null &&
         accountId.value !== null &&
         style.value !== null &&
+        styleCompatible.value &&
         promptLength.value >= PROMPT_MIN &&
         promptLength.value <= PROMPT_MAX
     );
+});
+
+/**
+ * The first unmet requirement, surfaced under the disabled generate button so
+ * the user knows why they cannot continue instead of facing a dead button.
+ */
+const blockingReason = computed<string | null>(() => {
+    if (format.value === null) return trans('posts.wizard.need_format');
+    if (accountId.value === null) return trans('posts.wizard.need_account');
+    if (!styleCompatible.value) return trans('posts.wizard.need_compatible_style');
+    if (promptLength.value < PROMPT_MIN) return trans('posts.wizard.need_prompt');
+    if (promptLength.value > PROMPT_MAX) return trans('posts.wizard.prompt_too_long');
+
+    return null;
 });
 
 const generate = (): void => {
@@ -402,12 +455,18 @@ void checkCredits();
                     v-for="entry in catalog.styles"
                     :key="entry.key"
                     type="button"
-                    class="group relative flex cursor-pointer flex-col overflow-hidden rounded-xl border-2 border-foreground bg-card text-left shadow-2xs transition-all hover:-translate-y-0.5 hover:shadow-md"
+                    :disabled="!styleSupportsFormat(entry)"
+                    class="group relative flex cursor-pointer flex-col overflow-hidden rounded-xl border-2 border-foreground bg-card text-left shadow-2xs transition-all hover:-translate-y-0.5 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:translate-y-0 disabled:hover:shadow-2xs"
                     :class="{
                         '!bg-violet-100 shadow-md ring-2 ring-foreground':
                             style === entry.key,
                     }"
-                    @click="style = entry.key"
+                    :title="
+                        !styleSupportsFormat(entry)
+                            ? $t('posts.wizard.style_unsupported_for_format')
+                            : undefined
+                    "
+                    @click="styleSupportsFormat(entry) && (style = entry.key)"
                 >
                     <div class="aspect-video w-full overflow-hidden bg-muted">
                         <img
@@ -618,32 +677,41 @@ void checkCredits();
         </p>
 
         <!-- Generation Actions -->
-        <div class="flex items-center justify-between gap-3 pt-2">
-            <Button
-                variant="ghost"
-                :disabled="submitting"
-                @click="emit('cancel')"
-            >
-                {{ $t('common.back') }}
-            </Button>
+        <div class="space-y-2 pt-2">
+            <div class="flex items-center justify-between gap-3">
+                <Button
+                    variant="ghost"
+                    :disabled="submitting"
+                    @click="emit('cancel')"
+                >
+                    {{ $t('common.back') }}
+                </Button>
 
-            <Button
-                size="lg"
-                class="gap-2 font-bold"
-                :disabled="
-                    !canContinue ||
-                    submitting ||
-                    (credits !== null && !credits.allowed)
-                "
-                @click="generate"
+                <Button
+                    size="lg"
+                    class="gap-2 font-bold"
+                    :disabled="
+                        !canContinue ||
+                        submitting ||
+                        (credits !== null && !credits.allowed)
+                    "
+                    @click="generate"
+                >
+                    <IconSparkles class="size-4" />
+                    {{
+                        submitting
+                            ? $t('posts.wizard.submitting')
+                            : $t('posts.wizard.generate')
+                    }}
+                </Button>
+            </div>
+
+            <p
+                v-if="blockingReason && !submitting"
+                class="text-right text-xs font-medium text-foreground/60"
             >
-                <IconSparkles class="size-4" />
-                {{
-                    submitting
-                        ? $t('posts.wizard.submitting')
-                        : $t('posts.wizard.generate')
-                }}
-            </Button>
+                {{ blockingReason }}
+            </p>
         </div>
     </div>
 </template>
