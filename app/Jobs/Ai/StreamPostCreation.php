@@ -128,6 +128,7 @@ class StreamPostCreation implements ShouldBeUnique, ShouldQueue
         }
 
         $workspace = Workspace::findOrFail($this->workspaceId);
+        $workspace->loadMissing('brandVariants');
         $socialAccount = $this->socialAccountId ? SocialAccount::find($this->socialAccountId) : null;
 
         $style = app(AiTemplateRegistry::class)->find($this->template);

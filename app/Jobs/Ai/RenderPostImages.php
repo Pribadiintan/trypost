@@ -120,6 +120,7 @@ class RenderPostImages implements ShouldBeUnique, ShouldQueue
         }
 
         $workspace = Workspace::findOrFail($this->workspaceId);
+        $workspace->loadMissing('brandVariants');
         $post = $workspace->posts()->whereKey($generation->post_id)->firstOrFail();
         $socialAccount = $generation->social_account_id !== null
             ? SocialAccount::find($generation->social_account_id)

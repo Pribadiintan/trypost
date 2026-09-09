@@ -54,7 +54,7 @@ final class PostGenerationCatalog
 
     public static function forWorkspace(Workspace $workspace, ?string $locale = null): array
     {
-        $cacheKey = "post_generation_catalog:{$workspace->id}:" . ($locale ?? 'default');
+        $cacheKey = "post_generation_catalog:{$workspace->id}:".($locale ?? 'default');
 
         return Cache::remember($cacheKey, self::CACHE_TTL_SECONDS, function () use ($workspace, $locale) {
             $accountsByPlatform = $workspace->socialAccounts()->active()->get()
@@ -191,9 +191,10 @@ final class PostGenerationCatalog
      */
     private static function buildLanguages(Workspace $workspace): array
     {
-        $labels = $workspace->brandVariants()
-            ->orderBy('sort_order')
-            ->get()
+        $labels = ($workspace->relationLoaded('brandVariants')
+            ? $workspace->brandVariants
+            : $workspace->brandVariants()->get())
+            ->sortBy('sort_order')
             ->mapWithKeys(fn (BrandVariant $variant): array => [
                 $variant->language_code => $variant->label ?: $variant->language_code,
             ])
