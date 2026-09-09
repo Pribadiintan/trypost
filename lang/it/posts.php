@@ -268,6 +268,14 @@ return [
             'button' => 'Regola',
             'title' => 'Regola immagine IA',
             'instruction_label' => 'Istruzione',
+            'source_alt' => 'Immagine in modifica',
+            'quick_edits' => [
+                'brighten' => 'Rendila più luminosa',
+                'remove_background' => 'Rimuovi lo sfondo',
+                'night' => 'Cambia in notte',
+                'warmer' => 'Toni più caldi',
+                'sharpen' => 'Accentua i dettagli',
+            ],
             'cancel' => 'Annulla',
             'fallback_title' => 'Migliora il testo di questa immagine',
             'errors' => [

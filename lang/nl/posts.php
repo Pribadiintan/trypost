@@ -268,6 +268,14 @@ return [
             'button' => 'Aanpassen',
             'title' => 'AI-afbeelding aanpassen',
             'instruction_label' => 'Instructie',
+            'source_alt' => 'Huidige afbeelding in bewerking',
+            'quick_edits' => [
+                'brighten' => 'Maak helderder',
+                'remove_background' => 'Achtergrond verwijderen',
+                'night' => 'Naar nacht wijzigen',
+                'warmer' => 'Warmere tinten',
+                'sharpen' => 'Details verscherpen',
+            ],
             'cancel' => 'Annuleren',
             'fallback_title' => 'Verbeter deze afbeeldingstekst',
             'errors' => [

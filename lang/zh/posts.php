@@ -268,6 +268,14 @@ return [
             'button' => '调整',
             'title' => '调整 AI 图片',
             'instruction_label' => '指令',
+            'source_alt' => '正在编辑的图片',
+            'quick_edits' => [
+                'brighten' => '调亮一些',
+                'remove_background' => '移除背景',
+                'night' => '改为夜景',
+                'warmer' => '更暖色调',
+                'sharpen' => '锐化细节',
+            ],
             'cancel' => '取消',
             'fallback_title' => '优化这张图片的文案',
             'errors' => [

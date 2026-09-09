@@ -268,6 +268,14 @@ return [
             'button' => '調整',
             'title' => 'AI 画像を調整',
             'instruction_label' => '指示',
+            'source_alt' => '編集中の画像',
+            'quick_edits' => [
+                'brighten' => '明るくする',
+                'remove_background' => '背景を削除',
+                'night' => '夜に変更',
+                'warmer' => '暖色にする',
+                'sharpen' => 'ディテールをシャープに',
+            ],
             'cancel' => 'キャンセル',
             'fallback_title' => 'この画像のコピーを改善',
             'errors' => [

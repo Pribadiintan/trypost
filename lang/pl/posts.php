@@ -268,6 +268,14 @@ return [
             'button' => 'Dostosuj',
             'title' => 'Dostosuj obraz AI',
             'instruction_label' => 'Instrukcja',
+            'source_alt' => 'Aktualnie edytowany obraz',
+            'quick_edits' => [
+                'brighten' => 'Rozjaśnij',
+                'remove_background' => 'Usuń tło',
+                'night' => 'Zmień na noc',
+                'warmer' => 'Cieplejsze tony',
+                'sharpen' => 'Wyostrz szczegóły',
+            ],
             'cancel' => 'Anuluj',
             'fallback_title' => 'Ulepsz tekst tego obrazu',
             'errors' => [

@@ -268,6 +268,14 @@ return [
             'button' => '조정',
             'title' => 'AI 이미지 조정',
             'instruction_label' => '지시사항',
+            'source_alt' => '편집 중인 이미지',
+            'quick_edits' => [
+                'brighten' => '더 밝게',
+                'remove_background' => '배경 제거',
+                'night' => '야간으로 변경',
+                'warmer' => '따뜻한 톤',
+                'sharpen' => '디테일 선명하게',
+            ],
             'cancel' => '취소',
             'fallback_title' => '이 이미지 문구 개선',
             'errors' => [

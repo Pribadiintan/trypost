@@ -270,6 +270,14 @@ return [
             'button' => 'Ayarla',
             'title' => 'AI görselini ayarla',
             'instruction_label' => 'Talimat',
+            'source_alt' => 'Düzenlenen görsel',
+            'quick_edits' => [
+                'brighten' => 'Daha parlak yap',
+                'remove_background' => 'Arka planı kaldır',
+                'night' => 'Geceye çevir',
+                'warmer' => 'Daha sıcak tonlar',
+                'sharpen' => 'Ayrıntıları keskinleştir',
+            ],
             'cancel' => 'İptal',
             'fallback_title' => 'Bu görsel metnini iyileştir',
             'errors' => [

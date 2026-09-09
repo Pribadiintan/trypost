@@ -270,6 +270,14 @@ return [
             'button' => 'Anpassen',
             'title' => 'KI-Bild anpassen',
             'instruction_label' => 'Anweisung',
+            'source_alt' => 'Aktuell bearbeitetes Bild',
+            'quick_edits' => [
+                'brighten' => 'Heller machen',
+                'remove_background' => 'Hintergrund entfernen',
+                'night' => 'In Nacht ändern',
+                'warmer' => 'Wärmere Töne',
+                'sharpen' => 'Details schärfen',
+            ],
             'cancel' => 'Abbrechen',
             'fallback_title' => 'Diesen Bildtext verbessern',
             'errors' => [

@@ -268,6 +268,14 @@ return [
             'button' => 'Ajuster',
             'title' => 'Ajuster l\'image IA',
             'instruction_label' => 'Instruction',
+            'source_alt' => 'Image en cours de modification',
+            'quick_edits' => [
+                'brighten' => 'Rendre plus lumineux',
+                'remove_background' => 'Supprimer l\'arrière-plan',
+                'night' => 'Passer en nuit',
+                'warmer' => 'Tons plus chauds',
+                'sharpen' => 'Accentuer les détails',
+            ],
             'cancel' => 'Annuler',
             'fallback_title' => 'Améliorer le texte de cette image',
             'errors' => [

@@ -288,6 +288,14 @@ return [
                 ],
             ],
             'instruction_label' => 'Arahan',
+            'source_alt' => 'Imej yang sedang disunting',
+            'quick_edits' => [
+                'brighten' => 'Jadikan lebih cerah',
+                'remove_background' => 'Buang latar belakang',
+                'night' => 'Tukar ke malam',
+                'warmer' => 'Ton lebih hangat',
+                'sharpen' => 'Tajamkan perincian',
+            ],
             'instruction_placeholders' => [
                 'text_only' => 'cth. Tukar “ECP” kepada “ICP” dalam tajuk utama.',
                 'image_only' => 'cth. Gantikan latar belakang dengan hutan matahari terbit.',

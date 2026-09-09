@@ -268,6 +268,14 @@ return [
             'button' => 'Ajustar',
             'title' => 'Ajustar imagen con IA',
             'instruction_label' => 'Instrucción',
+            'source_alt' => 'Imagen que se está editando',
+            'quick_edits' => [
+                'brighten' => 'Hazla más brillante',
+                'remove_background' => 'Quitar el fondo',
+                'night' => 'Cambiar a noche',
+                'warmer' => 'Tonos más cálidos',
+                'sharpen' => 'Enfocar detalles',
+            ],
             'cancel' => 'Cancelar',
             'fallback_title' => 'Mejorar este texto de imagen',
             'errors' => [

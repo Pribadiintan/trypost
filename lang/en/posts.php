@@ -288,6 +288,14 @@ return [
                 ],
             ],
             'instruction_label' => 'Instruction',
+            'source_alt' => 'Current image being edited',
+            'quick_edits' => [
+                'brighten' => 'Make it brighter',
+                'remove_background' => 'Remove the background',
+                'night' => 'Change to night',
+                'warmer' => 'Warmer tones',
+                'sharpen' => 'Sharpen details',
+            ],
             'instruction_placeholders' => [
                 'text_only' => 'e.g. Change “ECP” to “ICP” in the headline.',
                 'image_only' => 'e.g. Replace the background with a sunrise forest.',

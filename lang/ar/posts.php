@@ -268,6 +268,14 @@ return [
             'button' => 'تعديل',
             'title' => 'تعديل صورة الذكاء الاصطناعي',
             'instruction_label' => 'التعليمات',
+            'source_alt' => 'الصورة الحالية قيد التعديل',
+            'quick_edits' => [
+                'brighten' => 'اجعلها أكثر سطوعًا',
+                'remove_background' => 'أزل الخلفية',
+                'night' => 'حوّلها إلى ليل',
+                'warmer' => 'ألوان أدفأ',
+                'sharpen' => 'زد حدة التفاصيل',
+            ],
             'cancel' => 'إلغاء',
             'fallback_title' => 'تحسين نص هذه الصورة',
             'errors' => [
