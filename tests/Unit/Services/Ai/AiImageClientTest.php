@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Enums\Workspace\ImageStyle;
 use App\Services\Ai\AiImageClient;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Storage;
 use Laravel\Ai\Image;
 use Laravel\Ai\Prompts\ImagePrompt;
 use Laravel\Ai\Responses\Data\Meta;
@@ -247,6 +248,92 @@ test('generate returns null instead of throwing when the provider responds with 
     expect($client->generate(['x'], ImageStyle::Cinematic))->toBeNull();
 });
 
+test('generate retries a transient failure and succeeds on a later attempt', function () {
+    config()->set('ai.image.max_attempts', 3);
+    config()->set('ai.image.retry_delay_ms', 0);
+
+    $bytes = base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==');
+    $attempts = 0;
+
+    // Mirrors the prod fault: the first calls throw (BytePlus timeout / 5xx /
+    // body the SDK can't parse -> TypeError), then the provider recovers.
+    Image::fake(function () use (&$attempts, $bytes) {
+        $attempts++;
+
+        if ($attempts < 3) {
+            throw new RuntimeException('cURL error 28: Operation timed out');
+        }
+
+        return base64_encode($bytes);
+    });
+
+    $client = new AiImageClient;
+    $result = $client->generate(['kitchen'], ImageStyle::Cinematic);
+
+    expect($attempts)->toBe(3)
+        ->and($result)->not->toBeNull()
+        ->and($result['bytes'])->toBe($bytes);
+});
+
+test('generate returns null after exhausting every retry attempt', function () {
+    config()->set('ai.image.max_attempts', 3);
+    config()->set('ai.image.retry_delay_ms', 0);
+
+    $attempts = 0;
+    Image::fake(function () use (&$attempts) {
+        $attempts++;
+        throw new RuntimeException('cURL error 28: Operation timed out');
+    });
+
+    $client = new AiImageClient;
+    $result = $client->generate(['x'], ImageStyle::Cinematic);
+
+    expect($result)->toBeNull()
+        ->and($attempts)->toBe(3);
+});
+
+test('generate does not retry when max_attempts is 1', function () {
+    config()->set('ai.image.max_attempts', 1);
+    config()->set('ai.image.retry_delay_ms', 0);
+
+    $attempts = 0;
+    Image::fake(function () use (&$attempts) {
+        $attempts++;
+        throw new RuntimeException('boom');
+    });
+
+    $client = new AiImageClient;
+    $result = $client->generate(['x'], ImageStyle::Cinematic);
+
+    expect($result)->toBeNull()
+        ->and($attempts)->toBe(1);
+});
+
+test('generate returns null when the provider keeps responding with no image', function () {
+    config()->set('ai.image.max_attempts', 3);
+    config()->set('ai.image.retry_delay_ms', 0);
+
+    $attempts = 0;
+    Image::fake(function () use (&$attempts) {
+        $attempts++;
+
+        return new ImageResponse(
+            new Collection,
+            new Usage,
+            new Meta('openai', 'gpt-image-2'),
+        );
+    });
+
+    $client = new AiImageClient;
+    $result = $client->generate(['x'], ImageStyle::Cinematic);
+
+    // An empty ImageResponse throws when the SDK casts it to bytes, so it is
+    // indistinguishable from a transient fault and is retried; the important
+    // guarantee is that the caller still gets null to fall back on.
+    expect($result)->toBeNull()
+        ->and($attempts)->toBe(3);
+});
+
 test('generate uses high resolution 2K sizes when BytePlus Seedream is configured', function (string $orientation, string $expectedSize) {
     config()->set('ai.providers.openai.models.image.default', 'seedream-4-5-251128');
     Image::fake();
@@ -262,8 +349,8 @@ test('generate uses high resolution 2K sizes when BytePlus Seedream is configure
 ]);
 
 test('generate attaches reference images and adds subject consistency prompt instructions', function () {
-    \Illuminate\Support\Facades\Storage::fake();
-    \Illuminate\Support\Facades\Storage::put('medias/sara_reference.jpg', 'fake-image-data');
+    Storage::fake();
+    Storage::put('medias/sara_reference.jpg', 'fake-image-data');
 
     Image::fake();
 
@@ -282,3 +369,78 @@ test('generate attaches reference images and adds subject consistency prompt ins
     });
 });
 
+test('generate drops reference attachments for Seedream (text-to-image only, no images/edits support)', function () {
+    // Seedream returns an empty 200 body on images/edits, which the SDK turns
+    // into a TypeError. Reference photos must be dropped so the call stays on
+    // images/generations and still produces an image.
+    config()->set('ai.providers.openai.models.image.default', 'seedream-4-5-251128');
+
+    Storage::fake();
+    Storage::put('medias/ref.jpg', 'fake-image-data');
+
+    Image::fake();
+
+    $client = new AiImageClient;
+    $result = $client->generate(
+        keywords: ['office desk'],
+        style: ImageStyle::Cinematic,
+        referenceImages: ['medias/ref.jpg'],
+    );
+
+    expect($result)->not->toBeNull();
+    Image::assertGenerated(fn (ImagePrompt $prompt) => $prompt->attachments->isEmpty()
+        && ! $prompt->contains('SUBJECT & PERSONA CONSISTENCY'));
+});
+
+test('generate keeps reference attachments for an edit-capable provider', function () {
+    Storage::fake();
+    Storage::put('medias/ref.jpg', 'fake-image-data');
+
+    Image::fake();
+
+    $client = new AiImageClient;
+    $client->generate(
+        keywords: ['office desk'],
+        style: ImageStyle::Cinematic,
+        referenceImages: ['medias/ref.jpg'],
+    );
+
+    Image::assertGenerated(fn (ImagePrompt $prompt) => count($prompt->attachments) === 1);
+});
+
+test('ai.image.supports_edits config explicitly overrides provider inference', function () {
+    config()->set('ai.image.supports_edits', false);
+
+    Storage::fake();
+    Storage::put('medias/ref.jpg', 'fake-image-data');
+
+    Image::fake();
+
+    $client = new AiImageClient;
+    $client->generate(
+        keywords: ['office desk'],
+        style: ImageStyle::Cinematic,
+        referenceImages: ['medias/ref.jpg'],
+    );
+
+    Image::assertGenerated(fn (ImagePrompt $prompt) => $prompt->attachments->isEmpty());
+});
+
+test('ai.image.supports_edits=true forces attachments even for Seedream', function () {
+    config()->set('ai.providers.openai.models.image.default', 'seedream-4-5-251128');
+    config()->set('ai.image.supports_edits', true);
+
+    Storage::fake();
+    Storage::put('medias/ref.jpg', 'fake-image-data');
+
+    Image::fake();
+
+    $client = new AiImageClient;
+    $client->generate(
+        keywords: ['office desk'],
+        style: ImageStyle::Cinematic,
+        referenceImages: ['medias/ref.jpg'],
+    );
+
+    Image::assertGenerated(fn (ImagePrompt $prompt) => count($prompt->attachments) === 1);
+});

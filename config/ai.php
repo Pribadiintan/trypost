@@ -42,6 +42,33 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Image Generation Resilience
+    |--------------------------------------------------------------------------
+    |
+    | The image endpoint (e.g. BytePlus Seedream via the OpenAI-compatible
+    | driver) is the flakiest hop in the AI post pipeline: a provider timeout,
+    | a 5xx, or a body the SDK cannot parse all surface as a thrown error. To
+    | avoid failing a whole generation on a single transient hiccup,
+    | AiImageClient retries the call up to `max_attempts` times with a linear
+    | backoff of `retry_delay_ms` between attempts. Set max_attempts to 1 to
+    | disable retrying.
+    |
+    */
+
+    'image' => [
+        'max_attempts' => (int) env('AI_IMAGE_MAX_ATTEMPTS', 3),
+        'retry_delay_ms' => (int) env('AI_IMAGE_RETRY_DELAY_MS', 500),
+
+        // Whether the image provider implements the image-to-image
+        // `images/edits` endpoint used for brand reference-photo conditioning.
+        // null (default) = infer from the model/URL (BytePlus Seedream is
+        // text-to-image only and is treated as unsupported; everything else
+        // supported). Set AI_IMAGE_SUPPORTS_EDITS explicitly to override.
+        'supports_edits' => env('AI_IMAGE_SUPPORTS_EDITS'),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | AI Providers
     |--------------------------------------------------------------------------
     |

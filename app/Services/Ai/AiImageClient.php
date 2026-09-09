@@ -50,7 +50,18 @@ class AiImageClient
             return null;
         }
 
-        $attachments = $this->resolveAttachments($referenceImages);
+        // Whether the configured image provider supports the image-to-image
+        // `images/edits` endpoint. When reference images are present the SDK
+        // routes to `images/edits`; BytePlus Seedream only implements
+        // text-to-image (`images/generations`) and answers `images/edits` with
+        // an empty 200 body, which the SDK then feeds to extractUsage() as null
+        // and throws — failing the whole generation. So for a provider without
+        // edit support we drop the attachments and generate from the prompt
+        // alone (brand reference photos are a best-effort enhancement, not a
+        // hard requirement) rather than losing the image entirely.
+        $supportsEdits = $this->providerSupportsImageEdits();
+
+        $attachments = $supportsEdits ? $this->resolveAttachments($referenceImages) : [];
 
         $prompt = $this->buildPrompt(
             keywords: $keywords,
@@ -67,32 +78,101 @@ class AiImageClient
             hasReferenceImages: ! empty($attachments),
         );
 
-        try {
-            $builder = Image::of($prompt)->quality($quality)->timeout($timeout);
+        $isSeedream = str_contains((string) config('ai.providers.openai.models.image.default'), 'seedream')
+            || str_contains((string) config('ai.providers.openai.url'), 'byteplus');
 
-            if (! empty($attachments)) {
-                $builder = $builder->attachments($attachments);
+        // The image endpoint is the flakiest hop in the pipeline: a provider
+        // timeout, a 5xx, or a body the SDK cannot parse all surface here as a
+        // thrown Throwable (laravel/ai's generateImage() calls extractUsage()
+        // on a null $response->json() with no success guard, turning a
+        // transient failure into a TypeError). Rather than fail the whole
+        // generation on the first hiccup, retry a few times with a short
+        // backoff; only a run of failures returns null so the caller can fall
+        // back to a stock photo.
+        $attempts = max(1, (int) config('ai.image.max_attempts', 3));
+        $baseDelayMs = max(0, (int) config('ai.image.retry_delay_ms', 500));
+
+        $lastError = null;
+
+        for ($attempt = 1; $attempt <= $attempts; $attempt++) {
+            try {
+                $builder = Image::of($prompt)->quality($quality)->timeout($timeout);
+
+                if (! empty($attachments)) {
+                    $builder = $builder->attachments($attachments);
+                }
+
+                $builder = match ($orientation) {
+                    'portrait' => $isSeedream ? $builder->size('1664x2496') : $builder->portrait(),
+                    'landscape' => $isSeedream ? $builder->size('2496x1664') : $builder->landscape(),
+                    default => $isSeedream ? $builder->size('2048x2048') : $builder->square(),
+                };
+
+                $result = $this->toResult($builder->generate());
+
+                // A null result means the provider answered but produced no
+                // usable image — that is not a transient fault a retry fixes,
+                // so stop and let the caller fall back.
+                if ($result === null) {
+                    Log::warning('AiImageClient: generation produced no image', [
+                        'style' => $style->value,
+                        'orientation' => $orientation,
+                        'attempt' => $attempt,
+                    ]);
+
+                    return null;
+                }
+
+                return $result;
+            } catch (Throwable $e) {
+                $lastError = $e;
+
+                Log::warning('AiImageClient: generation attempt failed', [
+                    'style' => $style->value,
+                    'orientation' => $orientation,
+                    'attempt' => $attempt,
+                    'max_attempts' => $attempts,
+                    'error' => $e->getMessage(),
+                ]);
+
+                if ($attempt < $attempts && $baseDelayMs > 0) {
+                    // Linear backoff (500ms, 1000ms, ...). usleep takes µs.
+                    usleep($baseDelayMs * 1000 * $attempt);
+                }
             }
-
-            $isSeedream = str_contains((string) config('ai.providers.openai.models.image.default'), 'seedream')
-                || str_contains((string) config('ai.providers.openai.url'), 'byteplus');
-
-            $builder = match ($orientation) {
-                'portrait' => $isSeedream ? $builder->size('1664x2496') : $builder->portrait(),
-                'landscape' => $isSeedream ? $builder->size('2496x1664') : $builder->landscape(),
-                default => $isSeedream ? $builder->size('2048x2048') : $builder->square(),
-            };
-
-            return $this->toResult($builder->generate());
-        } catch (Throwable $e) {
-            Log::warning('AiImageClient: generation failed', [
-                'style' => $style->value,
-                'orientation' => $orientation,
-                'error' => $e->getMessage(),
-            ]);
-
-            return null;
         }
+
+        Log::warning('AiImageClient: generation failed after retries', [
+            'style' => $style->value,
+            'orientation' => $orientation,
+            'attempts' => $attempts,
+            'error' => $lastError?->getMessage(),
+        ]);
+
+        return null;
+    }
+
+    /**
+     * Whether the configured image provider implements the image-to-image
+     * `images/edits` endpoint (reference-image conditioning).
+     *
+     * Config `ai.image.supports_edits` is the explicit override. When unset it
+     * is inferred: BytePlus Seedream is text-to-image only and returns an empty
+     * 200 body on `images/edits`, so it is treated as unsupported; every other
+     * provider (OpenAI gpt-image, etc.) defaults to supported.
+     */
+    private function providerSupportsImageEdits(): bool
+    {
+        $configured = config('ai.image.supports_edits');
+
+        if ($configured !== null) {
+            return (bool) $configured;
+        }
+
+        $isSeedream = str_contains((string) config('ai.providers.openai.models.image.default'), 'seedream')
+            || str_contains((string) config('ai.providers.openai.url'), 'byteplus');
+
+        return ! $isSeedream;
     }
 
     /**

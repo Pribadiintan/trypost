@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Ai\Agents;
 
+use App\Ai\Agents\Concerns\AiTimeouts;
 use App\Ai\Agents\Concerns\ResolvesPlatformCopyBudget;
 use App\Ai\Templates\AiContentTemplate;
 use App\Ai\Templates\TemplateContext;
@@ -12,11 +13,13 @@ use App\Models\Workspace;
 use App\Support\ResolvedBrand;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Laravel\Ai\Attributes\Temperature;
+use Laravel\Ai\Attributes\Timeout;
 use Laravel\Ai\Contracts\Agent;
 use Laravel\Ai\Contracts\HasStructuredOutput;
 use Laravel\Ai\Promptable;
 
 #[Temperature(0.7)]
+#[Timeout(AiTimeouts::TEXT_SECONDS)]
 class PostContentGenerator implements Agent, HasStructuredOutput
 {
     use Promptable;

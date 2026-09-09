@@ -38,3 +38,6 @@ yarn-error.log
 
 # WorkBuddy AI working notes (local only)
 /.workbuddy-ai/
+
+# Kiro Crew agent environment (local only)
+/.kiro/

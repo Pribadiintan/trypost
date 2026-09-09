@@ -162,7 +162,11 @@ class RenderPostImages implements ShouldBeUnique, ShouldQueue
                 return;
             }
 
-            $generation->update(['status' => GenerationStatus::Ready]);
+            $generation->update([
+                'status' => GenerationStatus::Ready,
+                'error_phase' => null,
+                'error' => null,
+            ]);
 
             PostCreationReady::dispatch(
                 userId: $this->userId,
