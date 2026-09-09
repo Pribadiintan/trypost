@@ -43,6 +43,7 @@ class AiImageClient
         int $timeout = 180,
         array $typography = [],
         array $referenceImages = [],
+        array $referenceKinds = [],
     ): ?array {
         $keywords = $this->cleanKeywords($keywords);
 
@@ -73,6 +74,7 @@ class AiImageClient
             brandGuidelines: $brandGuidelines,
             typography: $typography,
             hasReferenceImages: $hasReferences,
+            referenceKinds: $hasReferences ? $referenceKinds : [],
         );
 
         $seedreamSize = match ($orientation) {
@@ -302,9 +304,19 @@ class AiImageClient
         ?string $brandGuidelines = null,
         array $typography = [],
         bool $hasReferenceImages = false,
+        array $referenceKinds = [],
     ): string {
         $palette = $this->buildPaletteContext($brandColor, $backgroundColor, $textColor);
         $extendedPalette = $this->cleanExtendedPalette($extendedPalette);
+
+        // Categorise the reference photos so the prompt can treat a logo /
+        // product / style board differently from a person: without this every
+        // reference is prompted as a face to preserve, which mangles a logo.
+        $kinds = array_map('strval', $referenceKinds);
+        $hasPersonReference = (bool) array_intersect($kinds, ['face_closeup', 'full_body']);
+        $hasLogoReference = in_array('logo', $kinds, true);
+        $hasProductReference = in_array('product', $kinds, true);
+        $hasStyleReference = in_array('style', $kinds, true);
 
         return view('prompts.post_image.generator', [
             'style' => $style->value,
@@ -325,6 +337,12 @@ class AiImageClient
             'brand_guidelines' => $this->resolveBrandContext($brandGuidelines, 500),
             'brand_typography' => $this->cleanTypography($typography),
             'has_reference_images' => $hasReferenceImages,
+            // When kinds are unknown (empty) default to the person treatment,
+            // preserving the prior behaviour for callers that pass no kinds.
+            'has_person_reference' => $hasReferenceImages && ($kinds === [] || $hasPersonReference),
+            'has_logo_reference' => $hasReferenceImages && $hasLogoReference,
+            'has_product_reference' => $hasReferenceImages && $hasProductReference,
+            'has_style_reference' => $hasReferenceImages && $hasStyleReference,
         ])->render();
     }
 

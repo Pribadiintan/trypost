@@ -127,6 +127,7 @@ class TweetCardImageTemplate implements AiContentTemplate
                 imageKeywords: $imageKeywords,
                 brand: $context->brand,
                 referenceImages: $context->referenceImages,
+                referenceKinds: $context->referenceKinds,
             );
         }
 
@@ -161,6 +162,7 @@ class TweetCardImageTemplate implements AiContentTemplate
                 slides: $slides,
                 brand: $context->brand,
                 referenceImages: $context->referenceImages,
+                referenceKinds: $context->referenceKinds,
             );
         }
 

@@ -387,8 +387,60 @@ test('generate attaches reference images and adds subject consistency prompt ins
         return count($prompt->attachments) === 1
             && $prompt->attachments[0]->path === 'medias/sara_reference.jpg'
             && $prompt->contains('SUBJECT & PERSONA CONSISTENCY')
-            && $prompt->contains('Maintain faithful visual consistency with the subject');
+            && $prompt->contains("keep the person's identity");
     });
+});
+
+test('a logo reference is prompted as a logo, not as a face to preserve', function () {
+    Storage::fake();
+    Storage::put('medias/logo.png', 'fake-image-data');
+
+    Image::fake();
+
+    $client = new AiImageClient;
+    $client->generate(
+        keywords: ['office desk'],
+        style: ImageStyle::Cinematic,
+        referenceImages: ['medias/logo.png'],
+        referenceKinds: ['logo'],
+    );
+
+    Image::assertGenerated(fn (ImagePrompt $prompt) => $prompt->contains('LOGO FIDELITY')
+        && ! $prompt->contains('SUBJECT & PERSONA CONSISTENCY'));
+});
+
+test('a style reference is prompted as a style guide, not a subject to copy', function () {
+    Storage::fake();
+    Storage::put('medias/moodboard.jpg', 'fake-image-data');
+
+    Image::fake();
+
+    $client = new AiImageClient;
+    $client->generate(
+        keywords: ['office desk'],
+        style: ImageStyle::Cinematic,
+        referenceImages: ['medias/moodboard.jpg'],
+        referenceKinds: ['style'],
+    );
+
+    Image::assertGenerated(fn (ImagePrompt $prompt) => $prompt->contains('STYLE MATCH')
+        && ! $prompt->contains('SUBJECT & PERSONA CONSISTENCY'));
+});
+
+test('references with no kind default to the person treatment (backwards compatible)', function () {
+    Storage::fake();
+    Storage::put('medias/ref.jpg', 'fake-image-data');
+
+    Image::fake();
+
+    $client = new AiImageClient;
+    $client->generate(
+        keywords: ['office desk'],
+        style: ImageStyle::Cinematic,
+        referenceImages: ['medias/ref.jpg'],
+    );
+
+    Image::assertGenerated(fn (ImagePrompt $prompt) => $prompt->contains('SUBJECT & PERSONA CONSISTENCY'));
 });
 
 test('seedream image-to-image sends reference photos as a base64 data-URI image array', function () {

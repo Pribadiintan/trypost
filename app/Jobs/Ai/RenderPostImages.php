@@ -8,6 +8,7 @@ use App\Ai\Templates\AiTemplateRegistry;
 use App\Ai\Templates\TemplateContext;
 use App\Enums\Ai\GenerationFailure;
 use App\Enums\Ai\GenerationStatus;
+use App\Enums\Media\BrandReferenceKind;
 use App\Enums\Media\Source;
 use App\Enums\Notification\Channel as NotificationChannel;
 use App\Enums\Notification\Type as NotificationType;
@@ -129,15 +130,42 @@ class RenderPostImages implements ShouldBeUnique, ShouldQueue
         $brand = $workspace->resolvedBrand($generation->language_code ?? $this->languageCode);
 
         $referenceImages = [];
+        $referenceKinds = [];
         if ($this->referenceMediaIds !== []) {
-            $referenceImages = $workspace->media()
+            $refMedia = $workspace->media()
                 ->whereIn('id', $this->referenceMediaIds)
-                ->pluck('path')
-                ->all();
+                ->get();
         } elseif ($this->useBrandReferences) {
-            $referenceImages = $workspace->getMedia('brand_references')
-                ->pluck('path')
-                ->all();
+            $refMedia = $workspace->getMedia('brand_references')->get();
+        } else {
+            $refMedia = collect();
+        }
+
+        if ($refMedia->isNotEmpty()) {
+            // Order faces/full-body first (identity matters most), then logo,
+            // product, style; cap at the model's reference limit. Carry each
+            // reference's kind so the image prompt treats a logo as a logo, not
+            // a face to preserve.
+            $kindPriority = [
+                'face_closeup' => 0,
+                'full_body' => 1,
+                'logo' => 2,
+                'product' => 3,
+                'style' => 4,
+                'other' => 5,
+            ];
+
+            $ordered = $refMedia
+                ->map(fn ($item) => [
+                    'path' => $item->path,
+                    'kind' => (string) (data_get($item->meta, 'kind') ?? 'other'),
+                ])
+                ->sortBy(fn (array $ref) => $kindPriority[$ref['kind']] ?? 99)
+                ->take(BrandReferenceKind::MAX_REFERENCES)
+                ->values();
+
+            $referenceImages = $ordered->pluck('path')->all();
+            $referenceKinds = $ordered->pluck('kind')->all();
         }
 
         $isCarousel = $generation->format === ContentType::CAROUSEL_FORMAT;
@@ -152,6 +180,7 @@ class RenderPostImages implements ShouldBeUnique, ShouldQueue
             languageCode: $brand->languageCode,
             brand: $brand,
             referenceImages: $referenceImages,
+            referenceKinds: $referenceKinds,
         );
 
         // Resume: reuse slides already rendered on a prior attempt so a retry

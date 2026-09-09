@@ -89,8 +89,19 @@ Brand context (use only to inform tasteful detail choices in the scene, not to s
 @endif
 
 @if(!empty($has_reference_images))
-<subject_reference>
-SUBJECT & PERSONA CONSISTENCY:
-Maintain faithful visual consistency with the subject, character persona, face likeness, and visual aesthetic provided in the reference image attachments. Keep the person's identity, features, hair, and key styling coherent with the reference photos while setting them naturally in the requested scene: {{ $scene }}.
-</subject_reference>
+<reference_images>
+Use the attached reference image(s) as ground truth for the following, integrating them naturally into the requested scene: {{ $scene }}.
+@if(!empty($has_person_reference))
+- SUBJECT & PERSONA CONSISTENCY: keep the person's identity, face likeness, features, hair, and key styling faithfully coherent with the reference photos. Do not invent a different person.
+@endif
+@if(!empty($has_logo_reference))
+- LOGO FIDELITY: reproduce the brand logo exactly as provided — same shapes, proportions, colors, and wordmark. Do NOT redraw, restyle, distort, recolor, or treat it as a face or scene element. Place it cleanly and legibly.
+@endif
+@if(!empty($has_product_reference))
+- PRODUCT FIDELITY: keep the product's form, proportions, materials, and colors true to the reference. Do not alter its design; only change its setting/lighting to fit the scene.
+@endif
+@if(!empty($has_style_reference))
+- STYLE MATCH: match the overall aesthetic, palette, mood, and composition of the reference as a style guide — do NOT copy any specific subject, person, product, or logo from it verbatim.
+@endif
+</reference_images>
 @endif

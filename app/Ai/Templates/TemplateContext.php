@@ -41,5 +41,6 @@ class TemplateContext
         public ?string $languageCode = null,
         public ?ResolvedBrand $brand = null,
         public array $referenceImages = [],
+        public array $referenceKinds = [],
     ) {}
 }

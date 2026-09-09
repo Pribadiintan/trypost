@@ -121,6 +121,7 @@ class ImageCardTemplate implements AiContentTemplate
                 applyBrandVisuals: $context->applyBrandVisuals,
                 brand: $context->brand,
                 referenceImages: $context->referenceImages,
+                referenceKinds: $context->referenceKinds,
                 existingSlideMedia: $context->existingSlideMedia,
             );
 
@@ -156,6 +157,7 @@ class ImageCardTemplate implements AiContentTemplate
                 applyBrandVisuals: $context->applyBrandVisuals,
                 brand: $context->brand,
                 referenceImages: $context->referenceImages,
+                referenceKinds: $context->referenceKinds,
             );
         }
 

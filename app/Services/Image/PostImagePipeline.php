@@ -28,7 +28,7 @@ class PostImagePipeline
      * @param  array<int, string|Image>  $referenceImages
      * @return array<int, array<string, mixed>>
      */
-    public function forSingle(Workspace $workspace, SocialAccount $account, array $structured, ?ContentType $contentType, bool $applyBrandVisuals = true, ?ResolvedBrand $brand = null, array $referenceImages = []): array
+    public function forSingle(Workspace $workspace, SocialAccount $account, array $structured, ?ContentType $contentType, bool $applyBrandVisuals = true, ?ResolvedBrand $brand = null, array $referenceImages = [], array $referenceKinds = []): array
     {
         ['width' => $width, 'height' => $height] = $this->dimensionsForContentType($contentType);
 
@@ -43,6 +43,7 @@ class PostImagePipeline
             applyBrandVisuals: $applyBrandVisuals,
             brand: $brand,
             referenceImages: $referenceImages,
+            referenceKinds: $referenceKinds,
         );
 
         if (! $rendered) {
@@ -67,7 +68,7 @@ class PostImagePipeline
      * @param  array<int, array<string, mixed>>  $existingSlideMedia
      * @return array<int, array<string, mixed>> index => media-item
      */
-    public function forCarousel(Workspace $workspace, SocialAccount $account, array $structured, ?ContentType $contentType, bool $applyBrandVisuals = true, ?ResolvedBrand $brand = null, array $referenceImages = [], array $existingSlideMedia = []): array
+    public function forCarousel(Workspace $workspace, SocialAccount $account, array $structured, ?ContentType $contentType, bool $applyBrandVisuals = true, ?ResolvedBrand $brand = null, array $referenceImages = [], array $referenceKinds = [], array $existingSlideMedia = []): array
     {
         ['width' => $width, 'height' => $height] = $this->dimensionsForContentType($contentType);
 
@@ -93,6 +94,7 @@ class PostImagePipeline
                 applyBrandVisuals: $applyBrandVisuals,
                 brand: $brand,
                 referenceImages: $referenceImages,
+                referenceKinds: $referenceKinds,
             );
 
             if ($rendered) {
@@ -114,7 +116,7 @@ class PostImagePipeline
      * @param  array<int, string|Image>  $referenceImages
      * @return array<int, array<string, mixed>>
      */
-    public function forTweetCard(Workspace $workspace, SocialAccount $account, string $tweetText, ?array $imageKeywords = null, ?ResolvedBrand $brand = null, array $referenceImages = []): array
+    public function forTweetCard(Workspace $workspace, SocialAccount $account, string $tweetText, ?array $imageKeywords = null, ?ResolvedBrand $brand = null, array $referenceImages = [], array $referenceKinds = []): array
     {
         $rendered = $this->generator->renderTweetCard(
             workspace: $workspace,
@@ -123,6 +125,7 @@ class PostImagePipeline
             imageKeywords: $imageKeywords,
             brand: $brand,
             referenceImages: $referenceImages,
+            referenceKinds: $referenceKinds,
         );
 
         if (! $rendered) {
@@ -143,7 +146,7 @@ class PostImagePipeline
      * @param  array<int, string|Image>  $referenceImages
      * @return array<int, array<string, mixed>>
      */
-    public function forTweetCardCarousel(Workspace $workspace, SocialAccount $account, array $slides, ?ResolvedBrand $brand = null, array $referenceImages = []): array
+    public function forTweetCardCarousel(Workspace $workspace, SocialAccount $account, array $slides, ?ResolvedBrand $brand = null, array $referenceImages = [], array $referenceKinds = []): array
     {
         $media = [];
 
@@ -163,6 +166,7 @@ class PostImagePipeline
                 imageKeywords: $imageKeywords,
                 brand: $brand,
                 referenceImages: $referenceImages,
+                referenceKinds: $referenceKinds,
             );
 
             if ($rendered) {
