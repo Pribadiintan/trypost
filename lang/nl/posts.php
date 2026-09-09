@@ -710,6 +710,7 @@ return [
         'detached' => 'We zijn gestopt met wachten. Het bericht kan nog voltooien — controleer je concepten.',
         'brand_references_select_all' => 'Alles selecteren',
         'brand_references_clear' => 'Wissen',
+        'brand_references_view' => 'Referentie bekijken',
         'language_variant_label' => 'Taalvariant',
         'language_variant_description' => 'Selecteer de taal en visuele merkvariant voor dit bericht.',
         'language_variant_default' => 'Standaard',

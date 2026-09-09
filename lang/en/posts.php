@@ -710,6 +710,7 @@ return [
         'detached' => 'We stopped waiting. The post may still finish — check your drafts.',
         'brand_references_select_all' => 'Select all',
         'brand_references_clear' => 'Clear',
+        'brand_references_view' => 'View reference',
         'language_variant_label' => 'Language variant',
         'language_variant_description' => 'Select the language and visual brand variant for this post.',
         'language_variant_default' => 'Default',

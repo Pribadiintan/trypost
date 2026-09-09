@@ -712,6 +712,7 @@ return [
         'detached' => 'Wir haben das Warten beendet. Der Beitrag kann noch fertig werden — prüfen Sie Ihre Entwürfe.',
         'brand_references_select_all' => 'Alle auswählen',
         'brand_references_clear' => 'Leeren',
+        'brand_references_view' => 'Referenz ansehen',
         'language_variant_label' => 'Sprachvariante',
         'language_variant_description' => 'Wählen Sie die Sprache und die visuelle Markenvariante für diesen Beitrag.',
         'language_variant_default' => 'Standard',

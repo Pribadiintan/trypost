@@ -710,6 +710,7 @@ return [
         'detached' => 'توقفنا عن الانتظار. قد يكتمل المنشور — تحقق من المسودات.',
         'brand_references_select_all' => 'تحديد الكل',
         'brand_references_clear' => 'مسح',
+        'brand_references_view' => 'عرض المرجع',
         'language_variant_label' => 'متغير اللغة',
         'language_variant_description' => 'حدد متغير اللغة وهوية العلامة التجارية المرئية لهذا المنشور.',
         'language_variant_default' => 'افتراضي',

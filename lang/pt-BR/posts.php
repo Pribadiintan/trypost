@@ -710,6 +710,7 @@ return [
         'detached' => 'Paramos de aguardar. A publicação ainda pode terminar — verifique seus rascunhos.',
         'brand_references_select_all' => 'Selecionar tudo',
         'brand_references_clear' => 'Limpar',
+        'brand_references_view' => 'Ver referência',
         'language_variant_label' => 'Variante de idioma',
         'language_variant_description' => 'Selecione o idioma e a variante visual da marca para esta publicação.',
         'language_variant_default' => 'Padrão',

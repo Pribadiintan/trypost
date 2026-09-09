@@ -710,6 +710,7 @@ return [
         'detached' => 'Ми припинили очікування. Пост може ще завершитися — перевірте чернетки.',
         'brand_references_select_all' => 'Вибрати всі',
         'brand_references_clear' => 'Очистити',
+        'brand_references_view' => 'Переглянути зразок',
         'language_variant_label' => 'Мовний варіант',
         'language_variant_description' => 'Оберіть мову та візуальний варіант бренду для цієї публікації.',
         'language_variant_default' => 'За замовчуванням',

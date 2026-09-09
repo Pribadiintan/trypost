@@ -1,10 +1,12 @@
 <script setup lang="ts">
-import { IconCheck, IconLoader2, IconPlus } from '@tabler/icons-vue';
+import { IconCheck, IconEye, IconLoader2, IconPlus } from '@tabler/icons-vue';
 import { trans } from 'laravel-vue-i18n';
 import { computed, ref } from 'vue';
 import { toast } from 'vue-sonner';
 
+import ImagePreviewDialog from '@/components/ImagePreviewDialog.vue';
 import { Button } from '@/components/ui/button';
+import { MediaType } from '@/lib/mediaType';
 import { store as storeReference } from '@/routes/app/workspace/brand-references';
 import type { MediaItem } from '@/types/media';
 
@@ -26,6 +28,24 @@ const selectedIds = defineModel<string[]>('selectedIds', { default: () => [] });
 
 const fileInput = ref<HTMLInputElement | null>(null);
 const uploading = ref(false);
+const lightbox = ref<InstanceType<typeof ImagePreviewDialog> | null>(null);
+
+const kindLabel = (reference: MediaItem): string | null => {
+    const kind = reference.meta?.kind;
+    if (!kind || kind === 'other') return null;
+
+    return trans(`assets.brand_references.kinds.${kind}`);
+};
+
+const openLightbox = (index: number): void => {
+    const collection = props.references.map((reference) => ({
+        url: reference.url,
+        type: MediaType.Image,
+        altText: reference.meta?.label ?? undefined,
+    }));
+
+    lightbox.value?.openCollection(collection, index);
+};
 
 const allSelected = computed(
     () =>
@@ -227,7 +247,7 @@ const handleFileChange = async (event: Event) => {
             class="grid grid-cols-3 gap-2.5 sm:grid-cols-4 md:grid-cols-6"
         >
             <button
-                v-for="reference in references"
+                v-for="(reference, refIndex) in references"
                 :key="reference.id"
                 type="button"
                 class="group relative cursor-pointer overflow-hidden rounded-xl border-2 border-foreground bg-card text-left shadow-2xs transition-all hover:-translate-y-0.5 hover:shadow-md"
@@ -247,6 +267,24 @@ const handleFileChange = async (event: Event) => {
                         loading="lazy"
                     />
                 </div>
+
+                <span
+                    v-if="kindLabel(reference)"
+                    class="pointer-events-none absolute top-1.5 left-1.5 rounded-md bg-black/65 px-1.5 py-0.5 text-[10px] font-semibold text-white backdrop-blur-sm"
+                >
+                    {{ kindLabel(reference) }}
+                </span>
+
+                <span
+                    role="button"
+                    :aria-label="$t('posts.wizard.brand_references_view')"
+                    class="absolute bottom-1.5 left-1.5 inline-flex size-6 items-center justify-center rounded-full border-2 border-foreground bg-card text-foreground opacity-0 shadow-2xs transition-opacity group-hover:opacity-100 focus:opacity-100"
+                    data-testid="brand-reference-view"
+                    @click.stop="openLightbox(refIndex)"
+                >
+                    <IconEye class="size-3" />
+                </span>
+
                 <div
                     v-if="isSelected(reference.id)"
                     class="absolute top-1.5 right-1.5 inline-flex size-6 items-center justify-center rounded-full border-2 border-foreground bg-primary text-primary-foreground shadow-2xs"
@@ -280,5 +318,7 @@ const handleFileChange = async (event: Event) => {
                 </span>
             </button>
         </div>
+
+        <ImagePreviewDialog ref="lightbox" />
     </div>
 </template>

@@ -710,6 +710,7 @@ return [
         'detached' => '我们已停止等待。帖子可能仍会完成 — 请查看草稿。',
         'brand_references_select_all' => '全选',
         'brand_references_clear' => '清除',
+        'brand_references_view' => '查看参考图',
         'language_variant_label' => '语言变体',
         'language_variant_description' => '为此帖子选择语言和视觉品牌变体。',
         'language_variant_default' => '默认',

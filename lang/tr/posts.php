@@ -712,6 +712,7 @@ return [
         'detached' => 'Beklemeyi bıraktık. Gönderi tamamlanabilir — taslaklarınızı kontrol edin.',
         'brand_references_select_all' => 'Tümünü seç',
         'brand_references_clear' => 'Temizle',
+        'brand_references_view' => 'Referansı görüntüle',
         'language_variant_label' => 'Dil varyantı',
         'language_variant_description' => 'Bu gönderi için dili ve görsel marka varyantını seçin.',
         'language_variant_default' => 'Varsayılan',

@@ -710,6 +710,7 @@ return [
         'detached' => 'Dejamos de esperar. La publicación puede terminar — revisa tus borradores.',
         'brand_references_select_all' => 'Seleccionar todo',
         'brand_references_clear' => 'Limpiar',
+        'brand_references_view' => 'Ver referencia',
         'language_variant_label' => 'Variante de idioma',
         'language_variant_description' => 'Selecciona el idioma y la variante visual de marca para esta publicación.',
         'language_variant_default' => 'Predeterminado',

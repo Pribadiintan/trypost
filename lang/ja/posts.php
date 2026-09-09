@@ -710,6 +710,7 @@ return [
         'detached' => '待機を中止しました。投稿は完了する可能性があります — 下書きを確認してください。',
         'brand_references_select_all' => 'すべて選択',
         'brand_references_clear' => 'クリア',
+        'brand_references_view' => '参照を表示',
         'language_variant_label' => '言語バリアント',
         'language_variant_description' => 'この投稿の言語とブランドビジュアルバリアントを選択します。',
         'language_variant_default' => 'デフォルト',

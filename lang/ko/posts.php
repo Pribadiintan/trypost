@@ -710,6 +710,7 @@ return [
         'detached' => '대기를 중단했습니다. 게시물이 완료될 수 있습니다 — 초안을 확인하세요.',
         'brand_references_select_all' => '전체 선택',
         'brand_references_clear' => '지우기',
+        'brand_references_view' => '참조 보기',
         'language_variant_label' => '언어 변형',
         'language_variant_description' => '이 게시물의 언어 및 시각적 브랜드 변형을 선택하세요.',
         'language_variant_default' => '기본값',

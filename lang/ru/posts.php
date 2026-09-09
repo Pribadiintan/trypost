@@ -710,6 +710,7 @@ return [
         'detached' => 'Мы перестали ждать. Пост может ещё завершиться — проверьте черновики.',
         'brand_references_select_all' => 'Выбрать все',
         'brand_references_clear' => 'Очистить',
+        'brand_references_view' => 'Посмотреть образец',
         'language_variant_label' => 'Языковой вариант',
         'language_variant_description' => 'Выберите язык и визуальный вариант бренда для этой публикации.',
         'language_variant_default' => 'По умолчанию',

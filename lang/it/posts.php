@@ -710,6 +710,7 @@ return [
         'detached' => 'Abbiamo smesso di attendere. Il post potrebbe completarsi — controlla le bozze.',
         'brand_references_select_all' => 'Seleziona tutto',
         'brand_references_clear' => 'Cancella',
+        'brand_references_view' => 'Vedi riferimento',
         'language_variant_label' => 'Variante di lingua',
         'language_variant_description' => 'Seleziona la lingua e la variante visiva del brand per questo post.',
         'language_variant_default' => 'Predefinito',

@@ -710,6 +710,7 @@ return [
         'detached' => 'Przestaliśmy czekać. Post może jeszcze zostać ukończony — sprawdź szkice.',
         'brand_references_select_all' => 'Zaznacz wszystkie',
         'brand_references_clear' => 'Wyczyść',
+        'brand_references_view' => 'Zobacz referencję',
         'language_variant_label' => 'Wariant językowy',
         'language_variant_description' => 'Wybierz język i wizualny wariant marki dla tego posta.',
         'language_variant_default' => 'Domyślny',

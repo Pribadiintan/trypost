@@ -710,6 +710,7 @@ return [
         'detached' => 'Σταματήσαμε την αναμονή. Η δημοσίευση μπορεί να ολοκληρωθεί — ελέγξτε τα πρόχειρα.',
         'brand_references_select_all' => 'Επιλογή όλων',
         'brand_references_clear' => 'Καθαρισμός',
+        'brand_references_view' => 'Προβολή αναφοράς',
         'language_variant_label' => 'Παραλλαγή γλώσσας',
         'language_variant_description' => 'Επιλέξτε τη γλώσσα και την οπτική παραλλαγή επωνυμίας για αυτήν την ανάρτηση.',
         'language_variant_default' => 'Προεπιλογή',

@@ -710,6 +710,7 @@ return [
         'detached' => 'Kami berhenti menunggu. Hantaran mungkin masih selesai — semak draf anda.',
         'brand_references_select_all' => 'Pilih semua',
         'brand_references_clear' => 'Kosongkan',
+        'brand_references_view' => 'Lihat rujukan',
         'language_variant_label' => 'Varian bahasa',
         'language_variant_description' => 'Pilih varian bahasa dan identiti visual jenama untuk siaran ini.',
         'language_variant_default' => 'Lalai',

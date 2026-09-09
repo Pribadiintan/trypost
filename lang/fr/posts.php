@@ -710,6 +710,7 @@ return [
         'detached' => 'Nous avons arrêté d’attendre. La publication peut encore aboutir — consultez vos brouillons.',
         'brand_references_select_all' => 'Tout sélectionner',
         'brand_references_clear' => 'Effacer',
+        'brand_references_view' => 'Voir la référence',
         'language_variant_label' => 'Variante de langue',
         'language_variant_description' => 'Sélectionnez la langue et la variante visuelle de marque pour cette publication.',
         'language_variant_default' => 'Par défaut',
