@@ -42,6 +42,7 @@ interface BrandFields {
 interface AutofillResponse {
     name: string | null;
     brand_description: string | null;
+    brand_guidelines: string | null;
     content_language: string | null;
     brand_color: string | null;
     background_color: string | null;
@@ -114,6 +115,8 @@ const runAutofill = async () => {
             props.fields.name = data.name;
         if (data?.brand_description)
             props.fields.brand_description = data.brand_description;
+        if (data?.brand_guidelines && !props.fields.brand_guidelines)
+            props.fields.brand_guidelines = data.brand_guidelines;
         if (data?.content_language)
             props.fields.content_language = data.content_language;
         if (data?.brand_voice_traits?.length) {
