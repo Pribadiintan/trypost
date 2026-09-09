@@ -469,6 +469,21 @@ const onDecide = (decision: ChatApprovalDecision): void => {
                             @stop="stopTurn"
                         />
 
+                        <div
+                            v-if="messages.length && !isBusy"
+                            class="mt-3 flex justify-center"
+                        >
+                            <button
+                                type="button"
+                                class="inline-flex items-center gap-1.5 rounded-full border-2 border-foreground bg-card px-3 py-1.5 text-sm font-semibold shadow-2xs hover:bg-accent"
+                                data-testid="chat-draft-post-shortcut"
+                                @click="draft = $t('chat.suggestions.posts')"
+                            >
+                                <IconFileText class="size-4" />
+                                {{ $t('chat.suggestions.posts') }}
+                            </button>
+                        </div>
+
                         <div v-if="!messages.length" class="mt-4">
                             <p
                                 class="mb-2 text-center text-xs font-bold tracking-wide text-muted-foreground uppercase"
