@@ -238,6 +238,7 @@ return [
         'edit_variant' => 'Edit Varian',
         'delete_variant' => 'Padam Varian',
         'variant_upgrade_prompt' => 'Cipta varian untuk menggunakan warna dan tipografi khusus bahasa.',
+        'variant_explainer' => 'Varian ialah rupa jenama anda khusus bahasa — contohnya, varian bahasa Jepun boleh menggunakan warna dan fon berbeza. Apabila anda menjana siaran dalam bahasa itu, variannya menggayakan imej secara automatik.',
         'variant_language' => 'Bahasa',
         'variant_label' => 'Nama Varian',
         'variant_colors' => 'Palet Warna',

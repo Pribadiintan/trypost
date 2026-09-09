@@ -238,6 +238,7 @@ return [
         'edit_variant' => 'Edit Variant',
         'delete_variant' => 'Delete Variant',
         'variant_upgrade_prompt' => 'Create a variant to use language-specific colors and typography.',
+        'variant_explainer' => 'Een variant is een taalspecifieke uitstraling van je merk — een Japanse variant kan bijvoorbeeld andere kleuren en lettertypen gebruiken. Als je een post in die taal genereert, styelt de variant de afbeeldingen automatisch.',
         'variant_language' => 'Language',
         'variant_label' => 'Variant Name',
         'variant_colors' => 'Color Palette',

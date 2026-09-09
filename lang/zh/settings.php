@@ -238,6 +238,7 @@ return [
         'edit_variant' => '编辑变体',
         'delete_variant' => '删除变体',
         'variant_upgrade_prompt' => '创建变体，以使用语言专属的颜色和字体。',
+        'variant_explainer' => '变体是你的品牌针对某种语言的外观——例如日语变体可以使用不同的颜色和字体。当你以该语言生成帖子时，其变体会自动为图片应用样式。',
         'variant_language' => '语言',
         'variant_label' => '变体名称',
         'variant_colors' => '配色方案',

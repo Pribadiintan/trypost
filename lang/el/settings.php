@@ -238,6 +238,7 @@ return [
         'edit_variant' => 'Edit Variant',
         'delete_variant' => 'Delete Variant',
         'variant_upgrade_prompt' => 'Create a variant to use language-specific colors and typography.',
+        'variant_explainer' => 'Μια παραλλαγή είναι μια εμφάνιση της επωνυμίας σας ανά γλώσσα — π.χ. μια ιαπωνική παραλλαγή μπορεί να χρησιμοποιεί διαφορετικά χρώματα και γραμματοσειρές. Όταν δημιουργείτε ανάρτηση σε εκείνη τη γλώσσα, η παραλλαγή της μορφοποιεί αυτόματα τις εικόνες.',
         'variant_language' => 'Language',
         'variant_label' => 'Variant Name',
         'variant_colors' => 'Color Palette',

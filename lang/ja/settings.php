@@ -238,6 +238,7 @@ return [
         'edit_variant' => 'Edit Variant',
         'delete_variant' => 'Delete Variant',
         'variant_upgrade_prompt' => 'Create a variant to use language-specific colors and typography.',
+        'variant_explainer' => 'バリアントは言語ごとのブランドの見た目です。たとえば日本語バリアントでは異なる色やフォントを使えます。その言語で投稿を生成すると、そのバリアントが画像を自動的にスタイリングします。',
         'variant_language' => 'Language',
         'variant_label' => 'Variant Name',
         'variant_colors' => 'Color Palette',

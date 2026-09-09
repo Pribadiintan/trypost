@@ -130,12 +130,17 @@ const deleteVariant = (variant: BrandVariant) => {
                 </Button>
             </div>
 
-            <p
+            <div
                 v-if="workspace.brand_variants.length === 0"
-                class="rounded-lg border-2 border-dashed border-foreground/40 p-4 text-sm text-muted-foreground"
+                class="grid gap-2 rounded-lg border-2 border-dashed border-foreground/40 p-4 text-sm"
             >
-                {{ $t('settings.brand.variant_upgrade_prompt') }}
-            </p>
+                <p class="text-foreground/80">
+                    {{ $t('settings.brand.variant_explainer') }}
+                </p>
+                <p class="text-muted-foreground">
+                    {{ $t('settings.brand.variant_upgrade_prompt') }}
+                </p>
+            </div>
 
             <div v-else class="grid gap-4">
                 <BrandVariantCard

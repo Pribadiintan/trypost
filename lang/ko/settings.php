@@ -238,6 +238,7 @@ return [
         'edit_variant' => 'Edit Variant',
         'delete_variant' => 'Delete Variant',
         'variant_upgrade_prompt' => 'Create a variant to use language-specific colors and typography.',
+        'variant_explainer' => '베리언트는 언어별 브랜드 룩입니다. 예를 들어 일본어 베리언트는 다른 색상과 글꼴을 사용할 수 있습니다. 해당 언어로 게시물을 생성하면 그 베리언트가 이미지를 자동으로 스타일링합니다.',
         'variant_language' => 'Language',
         'variant_label' => 'Variant Name',
         'variant_colors' => 'Color Palette',

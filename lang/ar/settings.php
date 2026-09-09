@@ -238,6 +238,7 @@ return [
         'edit_variant' => 'Edit Variant',
         'delete_variant' => 'Delete Variant',
         'variant_upgrade_prompt' => 'Create a variant to use language-specific colors and typography.',
+        'variant_explainer' => 'المتغيّر هو مظهر لعلامتك التجارية خاص بكل لغة — على سبيل المثال، يمكن لمتغيّر ياباني استخدام ألوان وخطوط مختلفة. عند إنشاء منشور بتلك اللغة، يُنسّق متغيّرها الصور تلقائيًا.',
         'variant_language' => 'Language',
         'variant_label' => 'Variant Name',
         'variant_colors' => 'Color Palette',

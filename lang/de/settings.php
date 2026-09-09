@@ -240,6 +240,7 @@ return [
         'edit_variant' => 'Edit Variant',
         'delete_variant' => 'Delete Variant',
         'variant_upgrade_prompt' => 'Create a variant to use language-specific colors and typography.',
+        'variant_explainer' => 'Eine Variante ist ein sprachspezifisches Erscheinungsbild deiner Marke — eine japanische Variante kann z. B. andere Farben und Schriften nutzen. Erstellst du einen Beitrag in dieser Sprache, gestaltet ihre Variante die Bilder automatisch.',
         'variant_language' => 'Language',
         'variant_label' => 'Variant Name',
         'variant_colors' => 'Color Palette',

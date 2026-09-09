@@ -238,6 +238,7 @@ return [
         'edit_variant' => 'Edit Variant',
         'delete_variant' => 'Delete Variant',
         'variant_upgrade_prompt' => 'Create a variant to use language-specific colors and typography.',
+        'variant_explainer' => 'Варіант — це оформлення вашого бренду для певної мови: наприклад, японський варіант може використовувати інші кольори та шрифти. Коли ви створюєте допис цією мовою, його варіант автоматично оформлює зображення.',
         'variant_language' => 'Language',
         'variant_label' => 'Variant Name',
         'variant_colors' => 'Color Palette',

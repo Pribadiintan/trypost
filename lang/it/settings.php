@@ -238,6 +238,7 @@ return [
         'edit_variant' => 'Edit Variant',
         'delete_variant' => 'Delete Variant',
         'variant_upgrade_prompt' => 'Create a variant to use language-specific colors and typography.',
+        'variant_explainer' => 'Una variante è un aspetto del tuo brand specifico per lingua — ad esempio, una variante giapponese può usare colori e font diversi. Quando generi un post in quella lingua, la sua variante applica automaticamente lo stile alle immagini.',
         'variant_language' => 'Language',
         'variant_label' => 'Variant Name',
         'variant_colors' => 'Color Palette',

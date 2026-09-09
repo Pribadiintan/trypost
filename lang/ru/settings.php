@@ -238,6 +238,7 @@ return [
         'edit_variant' => 'Edit Variant',
         'delete_variant' => 'Delete Variant',
         'variant_upgrade_prompt' => 'Create a variant to use language-specific colors and typography.',
+        'variant_explainer' => 'Вариант — это оформление вашего бренда для конкретного языка: например, японский вариант может использовать другие цвета и шрифты. Когда вы создаёте пост на этом языке, его вариант автоматически оформляет изображения.',
         'variant_language' => 'Language',
         'variant_label' => 'Variant Name',
         'variant_colors' => 'Color Palette',
