@@ -30,7 +30,7 @@ class PostContentReviewer implements Agent, HasStructuredOutput
         return view('prompts.post_content.reviewer', [
             'brand_name' => $this->workspace->name ?? '',
             'brand_description' => '',
-            'brand_guidelines' => '',
+            'brand_guidelines' => $brand->brandGuidelines ?: '',
             'brand_voice_traits' => $brand->brandVoiceTraits,
             'include_description' => false,
             'include_voice' => true,

@@ -7,6 +7,7 @@ namespace App\Services\Ai;
 use App\Ai\Templates\AiContentTemplate;
 use App\Ai\Templates\AiTemplateRegistry;
 use App\Enums\PostPlatform\ContentType;
+use App\Enums\User\Locale;
 use App\Enums\Workspace\ContentLanguage;
 use App\Models\BrandVariant;
 use App\Models\SocialAccount;
@@ -228,11 +229,18 @@ final class PostGenerationCatalog
      */
     public static function clearCache(Workspace $workspace): void
     {
-        $pattern = "post_generation_catalog:{$workspace->id}:*";
+        // The catalog is cached per resolved locale (see forWorkspace's key), so
+        // forgetting only ':default' left every locale-keyed entry (':en', ':ja',
+        // …) serving stale brand data until its TTL. File/array drivers do not
+        // support tag or pattern deletes, so forget the full known key set: the
+        // application-default entry plus one per supported UI locale.
+        $prefix = "post_generation_catalog:{$workspace->id}:";
 
-        // File/array cache drivers do not support tags or pattern deletes,
-        // so we build the two keys we actually use.
-        Cache::forget("post_generation_catalog:{$workspace->id}:default");
+        Cache::forget($prefix.'default');
+
+        foreach (Locale::values() as $locale) {
+            Cache::forget($prefix.$locale);
+        }
     }
 
     private static function languageLabel(string $languageCode): string

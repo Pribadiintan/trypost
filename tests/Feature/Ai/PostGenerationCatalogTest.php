@@ -7,11 +7,31 @@ use App\Models\SocialAccount;
 use App\Models\Workspace;
 use App\Services\Ai\PostGenerationCardCopy;
 use App\Services\Ai\PostGenerationCatalog;
+use Illuminate\Support\Facades\Cache;
 
 beforeEach(function (): void {
     // Several tests connect two accounts on the same network; the suite
     // default (phpunit.xml) only allows one, so opt into multiples here.
     config()->set('trypost.allow_multiple_social_accounts', true);
+});
+
+it('clearCache forgets locale-keyed entries, not only the default key', function (): void {
+    $workspace = Workspace::factory()->create();
+
+    // Warm both a default-locale entry and a specific-locale entry.
+    PostGenerationCatalog::forWorkspace($workspace);
+    PostGenerationCatalog::forWorkspace($workspace, 'ja');
+
+    $defaultKey = "post_generation_catalog:{$workspace->id}:default";
+    $jaKey = "post_generation_catalog:{$workspace->id}:ja";
+
+    expect(Cache::has($defaultKey))->toBeTrue()
+        ->and(Cache::has($jaKey))->toBeTrue();
+
+    PostGenerationCatalog::clearCache($workspace);
+
+    expect(Cache::has($defaultKey))->toBeFalse()
+        ->and(Cache::has($jaKey))->toBeFalse();
 });
 
 it('offers only formats whose platform has a connected account', function (): void {
