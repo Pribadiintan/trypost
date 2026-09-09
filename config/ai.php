@@ -58,13 +58,6 @@ return [
     'image' => [
         'max_attempts' => (int) env('AI_IMAGE_MAX_ATTEMPTS', 3),
         'retry_delay_ms' => (int) env('AI_IMAGE_RETRY_DELAY_MS', 500),
-
-        // Whether the image provider implements the image-to-image
-        // `images/edits` endpoint used for brand reference-photo conditioning.
-        // null (default) = infer from the model/URL (BytePlus Seedream is
-        // text-to-image only and is treated as unsupported; everything else
-        // supported). Set AI_IMAGE_SUPPORTS_EDITS explicitly to override.
-        'supports_edits' => env('AI_IMAGE_SUPPORTS_EDITS'),
     ],
 
     /*
@@ -217,6 +210,20 @@ return [
             'models' => [
                 'text' => ['default' => env('OPENAI_COMPATIBLE_TEXT_MODEL')],
                 'embeddings' => ['default' => env('OPENAI_COMPATIBLE_EMBEDDINGS_MODEL')],
+            ],
+        ],
+
+        'seedream' => [
+            // BytePlus Ark Seedream. Not a laravel/ai driver: its unified
+            // generate-edit endpoint (/images/generations with an `image` URL
+            // array for image-to-image) is not OpenAI-compatible, so it is
+            // driven by App\Services\Ai\SeedreamImageClient over plain HTTP.
+            'driver' => 'seedream',
+            'url' => env('SEEDREAM_URL', 'https://ark.ap-southeast.bytepluses.com/api/v3'),
+            'key' => env('SEEDREAM_API_KEY'),
+            'watermark' => env('SEEDREAM_WATERMARK', false),
+            'models' => [
+                'image' => ['default' => env('SEEDREAM_IMAGE_MODEL', 'seedream-4-5-251128')],
             ],
         ],
 

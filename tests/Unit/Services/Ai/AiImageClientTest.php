@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Enums\Workspace\ImageStyle;
 use App\Services\Ai\AiImageClient;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 use Laravel\Ai\Image;
 use Laravel\Ai\Prompts\ImagePrompt;
@@ -334,14 +335,35 @@ test('generate returns null when the provider keeps responding with no image', f
         ->and($attempts)->toBe(3);
 });
 
-test('generate uses high resolution 2K sizes when BytePlus Seedream is configured', function (string $orientation, string $expectedSize) {
-    config()->set('ai.providers.openai.models.image.default', 'seedream-4-5-251128');
-    Image::fake();
+test('generate uses the seedream custom client with correct size when provider is seedream', function (string $orientation, string $expectedSize) {
+    config()->set('ai.default_for_images', 'seedream');
+    config()->set('ai.providers.seedream.url', 'https://ark.example.com/api/v3');
+    config()->set('ai.providers.seedream.key', 'ark-test');
+    config()->set('ai.providers.seedream.models.image.default', 'seedream-4-5-251128');
+
+    $bytes = base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==');
+
+    Http::fake([
+        '*/images/generations' => Http::response([
+            'model' => 'seedream-4-5-251128',
+            'data' => [['b64_json' => base64_encode($bytes)]],
+            'usage' => ['generated_images' => 1],
+        ], 200),
+    ]);
 
     $client = new AiImageClient;
-    $client->generate(['x'], ImageStyle::Cinematic, orientation: $orientation);
+    $result = $client->generate(['office desk'], ImageStyle::Cinematic, orientation: $orientation);
 
-    Image::assertGenerated(fn (ImagePrompt $prompt) => $prompt->size === $expectedSize);
+    expect($result)->not->toBeNull()
+        ->and($result['bytes'])->toBe($bytes)
+        ->and($result['provider'])->toBe('seedream')
+        ->and($result['model'])->toBe('seedream-4-5-251128');
+
+    Http::assertSent(fn ($request) => $request['size'] === $expectedSize
+        && $request['response_format'] === 'b64_json'
+        && $request['sequential_image_generation'] === 'disabled'
+        && $request['watermark'] === false
+        && ! isset($request['image'])); // pure text-to-image: no image array
 })->with([
     'square' => ['square', '2048x2048'],
     'portrait' => ['portrait', '1664x2496'],
@@ -369,16 +391,22 @@ test('generate attaches reference images and adds subject consistency prompt ins
     });
 });
 
-test('generate drops reference attachments for Seedream (text-to-image only, no images/edits support)', function () {
-    // Seedream returns an empty 200 body on images/edits, which the SDK turns
-    // into a TypeError. Reference photos must be dropped so the call stays on
-    // images/generations and still produces an image.
-    config()->set('ai.providers.openai.models.image.default', 'seedream-4-5-251128');
+test('seedream image-to-image sends reference photos as a base64 data-URI image array', function () {
+    config()->set('ai.default_for_images', 'seedream');
+    config()->set('ai.providers.seedream.url', 'https://ark.example.com/api/v3');
+    config()->set('ai.providers.seedream.key', 'ark-test');
+    config()->set('ai.providers.seedream.models.image.default', 'seedream-4-5-251128');
 
     Storage::fake();
-    Storage::put('medias/ref.jpg', 'fake-image-data');
+    Storage::put('medias/ref.jpg', 'fake-image-bytes');
 
-    Image::fake();
+    $bytes = base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==');
+
+    Http::fake([
+        '*/images/generations' => Http::response([
+            'data' => [['b64_json' => base64_encode($bytes)]],
+        ], 200),
+    ]);
 
     $client = new AiImageClient;
     $result = $client->generate(
@@ -388,59 +416,68 @@ test('generate drops reference attachments for Seedream (text-to-image only, no 
     );
 
     expect($result)->not->toBeNull();
-    Image::assertGenerated(fn (ImagePrompt $prompt) => $prompt->attachments->isEmpty()
-        && ! $prompt->contains('SUBJECT & PERSONA CONSISTENCY'));
+
+    Http::assertSent(function ($request) {
+        return is_array($request['image'] ?? null)
+            && count($request['image']) === 1
+            && str_starts_with($request['image'][0], 'data:image/jpeg;base64,');
+    });
 });
 
-test('generate keeps reference attachments for an edit-capable provider', function () {
-    Storage::fake();
-    Storage::put('medias/ref.jpg', 'fake-image-data');
+test('seedream passes a public reference URL through unchanged', function () {
+    config()->set('ai.default_for_images', 'seedream');
+    config()->set('ai.providers.seedream.url', 'https://ark.example.com/api/v3');
+    config()->set('ai.providers.seedream.key', 'ark-test');
+    config()->set('ai.providers.seedream.models.image.default', 'seedream-4-5-251128');
 
-    Image::fake();
+    $bytes = base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==');
+
+    Http::fake([
+        '*/images/generations' => Http::response([
+            'data' => [['b64_json' => base64_encode($bytes)]],
+        ], 200),
+    ]);
 
     $client = new AiImageClient;
     $client->generate(
         keywords: ['office desk'],
         style: ImageStyle::Cinematic,
-        referenceImages: ['medias/ref.jpg'],
+        referenceImages: ['https://cdn.example.com/brand/ref.png'],
     );
 
-    Image::assertGenerated(fn (ImagePrompt $prompt) => count($prompt->attachments) === 1);
+    Http::assertSent(fn ($request) => ($request['image'] ?? []) === ['https://cdn.example.com/brand/ref.png']);
 });
 
-test('ai.image.supports_edits config explicitly overrides provider inference', function () {
-    config()->set('ai.image.supports_edits', false);
+test('seedream returns null (no throw) when the response carries no image', function () {
+    config()->set('ai.default_for_images', 'seedream');
+    config()->set('ai.image.retry_delay_ms', 0);
+    config()->set('ai.providers.seedream.url', 'https://ark.example.com/api/v3');
+    config()->set('ai.providers.seedream.key', 'ark-test');
+    config()->set('ai.providers.seedream.models.image.default', 'seedream-4-5-251128');
 
-    Storage::fake();
-    Storage::put('medias/ref.jpg', 'fake-image-data');
-
-    Image::fake();
+    Http::fake([
+        '*/images/generations' => Http::response(['data' => []], 200),
+    ]);
 
     $client = new AiImageClient;
-    $client->generate(
-        keywords: ['office desk'],
-        style: ImageStyle::Cinematic,
-        referenceImages: ['medias/ref.jpg'],
-    );
 
-    Image::assertGenerated(fn (ImagePrompt $prompt) => $prompt->attachments->isEmpty());
+    expect($client->generate(['x'], ImageStyle::Cinematic))->toBeNull();
 });
 
-test('ai.image.supports_edits=true forces attachments even for Seedream', function () {
-    config()->set('ai.providers.openai.models.image.default', 'seedream-4-5-251128');
-    config()->set('ai.image.supports_edits', true);
+test('seedream retries a transient 5xx and returns null after exhausting attempts', function () {
+    config()->set('ai.default_for_images', 'seedream');
+    config()->set('ai.image.max_attempts', 3);
+    config()->set('ai.image.retry_delay_ms', 0);
+    config()->set('ai.providers.seedream.url', 'https://ark.example.com/api/v3');
+    config()->set('ai.providers.seedream.key', 'ark-test');
+    config()->set('ai.providers.seedream.models.image.default', 'seedream-4-5-251128');
 
-    Storage::fake();
-    Storage::put('medias/ref.jpg', 'fake-image-data');
-
-    Image::fake();
+    Http::fake([
+        '*/images/generations' => Http::response('', 500),
+    ]);
 
     $client = new AiImageClient;
-    $client->generate(
-        keywords: ['office desk'],
-        style: ImageStyle::Cinematic,
-        referenceImages: ['medias/ref.jpg'],
-    );
 
-    Image::assertGenerated(fn (ImagePrompt $prompt) => count($prompt->attachments) === 1);
+    expect($client->generate(['x'], ImageStyle::Cinematic))->toBeNull();
+    Http::assertSentCount(3);
 });
