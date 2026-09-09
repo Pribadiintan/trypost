@@ -168,6 +168,8 @@ return [
         'brand_description_placeholder' => '介绍一下你的品牌、你做什么，以及你的受众是谁……',
         'voice' => '品牌语气',
         'voice_description' => '选择那些定义你内容风格的特质。',
+        'voice_select_one' => '（选择一项）',
+        'voice_select_any' => '（可多选）',
         'voice_group' => [
             'pov' => '视角',
             'formality' => '正式程度',

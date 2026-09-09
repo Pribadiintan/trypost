@@ -168,6 +168,8 @@ return [
         'brand_description_placeholder' => 'Raccontaci del tuo brand, cosa fai e chi è il tuo pubblico...',
         'voice' => 'Tono del brand',
         'voice_description' => 'Scegli i tratti che definiscono come suonano i tuoi contenuti.',
+        'voice_select_one' => '(scegline una)',
+        'voice_select_any' => '(scegline quante vuoi)',
         'voice_group' => [
             'pov' => 'Punto di vista',
             'formality' => 'Formalità',

@@ -170,6 +170,8 @@ return [
         'brand_description_placeholder' => 'Bize markanızdan, ne yaptığınızdan ve kitlenizin kim olduğundan bahsedin...',
         'voice' => 'Marka sesi',
         'voice_description' => 'İçeriğinizin nasıl bir tona sahip olacağını tanımlayan özellikleri seçin.',
+        'voice_select_one' => '(birini seçin)',
+        'voice_select_any' => '(istediğinizi seçin)',
         'voice_group' => [
             'pov' => 'Bakış açısı',
             'formality' => 'Resmiyet',

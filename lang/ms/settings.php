@@ -168,6 +168,8 @@ return [
         'brand_description_placeholder' => 'Beritahu kami tentang jenama anda, perkara yang anda lakukan, dan siapa khalayak anda...',
         'voice' => 'Suara jenama',
         'voice_description' => 'Pilih ciri-ciri yang menentukan nada bunyi kandungan anda.',
+        'voice_select_one' => '(pilih satu)',
+        'voice_select_any' => '(pilih mana-mana)',
         'voice_group' => [
             'pov' => 'Sudut pandangan',
             'formality' => 'Formaliti',

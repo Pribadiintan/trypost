@@ -168,6 +168,8 @@ return [
         'brand_description_placeholder' => 'Tell us about your brand, what you do, and who your audience is...',
         'voice' => 'Brand voice',
         'voice_description' => 'Pick the traits that define how your content sounds.',
+        'voice_select_one' => '(choose one)',
+        'voice_select_any' => '(choose any)',
         'voice_group' => [
             'pov' => 'Point of view',
             'formality' => 'Formality',

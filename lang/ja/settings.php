@@ -168,6 +168,8 @@ return [
         'brand_description_placeholder' => 'ブランドについて、何をしているか、対象となるオーディエンスは誰かを教えてください...',
         'voice' => 'ブランドボイス',
         'voice_description' => 'コンテンツの印象を決める特性を選んでください。',
+        'voice_select_one' => '（1つ選択）',
+        'voice_select_any' => '（複数選択可）',
         'voice_group' => [
             'pov' => '視点',
             'formality' => 'フォーマルさ',

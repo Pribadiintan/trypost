@@ -168,6 +168,8 @@ return [
         'brand_description_placeholder' => 'Opowiedz nam o swojej marce, czym się zajmujesz i kim są Twoi odbiorcy...',
         'voice' => 'Głos marki',
         'voice_description' => 'Wybierz cechy, które definiują brzmienie Twoich treści.',
+        'voice_select_one' => '(wybierz jedną)',
+        'voice_select_any' => '(wybierz dowolne)',
         'voice_group' => [
             'pov' => 'Punkt widzenia',
             'formality' => 'Formalność',

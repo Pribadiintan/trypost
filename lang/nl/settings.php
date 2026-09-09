@@ -168,6 +168,8 @@ return [
         'brand_description_placeholder' => 'Vertel ons over je merk, wat je doet en wie je publiek is...',
         'voice' => 'Merkstem',
         'voice_description' => 'Kies de eigenschappen die bepalen hoe je content klinkt.',
+        'voice_select_one' => '(kies er één)',
+        'voice_select_any' => '(kies er meerdere)',
         'voice_group' => [
             'pov' => 'Perspectief',
             'formality' => 'Formaliteit',

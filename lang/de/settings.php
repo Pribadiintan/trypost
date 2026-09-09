@@ -170,6 +170,8 @@ return [
         'brand_description_placeholder' => 'Erzähl uns von deiner Marke, was du machst und wer deine Zielgruppe ist...',
         'voice' => 'Markenton',
         'voice_description' => 'Wähle die Eigenschaften, die den Klang deiner Inhalte bestimmen.',
+        'voice_select_one' => '(eine wählen)',
+        'voice_select_any' => '(beliebig wählen)',
         'voice_group' => [
             'pov' => 'Perspektive',
             'formality' => 'Förmlichkeit',

@@ -168,6 +168,8 @@ return [
         'brand_description_placeholder' => 'أخبرنا عن علامتك التجارية، وما تفعله، ومن هو جمهورك...',
         'voice' => 'صوت العلامة التجارية',
         'voice_description' => 'اختر السمات التي تحدد أسلوب محتواك.',
+        'voice_select_one' => '(اختر واحدًا)',
+        'voice_select_any' => '(اختر أيًّا)',
         'voice_group' => [
             'pov' => 'وجهة النظر',
             'formality' => 'الرسمية',

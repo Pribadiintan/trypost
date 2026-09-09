@@ -168,6 +168,8 @@ return [
         'brand_description_placeholder' => '브랜드에 대해, 무엇을 하는지, 대상 고객이 누구인지 알려주세요...',
         'voice' => '브랜드 보이스',
         'voice_description' => '콘텐츠의 어조를 정의하는 특성을 선택하세요.',
+        'voice_select_one' => '(하나 선택)',
+        'voice_select_any' => '(여러 개 선택 가능)',
         'voice_group' => [
             'pov' => '관점',
             'formality' => '격식',

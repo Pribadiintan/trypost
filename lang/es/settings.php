@@ -168,6 +168,8 @@ return [
         'brand_description_placeholder' => 'Cuéntanos sobre tu marca, lo que haces y quién es tu audiencia...',
         'voice' => 'Voz de marca',
         'voice_description' => 'Elige los rasgos que definen cómo suena tu contenido.',
+        'voice_select_one' => '(elige una)',
+        'voice_select_any' => '(elige las que quieras)',
         'voice_group' => [
             'pov' => 'Punto de vista',
             'formality' => 'Formalidad',

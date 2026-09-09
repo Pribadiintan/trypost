@@ -252,7 +252,16 @@ const runAutofill = async () => {
                 :key="group"
                 class="grid gap-2"
             >
-                <Label>{{ $t(`settings.brand.voice_group.${group}`) }}</Label>
+                <Label class="flex items-center gap-2">
+                    {{ $t(`settings.brand.voice_group.${group}`) }}
+                    <span class="text-xs font-normal text-muted-foreground">
+                        {{
+                            group === 'style'
+                                ? $t('settings.brand.voice_select_any')
+                                : $t('settings.brand.voice_select_one')
+                        }}
+                    </span>
+                </Label>
                 <FieldGroup
                     class="flex flex-row flex-wrap gap-2 [--radius:9999rem]"
                 >
