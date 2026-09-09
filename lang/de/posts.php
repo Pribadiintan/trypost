@@ -715,6 +715,7 @@ return [
         'language_variant_label' => 'Sprachvariante',
         'language_variant_description' => 'Wählen Sie die Sprache und die visuelle Markenvariante für diesen Beitrag.',
         'language_variant_default' => 'Standard',
+        'language_variant_swatch_hint' => 'Diese Sprache wendet ihre eigenen Markenfarben auf generierte Bilder an.',
         'brand_references_title' => 'Markenreferenzen',
         'brand_references_description' => 'Fügen Sie Referenzbilder hinzu, um die KI-Generierung zu leiten (z. B. Logo, Produkt, Stil).',
         'brand_references_attach' => 'Foto anhängen',

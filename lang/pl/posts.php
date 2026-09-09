@@ -713,6 +713,7 @@ return [
         'language_variant_label' => 'Wariant językowy',
         'language_variant_description' => 'Wybierz język i wizualny wariant marki dla tego posta.',
         'language_variant_default' => 'Domyślny',
+        'language_variant_swatch_hint' => 'Ten język stosuje własne kolory marki do generowanych obrazów.',
         'brand_references_title' => 'Materiały referencyjne marki',
         'brand_references_description' => 'Załącz obrazy referencyjne, aby pokierować generowaniem AI (np. logo, produkt, styl).',
         'brand_references_attach' => 'Załącz zdjęcie',

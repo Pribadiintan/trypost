@@ -713,6 +713,7 @@ return [
         'language_variant_label' => 'Variante de idioma',
         'language_variant_description' => 'Selecciona el idioma y la variante visual de marca para esta publicación.',
         'language_variant_default' => 'Predeterminado',
+        'language_variant_swatch_hint' => 'Este idioma aplica sus propios colores de marca a las imágenes generadas.',
         'brand_references_title' => 'Referencias de marca',
         'brand_references_description' => 'Adjunta imágenes de referencia para guiar la generación con IA (ej. logotipo, producto, estilo).',
         'brand_references_attach' => 'Adjuntar foto',

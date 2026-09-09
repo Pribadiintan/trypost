@@ -713,6 +713,7 @@ return [
         'language_variant_label' => 'Taalvariant',
         'language_variant_description' => 'Selecteer de taal en visuele merkvariant voor dit bericht.',
         'language_variant_default' => 'Standaard',
+        'language_variant_swatch_hint' => 'Deze taal past zijn eigen merkkleuren toe op gegenereerde afbeeldingen.',
         'brand_references_title' => 'Merkreferenties',
         'brand_references_description' => 'Voeg referentieafbeeldingen toe om de AI-generatie te sturen (bijv. logo, product, stijl).',
         'brand_references_attach' => 'Foto bijvoegen',

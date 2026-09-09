@@ -713,6 +713,7 @@ return [
         'language_variant_label' => 'Мовний варіант',
         'language_variant_description' => 'Оберіть мову та візуальний варіант бренду для цієї публікації.',
         'language_variant_default' => 'За замовчуванням',
+        'language_variant_swatch_hint' => 'Ця мова застосовує власні фірмові кольори до згенерованих зображень.',
         'brand_references_title' => 'Референси бренду',
         'brand_references_description' => 'Додайте зображення-орієнтири для генерації ШІ (наприклад, логотип, продукт, стиль).',
         'brand_references_attach' => 'Додати фото',

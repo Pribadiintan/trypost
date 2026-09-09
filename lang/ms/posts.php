@@ -713,6 +713,7 @@ return [
         'language_variant_label' => 'Varian bahasa',
         'language_variant_description' => 'Pilih varian bahasa dan identiti visual jenama untuk siaran ini.',
         'language_variant_default' => 'Lalai',
+        'language_variant_swatch_hint' => 'Bahasa ini menggunakan warna jenamanya sendiri pada imej yang dijana.',
         'brand_references_title' => 'Rujukan jenama',
         'brand_references_description' => 'Lampirkan imej rujukan untuk membimbing penjanaan AI (cth. logo, produk, gaya).',
         'brand_references_attach' => 'Lampirkan foto',

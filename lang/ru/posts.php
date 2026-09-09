@@ -713,6 +713,7 @@ return [
         'language_variant_label' => 'Языковой вариант',
         'language_variant_description' => 'Выберите язык и визуальный вариант бренда для этой публикации.',
         'language_variant_default' => 'По умолчанию',
+        'language_variant_swatch_hint' => 'Этот язык применяет собственные фирменные цвета к создаваемым изображениям.',
         'brand_references_title' => 'Референсы бренда',
         'brand_references_description' => 'Прикрепите изображения для ориентира генерации ИИ (например, логотип, продукт, стиль).',
         'brand_references_attach' => 'Прикрепить фото',

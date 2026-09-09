@@ -713,6 +713,7 @@ return [
         'language_variant_label' => 'متغير اللغة',
         'language_variant_description' => 'حدد متغير اللغة وهوية العلامة التجارية المرئية لهذا المنشور.',
         'language_variant_default' => 'افتراضي',
+        'language_variant_swatch_hint' => 'تطبّق هذه اللغة ألوان علامتها التجارية على الصور المُنشأة.',
         'brand_references_title' => 'مراجع العلامة التجارية',
         'brand_references_description' => 'أرفق صوراً مرجعية لتوجيه التوليد بالذكاء الاصطناعي (مثل الشعار، المنتج، الأسلوب).',
         'brand_references_attach' => 'إرفاق صورة',

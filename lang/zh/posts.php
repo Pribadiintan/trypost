@@ -713,6 +713,7 @@ return [
         'language_variant_label' => '语言变体',
         'language_variant_description' => '为此帖子选择语言和视觉品牌变体。',
         'language_variant_default' => '默认',
+        'language_variant_swatch_hint' => '此语言会为生成的图片应用其专属品牌配色。',
         'brand_references_title' => '品牌参考',
         'brand_references_description' => '附加参考图片以引导 AI 生成（例如标志、产品、风格）。',
         'brand_references_attach' => '附加照片',

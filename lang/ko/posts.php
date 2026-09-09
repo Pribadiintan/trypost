@@ -713,6 +713,7 @@ return [
         'language_variant_label' => '언어 변형',
         'language_variant_description' => '이 게시물의 언어 및 시각적 브랜드 변형을 선택하세요.',
         'language_variant_default' => '기본값',
+        'language_variant_swatch_hint' => '이 언어는 생성된 이미지에 고유한 브랜드 색상을 적용합니다.',
         'brand_references_title' => '브랜드 참조',
         'brand_references_description' => 'AI 생성을 가이드할 참조 이미지(로고, 제품, 스타일 등)를 첨부하세요.',
         'brand_references_attach' => '사진 첨부',

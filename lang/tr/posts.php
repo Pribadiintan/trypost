@@ -715,6 +715,7 @@ return [
         'language_variant_label' => 'Dil varyantı',
         'language_variant_description' => 'Bu gönderi için dili ve görsel marka varyantını seçin.',
         'language_variant_default' => 'Varsayılan',
+        'language_variant_swatch_hint' => 'Bu dil, oluşturulan görsellere kendi marka renklerini uygular.',
         'brand_references_title' => 'Marka referansları',
         'brand_references_description' => 'Yapay zeka üretimini yönlendirmek için referans görseller ekleyin (örn. logo, ürün, stil).',
         'brand_references_attach' => 'Fotoğraf ekle',

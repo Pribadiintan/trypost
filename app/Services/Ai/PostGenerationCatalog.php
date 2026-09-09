@@ -47,7 +47,7 @@ final class PostGenerationCatalog
      *     applies_brand_visuals_default: bool,
      *     connected_platforms: list<string>,
      *     content_language: ?string,
-     *     languages: list<array{language_code: string, label: string}>,
+     *     languages: list<array{language_code: string, label: string, swatch: list<string>}>,
      *     brand_reference_count: int,
      * }
      */
@@ -188,36 +188,50 @@ final class PostGenerationCatalog
      * label wins over the plain language name for the same code; the full
      * variant payload already travels through `get_brand`.
      *
-     * @return list<array{language_code: string, label: string}>
+     * @return list<array{language_code: string, label: string, swatch: list<string>}>
      */
     private static function buildLanguages(Workspace $workspace): array
     {
-        $labels = ($workspace->relationLoaded('brandVariants')
+        $variants = ($workspace->relationLoaded('brandVariants')
             ? $workspace->brandVariants
             : $workspace->brandVariants()->get())
-            ->sortBy('sort_order')
+            ->sortBy('sort_order');
+
+        $labels = $variants
             ->mapWithKeys(fn (BrandVariant $variant): array => [
                 $variant->language_code => $variant->label ?: $variant->language_code,
+            ])
+            ->all();
+
+        // Per-language swatch (brand/background/text) so the wizard can show
+        // that picking a language also applies that variant's visual brand.
+        $swatches = $variants
+            ->mapWithKeys(fn (BrandVariant $variant): array => [
+                $variant->language_code => array_values(array_filter([
+                    $variant->brand_color,
+                    $variant->background_color,
+                    $variant->text_color,
+                ])),
             ])
             ->all();
 
         $languages = [];
         $default = $workspace->content_language;
 
+        $entry = static fn (string $code, string $label): array => [
+            'language_code' => $code,
+            'label' => $label,
+            'swatch' => $swatches[$code] ?? [],
+        ];
+
         if (is_string($default) && $default !== '') {
-            $languages[] = [
-                'language_code' => $default,
-                'label' => $labels[$default] ?? self::languageLabel($default),
-            ];
+            $languages[] = $entry($default, $labels[$default] ?? self::languageLabel($default));
 
             unset($labels[$default]);
         }
 
         foreach ($labels as $languageCode => $label) {
-            $languages[] = [
-                'language_code' => $languageCode,
-                'label' => $label,
-            ];
+            $languages[] = $entry($languageCode, $label);
         }
 
         return $languages;

@@ -713,6 +713,7 @@ return [
         'language_variant_label' => '言語バリアント',
         'language_variant_description' => 'この投稿の言語とブランドビジュアルバリアントを選択します。',
         'language_variant_default' => 'デフォルト',
+        'language_variant_swatch_hint' => 'この言語は、生成される画像に独自のブランドカラーを適用します。',
         'brand_references_title' => 'ブランド参照',
         'brand_references_description' => 'AI生成の参考となる画像（ロゴ、商品、スタイルなど）を添付します。',
         'brand_references_attach' => '写真を添付',

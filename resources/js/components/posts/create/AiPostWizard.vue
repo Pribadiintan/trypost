@@ -45,7 +45,11 @@ interface Props {
         styles: CatalogStyle[];
         applies_brand_visuals_default: boolean;
         content_language: string | null;
-        languages: Array<{ language_code: string; label: string }>;
+        languages: Array<{
+            language_code: string;
+            label: string;
+            swatch?: string[];
+        }>;
         brand_reference_count: number;
     };
     date?: string | null;
@@ -587,6 +591,18 @@ void checkCredits();
                         </span>
                         <span class="font-semibold text-foreground">
                             {{ entry.label }}
+                        </span>
+                        <span
+                            v-if="entry.swatch && entry.swatch.length"
+                            class="ml-1 flex items-center gap-0.5"
+                            :title="$t('posts.wizard.language_variant_swatch_hint')"
+                        >
+                            <span
+                                v-for="(color, i) in entry.swatch"
+                                :key="i"
+                                class="size-3 rounded-full border border-foreground/40"
+                                :style="{ backgroundColor: color }"
+                            />
                         </span>
                     </div>
                     <IconCheck

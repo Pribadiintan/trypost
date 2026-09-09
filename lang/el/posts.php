@@ -713,6 +713,7 @@ return [
         'language_variant_label' => 'Παραλλαγή γλώσσας',
         'language_variant_description' => 'Επιλέξτε τη γλώσσα και την οπτική παραλλαγή επωνυμίας για αυτήν την ανάρτηση.',
         'language_variant_default' => 'Προεπιλογή',
+        'language_variant_swatch_hint' => 'Αυτή η γλώσσα εφαρμόζει τα δικά της χρώματα επωνυμίας στις παραγόμενες εικόνες.',
         'brand_references_title' => 'Αναφορές επωνυμίας',
         'brand_references_description' => 'Επισυνάψτε εικόνες αναφοράς για καθοδήγηση της δημιουργίας AI (π.χ. λογότυπο, προϊόν, στυλ).',
         'brand_references_attach' => 'Επισύναψη φωτογραφίας',
