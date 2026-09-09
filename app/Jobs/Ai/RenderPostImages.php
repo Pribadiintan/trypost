@@ -6,7 +6,9 @@ namespace App\Jobs\Ai;
 
 use App\Ai\Templates\AiTemplateRegistry;
 use App\Ai\Templates\TemplateContext;
+use App\Enums\Ai\GenerationFailure;
 use App\Enums\Ai\GenerationStatus;
+use App\Enums\Media\Source;
 use App\Enums\Notification\Channel as NotificationChannel;
 use App\Enums\Notification\Type as NotificationType;
 use App\Enums\PostPlatform\ContentType;
@@ -14,6 +16,8 @@ use App\Events\Ai\PostCreationProgress;
 use App\Events\Ai\PostCreationReady;
 use App\Jobs\SendNotification;
 use App\Models\AiGeneration;
+use App\Models\Media;
+use App\Models\Post;
 use App\Models\SocialAccount;
 use App\Models\User;
 use App\Models\Workspace;
@@ -23,7 +27,9 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use Throwable;
 
 /**
@@ -40,6 +46,21 @@ class RenderPostImages implements ShouldBeUnique, ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public int $uniqueFor = 990;
+
+    /**
+     * Retry a transient image-phase failure. Safe: per-slide media is persisted
+     * (slide_media) so a retry resumes instead of re-rendering/re-billing, and
+     * replaceAiMedia merges idempotently without clobbering user edits.
+     */
+    public int $tries = 3;
+
+    /**
+     * @return array<int, int>
+     */
+    public function backoff(): array
+    {
+        return [10, 30];
+    }
 
     public function __construct(
         public string $userId,
@@ -69,10 +90,13 @@ class RenderPostImages implements ShouldBeUnique, ShouldQueue
             return;
         }
 
+        $locale = $generation->language_code;
+        $kind = $exception ? GenerationFailure::fromThrowable($exception, GenerationFailure::ImageNone) : GenerationFailure::ImageNone;
+
         $generation->update([
             'status' => GenerationStatus::FailedImage,
             'error_phase' => 'image',
-            'error' => $exception?->getMessage() ?? 'Image rendering failed.',
+            'error' => $kind->message($locale),
         ]);
 
         Log::error('RenderPostImages failed', [
@@ -130,6 +154,16 @@ class RenderPostImages implements ShouldBeUnique, ShouldQueue
             referenceImages: $referenceImages,
         );
 
+        // Resume: reuse slides already rendered on a prior attempt so a retry
+        // never re-renders or re-bills them (and never overwrites the draft
+        // with a fresh full set). Keyed by slide index.
+        if ($isCarousel && is_array($generation->slide_media)) {
+            $context->existingSlideMedia = array_filter(
+                $generation->slide_media,
+                fn ($item): bool => is_array($item) && $item !== [],
+            );
+        }
+
         $generation->update(['status' => GenerationStatus::ImageRunning]);
 
         PostCreationProgress::dispatch(
@@ -146,7 +180,17 @@ class RenderPostImages implements ShouldBeUnique, ShouldQueue
             $media = $generated->media;
             $done = count($media);
 
-            $post->update(['media' => $media]);
+            // Persist the per-slide map so a later retry resumes instead of
+            // re-rendering. Only meaningful for carousels; single/tweet paths
+            // leave it null.
+            if ($isCarousel && $context->renderedSlideMedia !== []) {
+                $generation->update(['slide_media' => $context->renderedSlideMedia]);
+            }
+
+            // Idempotent merge (locked read-modify-write): replace only the
+            // AI-generated slice, preserving any media the user attached to the
+            // draft between attempts, and delete AI media/files this run drops.
+            $this->replaceAiMedia($post, $media);
 
             $generation->update(['image_done' => $done]);
 
@@ -154,7 +198,10 @@ class RenderPostImages implements ShouldBeUnique, ShouldQueue
                 $generation->update([
                     'status' => GenerationStatus::FailedImage,
                     'error_phase' => 'image',
-                    'error' => "Only {$done} of {$generation->image_expected} images could be rendered. The draft text is saved — ask again to retry the images.",
+                    'error' => GenerationFailure::ImagePartial->message($brand->languageCode, [
+                        'done' => $done,
+                        'expected' => $generation->image_expected,
+                    ]),
                 ]);
 
                 PostCreationReady::dispatch($this->userId, $this->creationId, $post->id, (string) $generation->error);
@@ -186,18 +233,88 @@ class RenderPostImages implements ShouldBeUnique, ShouldQueue
                 data: ['post_id' => $post->id],
             );
         } catch (Throwable $e) {
-            $generation->update([
-                'status' => GenerationStatus::FailedImage,
-                'error_phase' => 'image',
-                'error' => $e->getMessage(),
-            ]);
+            // FailedImage is terminal and would short-circuit a retry's handle().
+            // Only write it on the final attempt; earlier attempts stay
+            // non-terminal so the queued retry re-runs and resumes via
+            // slide_media. failed() writes the terminal status after the last.
+            if ($this->attempts() >= $this->tries) {
+                $generation->update([
+                    'status' => GenerationStatus::FailedImage,
+                    'error_phase' => 'image',
+                    'error' => GenerationFailure::fromThrowable($e, GenerationFailure::ImageNone)->message($brand->languageCode),
+                ]);
+            }
 
             Log::error('RenderPostImages failed', [
                 'creation_id' => $this->creationId,
+                'attempt' => $this->attempts(),
                 'error' => $e->getMessage(),
             ]);
 
             throw $e;
+        }
+    }
+
+    /**
+     * Idempotently set the post's AI-generated media to $newAiMedia, preserving
+     * any non-AI media the user attached to the draft between attempts, and
+     * deleting the Media rows + storage files of AI media this run drops.
+     *
+     * A locked read-modify-write (mirroring RegeneratePostMediaImage) so a
+     * concurrent edit is not clobbered and a retry never duplicates or leaks.
+     *
+     * @param  array<int, array<string, mixed>>  $newAiMedia
+     */
+    private function replaceAiMedia(Post $post, array $newAiMedia): void
+    {
+        $newIds = collect($newAiMedia)->pluck('id')->filter()->all();
+
+        DB::transaction(function () use ($post, $newAiMedia, $newIds): void {
+            $fresh = Post::query()->whereKey($post->id)->lockForUpdate()->firstOrFail();
+            $current = collect($fresh->media ?? []);
+
+            // AI media present before this run but NOT in the new set — orphaned.
+            $orphans = $current
+                ->filter(fn ($item): bool => data_get($item, 'source') === Source::Ai->value
+                    && ! in_array(data_get($item, 'id'), $newIds, true));
+
+            // Keep everything the user added (non-AI), then append the new AI set.
+            $userMedia = $current
+                ->reject(fn ($item): bool => data_get($item, 'source') === Source::Ai->value)
+                ->values()
+                ->all();
+
+            $fresh->update(['media' => array_merge($userMedia, array_values($newAiMedia))]);
+
+            foreach ($orphans as $item) {
+                $this->discardMediaItem($item);
+            }
+
+            // Refresh the caller's instance so later reads see the merged set.
+            $post->setRawAttributes($fresh->getAttributes(), true);
+        });
+    }
+
+    /**
+     * Delete a dropped AI media item's DB row, its file, and any background.
+     *
+     * @param  array<string, mixed>  $item
+     */
+    private function discardMediaItem(array $item): void
+    {
+        $path = data_get($item, 'path');
+        if (is_string($path) && $path !== '' && Storage::exists($path)) {
+            Storage::delete($path);
+        }
+
+        $bg = data_get($item, 'source_meta.background_path');
+        if (is_string($bg) && $bg !== '' && Storage::exists($bg)) {
+            Storage::delete($bg);
+        }
+
+        $id = data_get($item, 'id');
+        if ($id !== null) {
+            Media::query()->whereKey($id)->first()?->delete();
         }
     }
 }

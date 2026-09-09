@@ -239,6 +239,9 @@ return [
             'errors' => [
                 'start_failed' => 'Tidak dapat memulakan penjanaan.',
                 'generation_failed' => 'Penjanaan AI gagal.',
+                'text_failed' => 'AI tidak dapat menyiapkan penulisan siaran ini. Prom anda tidak dicaj. Sila cuba lagi.',
+                'image_partial' => 'Hanya :done daripada :expected imej berjaya dibuat. Teks draf disimpan. Cuba semula imej.',
+                'image_none' => 'Imej tidak dapat dibuat. Teks draf disimpan. Cuba semula imej.',
                 'timeout' => 'Penjanaan AI telah tamat masa. Sila cuba lagi.',
                 'channel_failed' => 'Tidak dapat menyambung ke aliran penjanaan.',
             ],
@@ -738,6 +741,7 @@ return [
             'loading_eta' => 'Anggaran masa: kira-kira :minutes.',
             'loading_eta_minute_one' => '1 minit',
             'loading_eta_minute_other' => ':count minit',
+            'loading_image_progress' => 'Menjana imej :done daripada :expected',
             'loading_leave_title' => 'Anda boleh teruskan aktiviti lain.',
             'loading_leave_body' => 'Kami akan memberitahu anda apabila siaran telah sedia.',
             'loading_leave_cta' => 'Pergi ke kalendar',

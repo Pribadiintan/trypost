@@ -239,6 +239,9 @@ return [
             'errors' => [
                 'start_failed' => '생성을 시작할 수 없습니다.',
                 'generation_failed' => 'AI 생성에 실패했습니다.',
+                'text_failed' => 'AI가 이 게시물 작성을 완료하지 못했습니다. 프롬프트는 청구되지 않았습니다. 다시 시도해 주세요.',
+                'image_partial' => ':expected개 중 :done개의 이미지만 생성되었습니다. 초안 텍스트는 저장되었습니다. 이미지를 다시 시도하세요.',
+                'image_none' => '이미지를 생성하지 못했습니다. 초안 텍스트는 저장되었습니다. 이미지를 다시 시도하세요.',
                 'timeout' => 'AI 생성 시간이 초과되었습니다. 다시 시도해 주세요.',
                 'channel_failed' => '생성 스트림에 연결할 수 없습니다.',
             ],
@@ -738,6 +741,7 @@ return [
             'loading_eta' => '예상 시간: 약 :minutes.',
             'loading_eta_minute_one' => '1분',
             'loading_eta_minute_other' => ':count분',
+            'loading_image_progress' => ':expected개 중 :done번째 이미지 생성 중',
             'loading_leave_title' => '계속 작업하셔도 됩니다.',
             'loading_leave_body' => '게시물이 준비되면 알려드리겠습니다.',
             'loading_leave_cta' => '캘린더로 이동',

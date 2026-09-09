@@ -239,6 +239,9 @@ return [
             'errors' => [
                 'start_failed' => '生成を開始できませんでした。',
                 'generation_failed' => 'AI生成に失敗しました。',
+                'text_failed' => 'AIがこの投稿の作成を完了できませんでした。プロンプトは課金されていません。もう一度お試しください。',
+                'image_partial' => ':expected枚中:done枚の画像しか作成できませんでした。下書きのテキストは保存されています。画像を再試行してください。',
+                'image_none' => '画像を作成できませんでした。下書きのテキストは保存されています。画像を再試行してください。',
                 'timeout' => 'AI生成がタイムアウトしました。もう一度お試しください。',
                 'channel_failed' => '生成ストリームに接続できませんでした。',
             ],
@@ -738,6 +741,7 @@ return [
             'loading_eta' => '推定時間: 約 :minutes。',
             'loading_eta_minute_one' => '1 分',
             'loading_eta_minute_other' => ':count 分',
+            'loading_image_progress' => ':expected枚中:done枚の画像を生成中',
             'loading_leave_title' => '作業を続けても大丈夫です。',
             'loading_leave_body' => '投稿の準備ができたらお知らせします。',
             'loading_leave_cta' => 'カレンダーへ移動',

@@ -241,6 +241,9 @@ return [
             'errors' => [
                 'start_failed' => 'Oluşturma başlatılamadı.',
                 'generation_failed' => 'AI oluşturma başarısız oldu.',
+                'text_failed' => 'AI bu gönderiyi yazmayı tamamlayamadı. İsteminiz ücretlendirilmedi. Lütfen tekrar deneyin.',
+                'image_partial' => ':expected görselden yalnızca :done tanesi oluşturulabildi. Taslak metni kaydedildi. Görselleri yeniden deneyin.',
+                'image_none' => 'Görseller oluşturulamadı. Taslak metni kaydedildi. Görselleri yeniden deneyin.',
                 'timeout' => 'Yapay zeka oluşturma zaman aşımına uğradı. Lütfen tekrar deneyin.',
                 'channel_failed' => 'Oluşturma akışına bağlanılamadı.',
             ],
@@ -740,6 +743,7 @@ return [
             'loading_eta' => 'Tahmini süre: yaklaşık :minutes.',
             'loading_eta_minute_one' => '1 dakika',
             'loading_eta_minute_other' => ':count dakika',
+            'loading_image_progress' => ':expected görselden :done tanesi oluşturuluyor',
             'loading_leave_title' => 'Çalışmaya devam edebilirsiniz.',
             'loading_leave_body' => 'Gönderi hazır olduğunda sizi bilgilendireceğiz.',
             'loading_leave_cta' => 'Takvime git',

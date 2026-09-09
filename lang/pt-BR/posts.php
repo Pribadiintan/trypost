@@ -239,6 +239,9 @@ return [
             'errors' => [
                 'start_failed' => 'Não foi possível iniciar a geração.',
                 'generation_failed' => 'A geração por IA falhou.',
+                'text_failed' => 'A IA não conseguiu terminar de escrever esta publicação. Seu prompt não foi cobrado. Tente novamente.',
+                'image_partial' => 'Apenas :done de :expected imagens puderam ser criadas. O texto do rascunho foi salvo. Tente as imagens novamente.',
+                'image_none' => 'Não foi possível criar as imagens. O texto do rascunho foi salvo. Tente as imagens novamente.',
                 'timeout' => 'O tempo de geração por IA esgotou. Tente novamente.',
                 'channel_failed' => 'Não foi possível conectar ao fluxo de geração.',
             ],
@@ -738,6 +741,7 @@ return [
             'loading_eta' => 'Tempo estimado: cerca de :minutes.',
             'loading_eta_minute_one' => '1 minuto',
             'loading_eta_minute_other' => ':count minutos',
+            'loading_image_progress' => 'Gerando imagem :done de :expected',
             'loading_leave_title' => 'Você pode continuar trabalhando.',
             'loading_leave_body' => 'A gente te avisa assim que o post ficar pronto.',
             'loading_leave_cta' => 'Ir pro calendário',

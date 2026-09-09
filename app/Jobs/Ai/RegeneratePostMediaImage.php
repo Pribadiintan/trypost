@@ -17,6 +17,7 @@ use App\Services\Ai\RecordAiUsage;
 use App\Services\Image\TemplateImageGenerator;
 use App\Support\ResolvedBrand;
 use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
@@ -28,9 +29,16 @@ use Illuminate\Support\Str;
 use RuntimeException;
 use Throwable;
 
-class RegeneratePostMediaImage implements ShouldQueue
+class RegeneratePostMediaImage implements ShouldBeUnique, ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+
+    /**
+     * Long enough to cover the render window (up to ~180s) plus queue wait, so
+     * a rapid double-submit of the same regeneration is deduped rather than
+     * billed twice. Keep under the worker timeout + retry_after envelope.
+     */
+    public int $uniqueFor = 990;
 
     public function __construct(
         public string $workspaceId,
@@ -42,6 +50,11 @@ class RegeneratePostMediaImage implements ShouldQueue
         public MediaRegenerationMode $mode,
     ) {
         $this->onQueue('ai');
+    }
+
+    public function uniqueId(): string
+    {
+        return "{$this->workspaceId}:{$this->postId}:{$this->mediaId}:{$this->regenerationId}";
     }
 
     public function failed(?Throwable $exception): void

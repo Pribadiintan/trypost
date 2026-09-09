@@ -239,6 +239,9 @@ return [
             'errors' => [
                 'start_failed' => '无法开始生成。',
                 'generation_failed' => 'AI 生成失败。',
+                'text_failed' => 'AI 未能完成这篇帖子的撰写。未扣除你的提示费用。请重试。',
+                'image_partial' => '仅生成了 :expected 张图片中的 :done 张。草稿文本已保存。请重试生成图片。',
+                'image_none' => '无法生成图片。草稿文本已保存。请重试生成图片。',
                 'timeout' => 'AI 生成超时。请重试。',
                 'channel_failed' => '无法连接到生成流。',
             ],
@@ -738,6 +741,7 @@ return [
             'loading_eta' => '预计时间：约 :minutes。',
             'loading_eta_minute_one' => '1 分钟',
             'loading_eta_minute_other' => ':count 分钟',
+            'loading_image_progress' => '正在生成第 :done 张图片，共 :expected 张',
             'loading_leave_title' => '你可以继续工作。',
             'loading_leave_body' => '帖子准备就绪后，我们会通知你。',
             'loading_leave_cta' => '前往日历',

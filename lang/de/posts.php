@@ -241,6 +241,9 @@ return [
             'errors' => [
                 'start_failed' => 'Generierung konnte nicht gestartet werden.',
                 'generation_failed' => 'KI-Generierung fehlgeschlagen.',
+                'text_failed' => 'Die KI konnte diesen Beitrag nicht fertigstellen. Dein Prompt wurde nicht berechnet. Bitte versuche es erneut.',
+                'image_partial' => 'Nur :done von :expected Bildern konnten erstellt werden. Der Entwurfstext ist gespeichert. Versuche die Bilder erneut.',
+                'image_none' => 'Die Bilder konnten nicht erstellt werden. Der Entwurfstext ist gespeichert. Versuche die Bilder erneut.',
                 'timeout' => 'Zeitüberschreitung bei der KI-Generierung. Bitte versuche es erneut.',
                 'channel_failed' => 'Verbindung zum Generierungs-Stream konnte nicht hergestellt werden.',
             ],
@@ -740,6 +743,7 @@ return [
             'loading_eta' => 'Geschätzte Zeit: etwa :minutes.',
             'loading_eta_minute_one' => '1 Minute',
             'loading_eta_minute_other' => ':count Minuten',
+            'loading_image_progress' => 'Bild :done von :expected wird erstellt',
             'loading_leave_title' => 'Du kannst weiterarbeiten.',
             'loading_leave_body' => 'Wir benachrichtigen dich, wenn der Beitrag fertig ist.',
             'loading_leave_cta' => 'Zum Kalender',

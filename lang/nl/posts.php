@@ -239,6 +239,9 @@ return [
             'errors' => [
                 'start_failed' => 'Kan generatie niet starten.',
                 'generation_failed' => 'AI-generatie mislukt.',
+                'text_failed' => 'De AI kon deze post niet afschrijven. Je prompt is niet in rekening gebracht. Probeer het opnieuw.',
+                'image_partial' => 'Slechts :done van :expected afbeeldingen konden worden gemaakt. De concepttekst is opgeslagen. Probeer de afbeeldingen opnieuw.',
+                'image_none' => 'De afbeeldingen konden niet worden gemaakt. De concepttekst is opgeslagen. Probeer de afbeeldingen opnieuw.',
                 'timeout' => 'AI-generatie is verlopen. Probeer het opnieuw.',
                 'channel_failed' => 'Kon geen verbinding maken met de generatiestream.',
             ],
@@ -738,6 +741,7 @@ return [
             'loading_eta' => 'Geschatte tijd: ongeveer :minutes.',
             'loading_eta_minute_one' => '1 minuut',
             'loading_eta_minute_other' => ':count minuten',
+            'loading_image_progress' => 'Afbeelding :done van :expected genereren',
             'loading_leave_title' => 'Je kunt gewoon doorwerken.',
             'loading_leave_body' => 'We laten het je weten wanneer de post klaar is.',
             'loading_leave_cta' => 'Ga naar kalender',

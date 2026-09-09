@@ -53,20 +53,35 @@ class PostImagePipeline
     }
 
     /**
-     * Render one AI image per slide in the structured carousel output. Slides
-     * that render nothing are skipped.
+     * Render one AI image per slide in the structured carousel output, keyed by
+     * slide index. Slides that render nothing are omitted (leaving a gap at
+     * that index), so the caller can tell which slides still need work.
+     *
+     * Pass $existingSlideMedia (index => media-item) to resume a partially
+     * rendered carousel: any slide already present is reused verbatim — it is
+     * NOT re-rendered and NOT re-billed. This is what makes a retry idempotent
+     * and stops the double-billing that a full re-render would cause.
      *
      * @param  array<string, mixed>  $structured
      * @param  array<int, string|Image>  $referenceImages
-     * @return array<int, array<string, mixed>>
+     * @param  array<int, array<string, mixed>>  $existingSlideMedia
+     * @return array<int, array<string, mixed>> index => media-item
      */
-    public function forCarousel(Workspace $workspace, SocialAccount $account, array $structured, ?ContentType $contentType, bool $applyBrandVisuals = true, ?ResolvedBrand $brand = null, array $referenceImages = []): array
+    public function forCarousel(Workspace $workspace, SocialAccount $account, array $structured, ?ContentType $contentType, bool $applyBrandVisuals = true, ?ResolvedBrand $brand = null, array $referenceImages = [], array $existingSlideMedia = []): array
     {
         ['width' => $width, 'height' => $height] = $this->dimensionsForContentType($contentType);
 
         $media = [];
 
-        foreach (data_get($structured, 'slides', []) as $slide) {
+        foreach (array_values(data_get($structured, 'slides', [])) as $index => $slide) {
+            // Reuse an already-rendered slide as-is: no render call, no billing.
+            $existing = $existingSlideMedia[$index] ?? null;
+            if (is_array($existing) && $existing !== []) {
+                $media[$index] = $existing;
+
+                continue;
+            }
+
             $rendered = $this->generator->render(
                 workspace: $workspace,
                 socialAccount: $account,
@@ -81,7 +96,7 @@ class PostImagePipeline
             );
 
             if ($rendered) {
-                $media[] = $this->buildAiMediaItem($workspace, $rendered);
+                $media[$index] = $this->buildAiMediaItem($workspace, $rendered);
             }
         }
 

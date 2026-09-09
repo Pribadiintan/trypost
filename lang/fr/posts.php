@@ -239,6 +239,9 @@ return [
             'errors' => [
                 'start_failed' => 'Impossible de démarrer la génération.',
                 'generation_failed' => 'Échec de la génération par l\'IA.',
+                'text_failed' => 'L\'IA n\'a pas pu terminer la rédaction de cette publication. Votre prompt n\'a pas été facturé. Veuillez réessayer.',
+                'image_partial' => 'Seules :done image(s) sur :expected ont pu être créées. Le texte du brouillon est enregistré. Réessayez les images.',
+                'image_none' => 'Impossible de créer les images. Le texte du brouillon est enregistré. Réessayez les images.',
                 'timeout' => 'Le délai de génération par IA a expiré. Veuillez réessayer.',
                 'channel_failed' => 'Impossible de se connecter au flux de génération.',
             ],
@@ -738,6 +741,7 @@ return [
             'loading_eta' => 'Temps estimé : environ :minutes.',
             'loading_eta_minute_one' => '1 minute',
             'loading_eta_minute_other' => ':count minutes',
+            'loading_image_progress' => 'Génération de l\'image :done sur :expected',
             'loading_leave_title' => 'Vous pouvez continuer à travailler.',
             'loading_leave_body' => 'Nous vous préviendrons lorsque la publication sera prête.',
             'loading_leave_cta' => 'Aller au calendrier',

@@ -32,6 +32,7 @@ class AiGeneration extends Model
         'image_done',
         'post_id',
         'structured',
+        'slide_media',
         'error_phase',
         'error',
     ];
@@ -46,6 +47,7 @@ class AiGeneration extends Model
             'image_expected' => 'integer',
             'image_done' => 'integer',
             'structured' => 'array',
+            'slide_media' => 'array',
         ];
     }
 

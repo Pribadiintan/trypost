@@ -11,6 +11,7 @@ use App\Ai\Templates\AiTemplateRegistry;
 use App\Ai\Templates\GeneratedPost;
 use App\Ai\Templates\TemplateContext;
 use App\Enums\Ai\ContentStyle;
+use App\Enums\Ai\GenerationFailure;
 use App\Enums\Ai\GenerationStatus;
 use App\Enums\Ai\GeneratorFormat;
 use App\Enums\Notification\Channel as NotificationChannel;
@@ -40,6 +41,23 @@ class StreamPostCreation implements ShouldBeUnique, ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public int $uniqueFor = 990;
+
+    /**
+     * Retry a transient text-phase failure (provider 5xx / timeout). Safe to
+     * retry: the row is firstOrCreate'd on creation_id, a terminal status
+     * short-circuits handle(), createPostFromGenerated adopts any orphan draft,
+     * and text usage is billed only after the draft is created — so a retry
+     * neither duplicates the post nor double-bills.
+     */
+    public int $tries = 3;
+
+    /**
+     * @return array<int, int>
+     */
+    public function backoff(): array
+    {
+        return [10, 30];
+    }
 
     public function __construct(
         public string $userId,
@@ -79,7 +97,8 @@ class StreamPostCreation implements ShouldBeUnique, ShouldQueue
         $generation->update([
             'status' => GenerationStatus::FailedText,
             'error_phase' => 'text',
-            'error' => $exception?->getMessage() ?? 'Text generation failed.',
+            'error' => ($exception ? GenerationFailure::fromThrowable($exception, GenerationFailure::Text) : GenerationFailure::Text)
+                ->message($generation->language_code),
         ]);
 
         PostCreationReady::dispatch($this->userId, $this->creationId, $generation->post_id, (string) $generation->error);
@@ -146,6 +165,16 @@ class StreamPostCreation implements ShouldBeUnique, ShouldQueue
         try {
             $response = $agent->prompt($this->prompt);
 
+            $structured = $response->structured ?? [];
+
+            $structured = $this->humanize($workspace, $structured, $agentFormat, $style->style(), $brand);
+
+            $textOnly = $style->assemble($structured, $textContext);
+            $post = $this->createPostFromGenerated($workspace, $textOnly, $socialAccount);
+
+            // Bill text usage only once the draft is durably created. Doing it
+            // earlier meant a throw in humanize()/assemble()/createPost() spent
+            // credits for nothing AND a retry (same creation_id) billed again.
             RecordAiUsage::recordText(
                 workspace: $workspace,
                 promptTokens: $response->usage->promptTokens,
@@ -153,6 +182,7 @@ class StreamPostCreation implements ShouldBeUnique, ShouldQueue
                 provider: (string) $response->meta->provider,
                 model: (string) $response->meta->model,
                 userId: $this->userId,
+                postId: $post->id,
                 metadata: [
                     'agent' => 'post_generator',
                     'format' => $this->format,
@@ -163,13 +193,6 @@ class StreamPostCreation implements ShouldBeUnique, ShouldQueue
                     'apply_brand_visuals' => $this->applyBrandVisuals,
                 ],
             );
-
-            $structured = $response->structured ?? [];
-
-            $structured = $this->humanize($workspace, $structured, $agentFormat, $style->style(), $brand);
-
-            $textOnly = $style->assemble($structured, $textContext);
-            $post = $this->createPostFromGenerated($workspace, $textOnly, $socialAccount);
 
             $imageExpected = $this->expectedImageCount($isCarousel, $slideCount, $socialAccount);
 
@@ -219,15 +242,22 @@ class StreamPostCreation implements ShouldBeUnique, ShouldQueue
                 languageCode: $this->languageCode,
             );
         } catch (\Throwable $e) {
-            $generation->update([
-                'status' => GenerationStatus::FailedText,
-                'error_phase' => 'text',
-                'error' => $e->getMessage(),
-            ]);
+            // FailedText is terminal and would short-circuit a retry's handle().
+            // Only write it on the final attempt; otherwise leave the row
+            // non-terminal so the queued retry re-runs. failed() writes the
+            // terminal status + fires the event after the last attempt.
+            if ($this->attempts() >= $this->tries) {
+                $generation->update([
+                    'status' => GenerationStatus::FailedText,
+                    'error_phase' => 'text',
+                    'error' => GenerationFailure::fromThrowable($e, GenerationFailure::Text)->message($brand->languageCode),
+                ]);
+            }
 
             Log::error('StreamPostCreation failed', [
                 'creation_id' => $this->creationId,
                 'phase' => 'text',
+                'attempt' => $this->attempts(),
                 'error' => $e->getMessage(),
             ]);
 
@@ -414,7 +444,16 @@ class StreamPostCreation implements ShouldBeUnique, ShouldQueue
     private function aspectRatioFor(ContentType $type): ?string
     {
         $dims = $type->aiImageDimensions();
-        $ratio = data_get($dims, 'width') / data_get($dims, 'height');
+        $width = (int) data_get($dims, 'width');
+        $height = (int) data_get($dims, 'height');
+
+        // A zero/missing height would throw a DivisionByZeroError mid-generation
+        // (after text was created) — treat it as "no known ratio" instead.
+        if ($width <= 0 || $height <= 0) {
+            return null;
+        }
+
+        $ratio = $width / $height;
 
         return match (true) {
             abs($ratio - 1.0) < 0.01 => '1:1',

@@ -54,6 +54,8 @@ const props = withDefaults(
 const status = ref<'loading' | 'error'>('loading');
 const errorMessage = ref('');
 const progressPhase = ref<string | null>(null);
+const imageDone = ref(0);
+const imageExpected = ref(0);
 let subscribed = false;
 let unmounted = false;
 let generationTimeout: ReturnType<typeof setTimeout> | null = null;
@@ -102,8 +104,23 @@ let elapsedTimer: ReturnType<typeof setInterval> | null = null;
 const elapsedLabel = computed(() => dateFormat.formatClock(elapsed.value));
 
 const progress = computed(() => {
+    // Prefer real per-image completion once the image phase reports counts;
+    // fall back to the elapsed-time estimate for the text phase.
+    if (imageExpected.value > 0) {
+        return Math.min(1, imageDone.value / imageExpected.value);
+    }
     const ratio = elapsed.value / estimatedSeconds.value;
     return Math.min(0.95, ratio);
+});
+
+const imageProgressLabel = computed(() => {
+    if (imageExpected.value <= 0) {
+        return null;
+    }
+    return trans('posts.create.steps.loading_image_progress', {
+        done: String(imageDone.value),
+        expected: String(imageExpected.value),
+    });
 });
 
 const unsubscribe = () => {
@@ -207,6 +224,12 @@ const startGeneration = async () => {
                     if (e.phase) {
                         progressPhase.value = e.phase;
                     }
+                    if (typeof e.image_expected === 'number') {
+                        imageExpected.value = e.image_expected;
+                    }
+                    if (typeof e.image_done === 'number') {
+                        imageDone.value = e.image_done;
+                    }
                 },
             );
         },
@@ -233,7 +256,7 @@ const startGeneration = async () => {
     // Fallback polling every 6 seconds in case WebSocket is unstable
     pollTimer = setInterval(pollStatus, 6000);
 
-    if (!props.alreadyStarted) {
+    if (!props.alreadyStarted || forceStart.value) {
         try {
             await httpStart.post(startPostCreation.url());
 
@@ -262,6 +285,21 @@ const leave = () => {
 
 const createAnother = () => {
     router.visit(createPostRoute().url);
+};
+
+// On retry we always re-POST, even if the first attempt had already started.
+const forceStart = ref(false);
+
+const retry = () => {
+    unsubscribe();
+    status.value = 'loading';
+    errorMessage.value = '';
+    progressPhase.value = null;
+    imageDone.value = 0;
+    imageExpected.value = 0;
+    elapsed.value = 0;
+    forceStart.value = true;
+    startGeneration();
 };
 
 onMounted(() => {
@@ -296,11 +334,13 @@ onBeforeUnmount(() => {
                     v-if="status === 'loading'"
                     class="size-7 animate-spin text-foreground"
                     stroke-width="2"
+                    aria-hidden="true"
                 />
                 <IconSparkles
                     v-else
                     class="size-7 text-foreground"
                     stroke-width="2"
+                    aria-hidden="true"
                 />
             </div>
 
@@ -319,6 +359,14 @@ onBeforeUnmount(() => {
                 <div class="w-full max-w-md">
                     <div
                         class="h-2 w-full overflow-hidden rounded-full border-2 border-foreground bg-card"
+                        role="progressbar"
+                        :aria-valuenow="Math.round(progress * 100)"
+                        aria-valuemin="0"
+                        aria-valuemax="100"
+                        :aria-label="
+                            imageProgressLabel ||
+                            $t('posts.create.steps.loading_page_title')
+                        "
                     >
                         <div
                             class="h-full bg-foreground transition-[width] duration-700 ease-out"
@@ -331,12 +379,13 @@ onBeforeUnmount(() => {
                         class="mt-1.5 flex justify-between font-mono text-[11px] text-foreground/50"
                     >
                         <span>{{ elapsedLabel }}</span>
-                        <span>{{ minutesLabel }}</span>
+                        <span>{{ imageProgressLabel || minutesLabel }}</span>
                     </div>
                 </div>
 
                 <div
                     class="mt-4 flex min-h-[3rem] w-full max-w-lg items-center justify-center rounded-xl border-2 border-foreground bg-card px-5 py-3 shadow-2xs"
+                    aria-live="polite"
                 >
                     <p
                         class="text-center text-sm text-foreground/80 transition-opacity"
@@ -377,6 +426,7 @@ onBeforeUnmount(() => {
             >
                 <div
                     class="w-full rounded-xl border-2 border-foreground bg-rose-50 p-4 shadow-2xs"
+                    role="alert"
                 >
                     <p class="text-center text-sm font-semibold text-rose-700">
                         {{
@@ -386,7 +436,10 @@ onBeforeUnmount(() => {
                     </p>
                 </div>
                 <div class="flex flex-wrap items-center justify-center gap-2">
-                    <Button @click="createAnother">
+                    <Button @click="retry">
+                        {{ $t('posts.ai.generate.retry') }}
+                    </Button>
+                    <Button variant="outline" @click="createAnother">
                         {{
                             $t('posts.create.steps.loading_create_another_cta')
                         }}

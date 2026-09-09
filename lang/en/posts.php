@@ -239,6 +239,9 @@ return [
             'errors' => [
                 'start_failed' => 'Could not start generation.',
                 'generation_failed' => 'AI generation failed.',
+                'text_failed' => 'The AI could not finish writing this post. Your prompt was not charged. Please try again.',
+                'image_partial' => 'Only :done of :expected images could be created. The draft text is saved. Retry the images.',
+                'image_none' => 'The images could not be created. The draft text is saved. Retry the images.',
                 'timeout' => 'AI generation timed out. Please try again.',
                 'channel_failed' => 'Could not connect to the generation stream.',
             ],
@@ -738,6 +741,7 @@ return [
             'loading_eta' => 'Estimated time: about :minutes.',
             'loading_eta_minute_one' => '1 minute',
             'loading_eta_minute_other' => ':count minutes',
+            'loading_image_progress' => 'Generating image :done of :expected',
             'loading_leave_title' => 'You can keep working.',
             'loading_leave_body' => 'We will notify you when the post is ready.',
             'loading_leave_cta' => 'Go to calendar',

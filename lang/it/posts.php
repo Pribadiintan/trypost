@@ -239,6 +239,9 @@ return [
             'errors' => [
                 'start_failed' => 'Impossibile avviare la generazione.',
                 'generation_failed' => 'Generazione IA non riuscita.',
+                'text_failed' => 'L\'IA non è riuscita a completare la scrittura di questo post. Il tuo prompt non è stato addebitato. Riprova.',
+                'image_partial' => 'Sono state create solo :done immagini su :expected. Il testo della bozza è salvato. Riprova le immagini.',
+                'image_none' => 'Impossibile creare le immagini. Il testo della bozza è salvato. Riprova le immagini.',
                 'timeout' => 'Timeout della generazione AI. Riprova più tardi.',
                 'channel_failed' => 'Impossibile connettersi al flusso di generazione.',
             ],
@@ -738,6 +741,7 @@ return [
             'loading_eta' => 'Tempo stimato: circa :minutes.',
             'loading_eta_minute_one' => '1 minuto',
             'loading_eta_minute_other' => ':count minuti',
+            'loading_image_progress' => 'Generazione immagine :done di :expected',
             'loading_leave_title' => 'Puoi continuare a lavorare.',
             'loading_leave_body' => 'Ti avviseremo quando il post sarà pronto.',
             'loading_leave_cta' => 'Vai al calendario',

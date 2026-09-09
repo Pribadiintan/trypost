@@ -239,6 +239,9 @@ return [
             'errors' => [
                 'start_failed' => 'Nie udało się rozpocząć generowania.',
                 'generation_failed' => 'Generowanie przez AI nie powiodło się.',
+                'text_failed' => 'AI nie mogło dokończyć pisania tego posta. Twój prompt nie został naliczony. Spróbuj ponownie.',
+                'image_partial' => 'Utworzono tylko :done z :expected obrazów. Tekst wersji roboczej został zapisany. Ponów próbę dla obrazów.',
+                'image_none' => 'Nie udało się utworzyć obrazów. Tekst wersji roboczej został zapisany. Ponów próbę dla obrazów.',
                 'timeout' => 'Przekroczono limit czasu generowania AI. Spróbuj ponownie.',
                 'channel_failed' => 'Nie udało się połączyć ze strumieniem generowania.',
             ],
@@ -738,6 +741,7 @@ return [
             'loading_eta' => 'Szacowany czas: około :minutes.',
             'loading_eta_minute_one' => '1 minuta',
             'loading_eta_minute_other' => ':count minut',
+            'loading_image_progress' => 'Generowanie obrazu :done z :expected',
             'loading_leave_title' => 'Możesz dalej pracować.',
             'loading_leave_body' => 'Powiadomimy Cię, gdy post będzie gotowy.',
             'loading_leave_cta' => 'Przejdź do kalendarza',
