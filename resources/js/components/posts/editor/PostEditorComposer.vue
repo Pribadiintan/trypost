@@ -250,6 +250,30 @@ const issueLabel = (reason: string): string =>
 const canRegenerateWithAi = (item: MediaItem): boolean =>
     props.allowAiRegenerate && item.source === 'ai';
 
+/**
+ * A short aspect-ratio label ("9:16", "1:1", …) derived from the stored
+ * width/height, so the square-cropped grid tile still tells the truth about
+ * what will actually publish. Returns null when dimensions are unknown.
+ */
+const aspectRatioLabel = (item: MediaItem): string | null => {
+    const w = item.meta?.width;
+    const h = item.meta?.height;
+
+    if (!w || !h || w <= 0 || h <= 0) return null;
+
+    const gcd = (a: number, b: number): number => (b === 0 ? a : gcd(b, a % b));
+    const divisor = gcd(w, h);
+    const rw = Math.round(w / divisor);
+    const rh = Math.round(h / divisor);
+
+    // Collapse odd ratios that reduce to large coprime numbers to a decimal.
+    if (rw > 20 || rh > 20) {
+        return `${(w / h).toFixed(2)}:1`;
+    }
+
+    return `${rw}:${rh}`;
+};
+
 const altDialogOpen = ref(false);
 const altDialogIndex = ref<number | null>(null);
 const altDialogItem = computed<MediaItem | null>(() =>
@@ -339,6 +363,14 @@ const onAltTextSave = (alt: string): void => {
                         <div
                             class="pointer-events-none absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-black/60 to-transparent opacity-0 transition-opacity group-hover:opacity-100"
                         />
+
+                        <span
+                            v-if="isImage(item) && aspectRatioLabel(item)"
+                            class="pointer-events-none absolute top-1.5 left-1.5 rounded-md bg-black/65 px-1.5 py-0.5 text-[10px] font-semibold text-white tabular-nums backdrop-blur-sm"
+                            data-testid="aspect-ratio-badge"
+                        >
+                            {{ aspectRatioLabel(item) }}
+                        </span>
 
                         <div
                             class="pointer-events-none absolute inset-x-1.5 bottom-1.5 flex flex-col items-start gap-1 text-[10px] font-medium text-white"
