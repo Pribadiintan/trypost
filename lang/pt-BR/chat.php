@@ -206,5 +206,6 @@ return [
         'preview_show' => 'Pré-visualização',
         'preview_hide' => 'Ocultar pré-visualização',
         'preview_error' => 'Não foi possível carregar a pré-visualização. Abra no editor.',
+        'view_image' => 'Ver imagem',
     ],
 ];

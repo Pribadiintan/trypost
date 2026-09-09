@@ -194,6 +194,7 @@ return [
         'preview_show' => 'Podgląd',
         'preview_hide' => 'Ukryj podgląd',
         'preview_error' => 'Nie udało się wczytać podglądu. Otwórz go zamiast tego w edytorze.',
+        'view_image' => 'Zobacz obraz',
     ],
     'history' => [
         'rename' => 'Zmień nazwę',

@@ -194,6 +194,7 @@ return [
         'preview_show' => '预览',
         'preview_hide' => '隐藏预览',
         'preview_error' => '无法加载预览。请改为在编辑器中打开。',
+        'view_image' => '查看图片',
     ],
     'history' => [
         'rename' => '重命名',

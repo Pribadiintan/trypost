@@ -194,6 +194,7 @@ return [
         'preview_show' => 'Anteprima',
         'preview_hide' => 'Nascondi anteprima',
         'preview_error' => 'Impossibile caricare l’anteprima. Aprila invece nell’editor.',
+        'view_image' => 'Vedi immagine',
     ],
     'history' => [
         'rename' => 'Rinomina',

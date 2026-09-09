@@ -195,6 +195,7 @@ return [
         'preview_show' => 'Preview',
         'preview_hide' => 'Hide preview',
         'preview_error' => "Couldn't load the preview. Open in editor instead.",
+        'view_image' => 'View image',
         'result_elapsed_label' => 'Elapsed: :elapsed',
         'result_waiting_hint' => "This keeps running if you leave. The post shows up here when it's ready.",
         'result_detached_hint' => 'This keeps running in the background. Reopen this conversation to see the post.',

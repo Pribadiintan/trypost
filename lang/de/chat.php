@@ -194,6 +194,7 @@ return [
         'preview_show' => 'Vorschau',
         'preview_hide' => 'Vorschau ausblenden',
         'preview_error' => 'Vorschau konnte nicht geladen werden. Stattdessen im Editor öffnen.',
+        'view_image' => 'Bild ansehen',
     ],
     'history' => [
         'rename' => 'Umbenennen',

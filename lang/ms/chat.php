@@ -195,6 +195,7 @@ return [
         'preview_show' => 'Pratonton',
         'preview_hide' => 'Sembunyikan pratonton',
         'preview_error' => 'Tidak dapat memuatkan pratonton. Buka dalam editor sebaliknya.',
+        'view_image' => 'Lihat imej',
         'result_elapsed_label' => 'Masa berlalu: :elapsed',
         'result_waiting_hint' => 'Ini terus berjalan jika anda pergi. Hantaran akan muncul di sini apabila sudah siap.',
         'result_detached_hint' => 'Ini terus berjalan di latar belakang. Buka semula perbualan ini untuk melihat hantaran.',

@@ -194,6 +194,7 @@ return [
         'preview_show' => 'プレビュー',
         'preview_hide' => 'プレビューを隠す',
         'preview_error' => 'プレビューを読み込めませんでした。代わりにエディタで開いてください。',
+        'view_image' => '画像を表示',
     ],
     'history' => [
         'rename' => '名前を変更',

@@ -194,6 +194,7 @@ return [
         'preview_show' => 'Vista previa',
         'preview_hide' => 'Ocultar vista previa',
         'preview_error' => 'No se pudo cargar la vista previa. Ábrela en el editor.',
+        'view_image' => 'Ver imagen',
     ],
     'history' => [
         'rename' => 'Renombrar',

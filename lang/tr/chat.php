@@ -194,6 +194,7 @@ return [
         'preview_show' => 'Önizleme',
         'preview_hide' => 'Önizlemeyi gizle',
         'preview_error' => 'Önizleme yüklenemedi. Bunun yerine düzenleyicide açın.',
+        'view_image' => 'Resmi görüntüle',
     ],
     'history' => [
         'rename' => 'Yeniden adlandır',

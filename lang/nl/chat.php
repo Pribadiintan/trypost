@@ -194,6 +194,7 @@ return [
         'preview_show' => 'Voorbeeld',
         'preview_hide' => 'Voorbeeld verbergen',
         'preview_error' => 'Kan het voorbeeld niet laden. Open het in plaats daarvan in de editor.',
+        'view_image' => 'Afbeelding bekijken',
     ],
     'history' => [
         'rename' => 'Hernoemen',

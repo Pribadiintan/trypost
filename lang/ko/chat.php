@@ -194,6 +194,7 @@ return [
         'preview_show' => '미리보기',
         'preview_hide' => '미리보기 숨기기',
         'preview_error' => '미리보기를 불러올 수 없습니다. 대신 편집기에서 여세요.',
+        'view_image' => '이미지 보기',
     ],
     'history' => [
         'rename' => '이름 변경',

@@ -194,6 +194,7 @@ return [
         'preview_show' => 'Aperçu',
         'preview_hide' => 'Masquer l’aperçu',
         'preview_error' => 'Impossible de charger l’aperçu. Ouvrez-le plutôt dans l’éditeur.',
+        'view_image' => 'Voir l\'image',
     ],
     'history' => [
         'rename' => 'Renommer',

@@ -347,7 +347,7 @@ onBeforeUnmount(stopElapsed);
                 </Link>
             </div>
 
-            <ChatPostPreview :post-id="readyPostId" />
+            <ChatPostPreview :post-id="readyPostId" :expected-media="imageExpected" />
         </div>
 
         <div
