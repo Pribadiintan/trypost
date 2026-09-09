@@ -66,6 +66,33 @@ class WorkspaceConversationAgent implements Agent, Conversational, HasTools
         public User $user,
     ) {}
 
+    /**
+     * Ordered provider failover chain for the chat agent.
+     *
+     * Returns the configured `ai.text.failover` list when set (the SDK then
+     * falls through them on a failoverable error), or null to fall back to the
+     * single default provider — preserving the prior single-provider behaviour
+     * when no chain is configured.
+     *
+     * @return array<int, string>|null
+     */
+    public function provider(): ?array
+    {
+        $chain = (array) config('ai.text.failover', []);
+
+        return $chain === [] ? null : array_values($chain);
+    }
+
+    /**
+     * Cap how many stored conversation messages are replayed each turn. The
+     * SDK default is 100; a tighter window (config `ai.text.chat`) trims token
+     * cost/latency on long chats.
+     */
+    protected function maxConversationMessages(): int
+    {
+        return max(1, (int) config('ai.text.chat.max_conversation_messages', 30));
+    }
+
     public function instructions(): string
     {
         return view('prompts.conversation.assistant', [

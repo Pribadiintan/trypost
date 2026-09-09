@@ -24,6 +24,36 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Text Generation Resilience & Cost
+    |--------------------------------------------------------------------------
+    |
+    | `text.failover` is an optional ordered list of provider names the SDK
+    | falls back through when the primary text provider throws a failoverable
+    | error (timeout, 5xx, rate limit). Leave it empty (the default) to run
+    | single-provider exactly as before; set e.g. AI_TEXT_FAILOVER="openai,gemini"
+    | to enable cross-provider failover on the critical chat/generation agents.
+    | Every listed provider must be configured with credentials below.
+    |
+    | `text.chat.max_conversation_messages` caps how many stored messages the
+    | interactive workspace chat agent replays each turn (the SDK default is
+    | 100). A tighter window cuts tokens/cost/latency on long conversations at
+    | the price of shorter memory; raise it if the assistant forgets context.
+    |
+    */
+
+    'text' => [
+        'failover' => array_values(array_filter(array_map(
+            'trim',
+            explode(',', (string) env('AI_TEXT_FAILOVER', '')),
+        ))),
+
+        'chat' => [
+            'max_conversation_messages' => (int) env('AI_CHAT_MAX_MESSAGES', 30),
+        ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Caching
     |--------------------------------------------------------------------------
     |

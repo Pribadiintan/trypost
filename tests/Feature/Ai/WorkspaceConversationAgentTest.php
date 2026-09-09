@@ -73,3 +73,41 @@ test('the instructions carry the workspace brand and content language', function
         ->and($instructions)->toContain('confident')
         ->and($instructions)->toContain('linkedin');
 });
+
+test('provider() is null by default so the single default provider is used', function () {
+    config()->set('ai.text.failover', []);
+
+    $agent = new WorkspaceConversationAgent(Workspace::factory()->create(), User::factory()->create());
+
+    expect($agent->provider())->toBeNull();
+});
+
+test('provider() returns the configured failover chain when set', function () {
+    config()->set('ai.text.failover', ['openai', 'gemini']);
+
+    $agent = new WorkspaceConversationAgent(Workspace::factory()->create(), User::factory()->create());
+
+    expect($agent->provider())->toBe(['openai', 'gemini']);
+});
+
+test('the conversation window is capped from config', function () {
+    config()->set('ai.text.chat.max_conversation_messages', 25);
+
+    $agent = new WorkspaceConversationAgent(Workspace::factory()->create(), User::factory()->create());
+
+    $method = new ReflectionMethod($agent, 'maxConversationMessages');
+    $method->setAccessible(true);
+
+    expect($method->invoke($agent))->toBe(25);
+});
+
+test('the conversation window never drops below one', function () {
+    config()->set('ai.text.chat.max_conversation_messages', 0);
+
+    $agent = new WorkspaceConversationAgent(Workspace::factory()->create(), User::factory()->create());
+
+    $method = new ReflectionMethod($agent, 'maxConversationMessages');
+    $method->setAccessible(true);
+
+    expect($method->invoke($agent))->toBe(1);
+});
