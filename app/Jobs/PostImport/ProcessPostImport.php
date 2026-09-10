@@ -42,7 +42,7 @@ class ProcessPostImport implements ShouldQueue
     {
         $import = PostImport::with('workspace', 'user')->find($this->postImportId);
 
-        if ($import === null || $import->status !== Status::PreviewReady) {
+        if ($import === null || ! in_array($import->status, [Status::PreviewReady, Status::Processing], true)) {
             return;
         }
 

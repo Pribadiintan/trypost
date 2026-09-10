@@ -12,12 +12,24 @@ use App\Jobs\PostImport\ProcessPostImport;
 use App\Models\PostImport;
 use App\Models\User;
 use App\Models\Workspace;
+use App\Services\PostImport\PostImportParser;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
+use Inertia\Response as InertiaResponse;
 use Symfony\Component\HttpFoundation\Response;
 
 class PostImportController extends Controller
 {
+    public function index(Request $request): InertiaResponse
+    {
+        $this->resolveWorkspaceAndUser($request);
+
+        return Inertia::render('posts/Import', [
+            'maxRows' => PostImportParser::MAX_ROWS,
+        ]);
+    }
+
     public function store(StorePostImportRequest $request): JsonResponse
     {
         [$workspace, $user] = $this->resolveWorkspaceAndUser($request);
@@ -73,6 +85,8 @@ class PostImportController extends Controller
             ->findOrFail($import);
 
         abort_unless($model->status === Status::PreviewReady, Response::HTTP_CONFLICT);
+
+        $model->update(['status' => Status::Processing]);
 
         ProcessPostImport::dispatch($model->id);
 

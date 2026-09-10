@@ -297,6 +297,7 @@ Route::middleware(['auth', EnsureAccountReady::class, EnsureHasWorkspace::class]
     Route::get('assets/giphy/search', [GiphyController::class, 'search'])->name('app.assets.giphy.search');
     Route::get('assets/giphy/trending', [GiphyController::class, 'trending'])->name('app.assets.giphy.trending');
 
+    Route::get('post-imports', [PostImportController::class, 'index'])->name('app.post-imports.index');
     Route::post('post-imports', [PostImportController::class, 'store'])->name('app.post-imports.store');
     Route::get('post-imports/{import}', [PostImportController::class, 'show'])->name('app.post-imports.show');
     Route::get('post-imports/{import}/preview', [PostImportController::class, 'preview'])->name('app.post-imports.preview');

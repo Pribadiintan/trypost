@@ -230,3 +230,13 @@ test('process endpoint refuses an import that is not preview_ready', function ()
 test('CreatedVia has an Import case', function () {
     expect(CreatedVia::Import->value)->toBe('import');
 });
+
+test('import index page renders with the row cap', function () {
+    $this->actingAs($this->user)
+        ->get(route('app.post-imports.index'))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('posts/Import', false)
+            ->where('maxRows', 50)
+        );
+});
