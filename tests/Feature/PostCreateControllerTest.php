@@ -74,6 +74,8 @@ it('rejects a prompt shorter than the minimum', function (): void {
 it('resolves a generation by its creation id', function (): void {
     $creationId = (string) Str::uuid();
 
+    $post = Post::factory()->for($this->workspace)->create();
+
     AiGeneration::query()->create([
         'workspace_id' => $this->workspace->id,
         'user_id' => $this->user->id,
@@ -83,11 +85,15 @@ it('resolves a generation by its creation id', function (): void {
         'template' => 'image_card',
         'image_expected' => 0,
         'image_done' => 0,
+        'post_id' => $post->id,
     ]);
 
     $this->get(route('app.posts.ai.status', $creationId))
         ->assertOk()
-        ->assertJsonPath('status', 'ready');
+        ->assertJsonPath('status', 'ready')
+        // The chat card's polling fallback resolves the ready post from these.
+        ->assertJsonPath('post_id', $post->id)
+        ->assertJsonPath('error', null);
 });
 
 it('does not resolve a generation from another workspace', function (): void {
