@@ -11,4 +11,5 @@ enum CreatedVia: string
     case Api = 'api';
     case Chat = 'chat';
     case Repurpose = 'repurpose';
+    case Import = 'import';
 }

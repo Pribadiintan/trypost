@@ -98,6 +98,27 @@ enum ContentLanguage: string
         return $this === self::Arabic ? 'rtl' : 'ltr';
     }
 
+    public static function fromNameOrCode(string $value): ?self
+    {
+        $needle = strtolower(trim($value));
+
+        if ($needle === '') {
+            return null;
+        }
+
+        foreach (self::cases() as $language) {
+            if (
+                strtolower($language->value) === $needle
+                || strtolower($language->englishName()) === $needle
+                || strtolower($language->label()) === $needle
+            ) {
+                return $language;
+            }
+        }
+
+        return self::fromHtmlLang($value);
+    }
+
     /**
      * Resolve a raw `<html lang>` value (e.g. "pt-PT", "zh-Hans") to a supported
      * language by matching its primary subtag, or null if none is supported.
