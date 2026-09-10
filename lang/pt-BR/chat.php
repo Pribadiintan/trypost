@@ -11,6 +11,22 @@ return [
     'stop' => 'Parar',
     'retry' => 'Tentar novamente',
     'suggestions_label' => 'Experimente perguntar sobre',
+
+    'attachment' => [
+        'attach' => 'Anexar um CSV',
+        'remove' => 'Remover anexo',
+        'default_prompt' => 'Importe estes briefings de conteúdo como rascunhos.',
+        'errors' => [
+            'file_too_large' => 'Este arquivo é muito grande. Anexe um CSV com menos de 1 MB.',
+            'read_failed' => 'Não foi possível ler este arquivo. Tente novamente.',
+        ],
+    ],
+
+    'brief_import' => [
+        'created' => ':count rascunhos criados a partir dos seus briefings.',
+        'failed' => 'Não foi possível transformar :count briefings em rascunhos.',
+        'view_drafts' => 'Ver rascunhos com o rótulo :label',
+    ],
     'suggestions' => [
         'posts' => 'Posts recentes',
         'metrics' => 'Métricas dos posts',
@@ -74,6 +90,7 @@ return [
         'get_post' => 'Detalhes do post',
         'get_post_metrics' => 'Métricas do post',
         'create_post' => 'Criar post',
+        'create_posts_from_briefs' => 'Importar briefings',
         'update_post' => 'Atualizar post',
         'schedule_post' => 'Agendar post',
         'publish_post' => 'Publicar post',
@@ -107,6 +124,7 @@ return [
         'get_post' => 'Carregando detalhes do post…',
         'get_post_metrics' => 'Carregando métricas…',
         'create_post' => 'Criando post…',
+        'create_posts_from_briefs' => 'Importando briefings…',
         'update_post' => 'Atualizando post…',
         'delete_post' => 'Excluindo post…',
         'generate_post' => 'Gerando post…',
@@ -126,6 +144,8 @@ return [
         'create_brand_variant' => 'Criando variante da marca…',
         'update_brand_variant' => 'Atualizando variante da marca…',
         'delete_brand_variant' => 'Excluindo variante da marca…',
+        'delete_brand_reference_photo' => 'Excluindo foto de referência…',
+        'add_brand_reference_from_url' => 'Adicionando foto de referência…',
         'list_assets' => 'Buscando arquivos…',
         'get_asset' => 'Carregando arquivo…',
         'attach_existing_asset' => 'Anexando arquivo…',

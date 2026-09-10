@@ -11,6 +11,22 @@ return [
     'stop' => 'Zatrzymaj',
     'retry' => 'Spróbuj ponownie',
     'suggestions_label' => 'Spróbuj zapytać o',
+
+    'attachment' => [
+        'attach' => 'Załącz CSV',
+        'remove' => 'Usuń załącznik',
+        'default_prompt' => 'Zaimportuj te briefy treści jako szkice.',
+        'errors' => [
+            'file_too_large' => 'Ten plik jest za duży. Załącz plik CSV poniżej 1 MB.',
+            'read_failed' => 'Nie udało się odczytać pliku. Spróbuj ponownie.',
+        ],
+    ],
+
+    'brief_import' => [
+        'created' => 'Utworzono :count szkiców z Twoich briefów.',
+        'failed' => 'Nie udało się zamienić :count briefów w szkice.',
+        'view_drafts' => 'Zobacz szkice z etykietą :label',
+    ],
     'suggestions' => [
         'posts' => 'Ostatnie posty',
         'metrics' => 'Statystyki postów',
@@ -62,6 +78,7 @@ return [
         'get_post' => 'Szczegóły posta',
         'get_post_metrics' => 'Statystyki posta',
         'create_post' => 'Utwórz post',
+        'create_posts_from_briefs' => 'Importuj briefy',
         'update_post' => 'Zaktualizuj post',
         'schedule_post' => 'Zaplanuj post',
         'publish_post' => 'Opublikuj post',
@@ -95,6 +112,7 @@ return [
         'get_post' => 'Ładowanie szczegółów posta…',
         'get_post_metrics' => 'Ładowanie statystyk…',
         'create_post' => 'Tworzenie posta…',
+        'create_posts_from_briefs' => 'Importowanie briefów…',
         'update_post' => 'Aktualizowanie posta…',
         'delete_post' => 'Usuwanie posta…',
         'generate_post' => 'Generowanie posta…',
@@ -114,6 +132,8 @@ return [
         'create_brand_variant' => 'Tworzenie wariantu marki…',
         'update_brand_variant' => 'Aktualizowanie wariantu marki…',
         'delete_brand_variant' => 'Usuwanie wariantu marki…',
+        'delete_brand_reference_photo' => 'Usuwanie zdjęcia referencyjnego…',
+        'add_brand_reference_from_url' => 'Dodawanie zdjęcia referencyjnego…',
         'list_assets' => 'Pobieranie zasobów…',
         'get_asset' => 'Ładowanie zasobu…',
         'attach_existing_asset' => 'Dołączanie zasobu…',

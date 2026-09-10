@@ -11,6 +11,22 @@ return [
     'stop' => '중지',
     'retry' => '다시 시도',
     'suggestions_label' => '이런 걸 물어보세요',
+
+    'attachment' => [
+        'attach' => 'CSV 첨부',
+        'remove' => '첨부 파일 제거',
+        'default_prompt' => '이 콘텐츠 브리프를 초안으로 가져옵니다.',
+        'errors' => [
+            'file_too_large' => '파일이 너무 큽니다. 1MB 미만의 CSV를 첨부해 주세요.',
+            'read_failed' => '파일을 읽을 수 없습니다. 다시 시도해 주세요.',
+        ],
+    ],
+
+    'brief_import' => [
+        'created' => '브리프에서 :count개의 초안을 만들었습니다.',
+        'failed' => ':count개의 브리프를 초안으로 변환하지 못했습니다.',
+        'view_drafts' => ':label 라벨의 초안 보기',
+    ],
     'suggestions' => [
         'posts' => '최근 게시물',
         'metrics' => '게시물 지표',
@@ -62,6 +78,7 @@ return [
         'get_post' => '게시물 상세정보',
         'get_post_metrics' => '게시물 지표',
         'create_post' => '게시물 만들기',
+        'create_posts_from_briefs' => '브리프 가져오기',
         'update_post' => '게시물 업데이트',
         'schedule_post' => '게시물 예약',
         'publish_post' => '게시물 게시',
@@ -95,6 +112,7 @@ return [
         'get_post' => '게시물 세부정보 불러오는 중…',
         'get_post_metrics' => '지표 불러오는 중…',
         'create_post' => '게시물 작성 중…',
+        'create_posts_from_briefs' => '브리프 가져오는 중…',
         'update_post' => '게시물 수정 중…',
         'delete_post' => '게시물 삭제 중…',
         'generate_post' => '게시물 생성 중…',
@@ -114,6 +132,8 @@ return [
         'create_brand_variant' => '브랜드 변형 생성 중…',
         'update_brand_variant' => '브랜드 변형 수정 중…',
         'delete_brand_variant' => '브랜드 변형 삭제 중…',
+        'delete_brand_reference_photo' => '레퍼런스 사진 삭제 중…',
+        'add_brand_reference_from_url' => '레퍼런스 사진 추가 중…',
         'list_assets' => '에셋 가져오는 중…',
         'get_asset' => '에셋 불러오는 중…',
         'attach_existing_asset' => '에셋 첨부 중…',

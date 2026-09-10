@@ -11,6 +11,22 @@ return [
     'stop' => '停止',
     'retry' => '重试',
     'suggestions_label' => '可以问问',
+
+    'attachment' => [
+        'attach' => '附加 CSV',
+        'remove' => '移除附件',
+        'default_prompt' => '将这些内容简报导入为草稿。',
+        'errors' => [
+            'file_too_large' => '此文件过大。请附加小于 1 MB 的 CSV 文件。',
+            'read_failed' => '无法读取此文件。请重试。',
+        ],
+    ],
+
+    'brief_import' => [
+        'created' => '已从您的简报中创建 :count 篇草稿。',
+        'failed' => ':count 篇简报无法转换为草稿。',
+        'view_drafts' => '查看带有标签 :label 的草稿',
+    ],
     'suggestions' => [
         'posts' => '最近的帖子',
         'metrics' => '帖子数据',
@@ -62,6 +78,7 @@ return [
         'get_post' => '帖子详情',
         'get_post_metrics' => '帖子数据',
         'create_post' => '创建帖子',
+        'create_posts_from_briefs' => '导入简报',
         'update_post' => '更新帖子',
         'schedule_post' => '安排帖子',
         'publish_post' => '发布帖子',
@@ -95,6 +112,7 @@ return [
         'get_post' => '正在加载帖子详情…',
         'get_post_metrics' => '正在加载指标…',
         'create_post' => '正在创建帖子…',
+        'create_posts_from_briefs' => '正在导入简报…',
         'update_post' => '正在更新帖子…',
         'delete_post' => '正在删除帖子…',
         'generate_post' => '正在生成帖子…',
@@ -114,6 +132,8 @@ return [
         'create_brand_variant' => '正在创建品牌变体…',
         'update_brand_variant' => '正在更新品牌变体…',
         'delete_brand_variant' => '正在删除品牌变体…',
+        'delete_brand_reference_photo' => '正在删除参考照片…',
+        'add_brand_reference_from_url' => '正在添加参考照片…',
         'list_assets' => '正在获取素材…',
         'get_asset' => '正在加载素材…',
         'attach_existing_asset' => '正在附加素材…',

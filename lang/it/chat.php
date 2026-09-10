@@ -11,6 +11,22 @@ return [
     'stop' => 'Interrompi',
     'retry' => 'Riprova',
     'suggestions_label' => 'Prova a chiedere',
+
+    'attachment' => [
+        'attach' => 'Allega un CSV',
+        'remove' => 'Rimuovi allegato',
+        'default_prompt' => 'Importa questi brief di contenuti come bozze.',
+        'errors' => [
+            'file_too_large' => 'Questo file è troppo grande. Allega un CSV sotto 1 MB.',
+            'read_failed' => 'Impossibile leggere questo file. Riprova.',
+        ],
+    ],
+
+    'brief_import' => [
+        'created' => ':count bozze create dai tuoi brief.',
+        'failed' => 'Impossibile trasformare :count brief in bozze.',
+        'view_drafts' => 'Vedi le bozze con etichetta :label',
+    ],
     'suggestions' => [
         'posts' => 'Post recenti',
         'metrics' => 'Metriche dei post',
@@ -62,6 +78,7 @@ return [
         'get_post' => 'Dettagli del post',
         'get_post_metrics' => 'Metriche del post',
         'create_post' => 'Crea post',
+        'create_posts_from_briefs' => 'Importa brief',
         'update_post' => 'Aggiorna post',
         'schedule_post' => 'Pianifica post',
         'publish_post' => 'Pubblica post',
@@ -95,6 +112,7 @@ return [
         'get_post' => 'Caricamento dettagli del post…',
         'get_post_metrics' => 'Caricamento metriche…',
         'create_post' => 'Creazione del post…',
+        'create_posts_from_briefs' => 'Importazione dei brief…',
         'update_post' => 'Aggiornamento del post…',
         'delete_post' => 'Eliminazione del post…',
         'generate_post' => 'Generazione del post…',
@@ -114,6 +132,8 @@ return [
         'create_brand_variant' => 'Creazione variante brand…',
         'update_brand_variant' => 'Aggiornamento variante brand…',
         'delete_brand_variant' => 'Eliminazione variante brand…',
+        'delete_brand_reference_photo' => 'Eliminazione foto di riferimento…',
+        'add_brand_reference_from_url' => 'Aggiunta foto di riferimento…',
         'list_assets' => 'Recupero risorse…',
         'get_asset' => 'Caricamento risorsa…',
         'attach_existing_asset' => 'Allegamento risorsa…',

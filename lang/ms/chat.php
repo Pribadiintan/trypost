@@ -11,6 +11,22 @@ return [
     'stop' => 'Berhenti',
     'retry' => 'Cuba lagi',
     'suggestions_label' => 'Cuba tanya tentang',
+
+    'attachment' => [
+        'attach' => 'Lampirkan CSV',
+        'remove' => 'Buang lampiran',
+        'default_prompt' => 'Import ringkasan kandungan ini menjadi draf.',
+        'errors' => [
+            'file_too_large' => 'Fail ini terlalu besar. Lampirkan CSV bawah 1 MB.',
+            'read_failed' => 'Tidak dapat membaca fail ini. Cuba lagi.',
+        ],
+    ],
+
+    'brief_import' => [
+        'created' => ':count draf dicipta daripada ringkasan anda.',
+        'failed' => ':count ringkasan tidak dapat dijadikan draf.',
+        'view_drafts' => 'Lihat draf berlabel :label',
+    ],
     'suggestions' => [
         'posts' => 'Hantaran terkini',
         'metrics' => 'Metrik hantaran',
@@ -69,6 +85,7 @@ return [
         'get_post' => 'Butiran hantaran',
         'get_post_metrics' => 'Metrik hantaran',
         'create_post' => 'Cipta hantaran',
+        'create_posts_from_briefs' => 'Import ringkasan',
         'update_post' => 'Kemas kini hantaran',
         'schedule_post' => 'Jadualkan hantaran',
         'publish_post' => 'Terbitkan hantaran',
@@ -102,6 +119,7 @@ return [
         'get_post' => 'Memuatkan butiran hantaran…',
         'get_post_metrics' => 'Memuatkan metrik…',
         'create_post' => 'Mencipta hantaran…',
+        'create_posts_from_briefs' => 'Mengimport ringkasan…',
         'update_post' => 'Mengemas kini hantaran…',
         'delete_post' => 'Memadamkan hantaran…',
         'generate_post' => 'Menghasilkan hantaran…',
@@ -121,6 +139,8 @@ return [
         'create_brand_variant' => 'Mencipta varian jenama…',
         'update_brand_variant' => 'Mengemas kini varian jenama…',
         'delete_brand_variant' => 'Memadamkan varian jenama…',
+        'delete_brand_reference_photo' => 'Memadamkan foto rujukan…',
+        'add_brand_reference_from_url' => 'Menambah foto rujukan…',
         'list_assets' => 'Mengambil aset…',
         'get_asset' => 'Memuatkan aset…',
         'attach_existing_asset' => 'Melampirkan aset…',

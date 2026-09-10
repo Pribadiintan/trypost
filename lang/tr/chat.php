@@ -11,6 +11,22 @@ return [
     'stop' => 'Durdur',
     'retry' => 'Tekrar dene',
     'suggestions_label' => 'Şunları sorabilirsiniz',
+
+    'attachment' => [
+        'attach' => 'CSV Ekle',
+        'remove' => 'Eki kaldır',
+        'default_prompt' => 'Bu içerik brieflerini taslaklara aktarın.',
+        'errors' => [
+            'file_too_large' => 'Bu dosya çok büyük. 1 MB altındaki bir CSV ekleyin.',
+            'read_failed' => 'Bu dosya okunamadı. Tekrar deneyin.',
+        ],
+    ],
+
+    'brief_import' => [
+        'created' => 'Brieflerinizden :count taslak oluşturuldu.',
+        'failed' => ':count brief taslağa dönüştürülemedi.',
+        'view_drafts' => ':label etiketli taslakları görüntüle',
+    ],
     'suggestions' => [
         'posts' => 'Son gönderiler',
         'metrics' => 'Gönderi metrikleri',
@@ -62,6 +78,7 @@ return [
         'get_post' => 'Gönderi ayrıntıları',
         'get_post_metrics' => 'Gönderi metrikleri',
         'create_post' => 'Gönderi oluştur',
+        'create_posts_from_briefs' => 'Briefleri içe aktar',
         'update_post' => 'Gönderiyi güncelle',
         'schedule_post' => 'Gönderiyi zamanla',
         'publish_post' => 'Gönderiyi yayınla',
@@ -95,6 +112,7 @@ return [
         'get_post' => 'Gönderi detayları yükleniyor…',
         'get_post_metrics' => 'Metrikler yükleniyor…',
         'create_post' => 'Gönderi oluşturuluyor…',
+        'create_posts_from_briefs' => 'Briefler içe aktarılıyor…',
         'update_post' => 'Gönderi güncelleniyor…',
         'delete_post' => 'Gönderi siliniyor…',
         'generate_post' => 'Gönderi üretiliyor…',
@@ -114,6 +132,8 @@ return [
         'create_brand_variant' => 'Marka varyantı oluşturuluyor…',
         'update_brand_variant' => 'Marka varyantı güncelleniyor…',
         'delete_brand_variant' => 'Marka varyantı siliniyor…',
+        'delete_brand_reference_photo' => 'Referans fotoğrafı siliniyor…',
+        'add_brand_reference_from_url' => 'Referans fotoğrafı ekleniyor…',
         'list_assets' => 'Materyaller alınıyor…',
         'get_asset' => 'Materyal yükleniyor…',
         'attach_existing_asset' => 'Materyal ekleniyor…',

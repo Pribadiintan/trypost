@@ -11,6 +11,22 @@ return [
     'stop' => 'Stop',
     'retry' => 'Try again',
     'suggestions_label' => 'Try asking about',
+
+    'attachment' => [
+        'attach' => 'Attach a CSV',
+        'remove' => 'Remove attachment',
+        'default_prompt' => 'Import these content briefs into drafts.',
+        'errors' => [
+            'file_too_large' => 'This file is too large. Attach a CSV under 1 MB.',
+            'read_failed' => 'Could not read this file. Try again.',
+        ],
+    ],
+
+    'brief_import' => [
+        'created' => ':count drafts created from your briefs.',
+        'failed' => ':count briefs could not be turned into drafts.',
+        'view_drafts' => 'View drafts labelled :label',
+    ],
     'suggestions' => [
         'posts' => 'Recent posts',
         'metrics' => 'Post metrics',
@@ -69,6 +85,7 @@ return [
         'get_post' => 'Post details',
         'get_post_metrics' => 'Post metrics',
         'create_post' => 'Create post',
+        'create_posts_from_briefs' => 'Import briefs',
         'update_post' => 'Update post',
         'schedule_post' => 'Schedule post',
         'publish_post' => 'Publish post',
@@ -102,6 +119,7 @@ return [
         'get_post' => 'Loading post details…',
         'get_post_metrics' => 'Loading metrics…',
         'create_post' => 'Creating post…',
+        'create_posts_from_briefs' => 'Importing briefs…',
         'update_post' => 'Updating post…',
         'delete_post' => 'Deleting post…',
         'generate_post' => 'Generating post…',
@@ -121,6 +139,8 @@ return [
         'create_brand_variant' => 'Creating brand variant…',
         'update_brand_variant' => 'Updating brand variant…',
         'delete_brand_variant' => 'Deleting brand variant…',
+        'delete_brand_reference_photo' => 'Deleting reference photo…',
+        'add_brand_reference_from_url' => 'Adding reference photo…',
         'list_assets' => 'Fetching assets…',
         'get_asset' => 'Loading asset…',
         'attach_existing_asset' => 'Attaching asset…',

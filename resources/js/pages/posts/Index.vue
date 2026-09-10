@@ -59,7 +59,6 @@ import date from '@/date';
 import debounce from '@/debounce';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { copyToClipboard } from '@/lib/utils';
-import { index as postImportsIndex } from '@/routes/app/post-imports';
 import { create as createPostRoute } from '@/routes/app/posts';
 import { PostStatus } from '@/types/post';
 interface SocialAccount {
@@ -311,28 +310,15 @@ useWorkspaceEcho(
                     />
                 </div>
 
-                <div class="flex flex-col gap-2 sm:flex-row">
-                    <Button
-                        v-if="canCreatePost"
-                        as="a"
-                        :href="postImportsIndex.url()"
-                        variant="outline"
-                        class="w-full sm:w-auto"
-                        data-testid="posts-import"
-                    >
-                        {{ $t('post_import.title') }}
-                    </Button>
-
-                    <Button
-                        v-if="canCreatePost"
-                        class="w-full sm:w-auto"
-                        data-testid="posts-create-post"
-                        :loading="creatingPost"
-                        @click="createPost"
-                    >
-                        {{ $t('posts.new_post') }}
-                    </Button>
-                </div>
+                <Button
+                    v-if="canCreatePost"
+                    class="w-full sm:w-auto"
+                    data-testid="posts-create-post"
+                    :loading="creatingPost"
+                    @click="createPost"
+                >
+                    {{ $t('posts.new_post') }}
+                </Button>
             </div>
 
             <EmptyState

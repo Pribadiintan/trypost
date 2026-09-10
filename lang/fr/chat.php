@@ -11,6 +11,22 @@ return [
     'stop' => 'Arrêter',
     'retry' => 'Réessayer',
     'suggestions_label' => 'Essayez de demander',
+
+    'attachment' => [
+        'attach' => 'Joindre un CSV',
+        'remove' => 'Retirer la pièce jointe',
+        'default_prompt' => 'Importe ces briefs de contenu en brouillons.',
+        'errors' => [
+            'file_too_large' => 'Ce fichier est trop volumineux. Joignez un CSV de moins de 1 Mo.',
+            'read_failed' => 'Impossible de lire ce fichier. Réessayez.',
+        ],
+    ],
+
+    'brief_import' => [
+        'created' => ':count brouillons créés à partir de vos briefs.',
+        'failed' => 'Impossible de transformer :count briefs en brouillons.',
+        'view_drafts' => 'Voir les brouillons étiquetés :label',
+    ],
     'suggestions' => [
         'posts' => 'Posts récents',
         'metrics' => 'Métriques des posts',
@@ -62,6 +78,7 @@ return [
         'get_post' => 'Détails du post',
         'get_post_metrics' => 'Métriques du post',
         'create_post' => 'Créer un post',
+        'create_posts_from_briefs' => 'Importer des briefs',
         'update_post' => 'Mettre à jour le post',
         'schedule_post' => 'Planifier le post',
         'publish_post' => 'Publier le post',
@@ -95,6 +112,7 @@ return [
         'get_post' => 'Chargement des détails de la publication…',
         'get_post_metrics' => 'Chargement des métriques…',
         'create_post' => 'Création de la publication…',
+        'create_posts_from_briefs' => 'Import des briefs…',
         'update_post' => 'Mise à jour de la publication…',
         'delete_post' => 'Suppression de la publication…',
         'generate_post' => 'Génération de la publication…',
@@ -114,6 +132,8 @@ return [
         'create_brand_variant' => 'Création de la variante de marque…',
         'update_brand_variant' => 'Mise à jour de la variante de marque…',
         'delete_brand_variant' => 'Suppression de la variante de marque…',
+        'delete_brand_reference_photo' => 'Suppression de la photo de référence…',
+        'add_brand_reference_from_url' => 'Ajout de la photo de référence…',
         'list_assets' => 'Récupération des ressources…',
         'get_asset' => 'Chargement de la ressource…',
         'attach_existing_asset' => 'Attachement de la ressource…',

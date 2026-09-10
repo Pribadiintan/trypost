@@ -11,6 +11,22 @@ return [
     'stop' => 'Stoppen',
     'retry' => 'Probeer opnieuw',
     'suggestions_label' => 'Probeer te vragen naar',
+
+    'attachment' => [
+        'attach' => 'CSV bijvoegen',
+        'remove' => 'Bijlage verwijderen',
+        'default_prompt' => 'Importeer deze contentbriefings als concepten.',
+        'errors' => [
+            'file_too_large' => 'Dit bestand is te groot. Voeg een CSV onder 1 MB bij.',
+            'read_failed' => 'Kon dit bestand niet lezen. Probeer opnieuw.',
+        ],
+    ],
+
+    'brief_import' => [
+        'created' => ':count concepten aangemaakt uit je briefings.',
+        'failed' => ':count briefings konden niet naar concepten worden omgezet.',
+        'view_drafts' => 'Concepten met label :label bekijken',
+    ],
     'suggestions' => [
         'posts' => 'Recente posts',
         'metrics' => 'Poststatistieken',
@@ -62,6 +78,7 @@ return [
         'get_post' => 'Postdetails',
         'get_post_metrics' => 'Poststatistieken',
         'create_post' => 'Post aanmaken',
+        'create_posts_from_briefs' => 'Briefings importeren',
         'update_post' => 'Post bijwerken',
         'schedule_post' => 'Post plannen',
         'publish_post' => 'Post publiceren',
@@ -95,6 +112,7 @@ return [
         'get_post' => 'Berichtdetails laden…',
         'get_post_metrics' => 'Statistieken laden…',
         'create_post' => 'Bericht maken…',
+        'create_posts_from_briefs' => 'Briefings importeren…',
         'update_post' => 'Bericht bijwerken…',
         'delete_post' => 'Bericht verwijderen…',
         'generate_post' => 'Bericht genereren…',
@@ -114,6 +132,8 @@ return [
         'create_brand_variant' => 'Merkvariant maken…',
         'update_brand_variant' => 'Merkvariant bijwerken…',
         'delete_brand_variant' => 'Merkvariant verwijderen…',
+        'delete_brand_reference_photo' => 'Referentiefoto verwijderen…',
+        'add_brand_reference_from_url' => 'Referentiefoto toevoegen…',
         'list_assets' => 'Bestanden ophalen…',
         'get_asset' => 'Bestand laden…',
         'attach_existing_asset' => 'Bestand bijvoegen…',

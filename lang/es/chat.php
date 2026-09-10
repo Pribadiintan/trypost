@@ -11,6 +11,22 @@ return [
     'stop' => 'Detener',
     'retry' => 'Intentar de nuevo',
     'suggestions_label' => 'Prueba a preguntar por',
+
+    'attachment' => [
+        'attach' => 'Adjuntar un CSV',
+        'remove' => 'Quitar adjunto',
+        'default_prompt' => 'Importa estos briefs de contenido como borradores.',
+        'errors' => [
+            'file_too_large' => 'Este archivo es demasiado grande. Adjunta un CSV de menos de 1 MB.',
+            'read_failed' => 'No se pudo leer este archivo. Inténtalo de nuevo.',
+        ],
+    ],
+
+    'brief_import' => [
+        'created' => ':count borradores creados a partir de tus briefs.',
+        'failed' => 'No se pudieron convertir :count briefs en borradores.',
+        'view_drafts' => 'Ver borradores con la etiqueta :label',
+    ],
     'suggestions' => [
         'posts' => 'Posts recientes',
         'metrics' => 'Métricas de posts',
@@ -62,6 +78,7 @@ return [
         'get_post' => 'Detalles del post',
         'get_post_metrics' => 'Métricas del post',
         'create_post' => 'Crear post',
+        'create_posts_from_briefs' => 'Importar briefs',
         'update_post' => 'Actualizar post',
         'schedule_post' => 'Programar post',
         'publish_post' => 'Publicar post',
@@ -95,6 +112,7 @@ return [
         'get_post' => 'Cargando detalles de la publicación…',
         'get_post_metrics' => 'Cargando métricas…',
         'create_post' => 'Creando publicación…',
+        'create_posts_from_briefs' => 'Importando briefs…',
         'update_post' => 'Actualizando publicación…',
         'delete_post' => 'Eliminando publicación…',
         'generate_post' => 'Generando publicación…',
@@ -114,6 +132,8 @@ return [
         'create_brand_variant' => 'Creando variante de marca…',
         'update_brand_variant' => 'Actualizando variante de marca…',
         'delete_brand_variant' => 'Eliminando variante de marca…',
+        'delete_brand_reference_photo' => 'Eliminando foto de referencia…',
+        'add_brand_reference_from_url' => 'Añadiendo foto de referencia…',
         'list_assets' => 'Obteniendo recursos…',
         'get_asset' => 'Cargando recurso…',
         'attach_existing_asset' => 'Adjuntando recurso…',

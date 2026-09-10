@@ -16,6 +16,7 @@ import { trans } from 'laravel-vue-i18n';
 import { computed, ref } from 'vue';
 
 import ChatComposer from '@/components/chat/ChatComposer.vue';
+import type { ChatAttachment } from '@/components/chat/ChatComposer.vue';
 import ChatHistoryPanel from '@/components/chat/ChatHistoryPanel.vue';
 import ChatThread from '@/components/chat/ChatThread.vue';
 import { Button } from '@/components/ui/button';
@@ -115,6 +116,7 @@ const {
 );
 
 const draft = ref('');
+const attachment = ref<ChatAttachment | null>(null);
 const historyOpen = ref(false);
 
 /**
@@ -271,7 +273,21 @@ const send = (text: string, referenceMediaIds?: string[]): void => {
     });
 };
 
-const submitDraft = (): void => send(draft.value);
+const submitDraft = (): void => {
+    const csv = attachment.value;
+
+    if (csv) {
+        const instruction = draft.value.trim() || trans('chat.attachment.default_prompt');
+        const message = `${instruction}\n\nAttached CSV "${csv.filename}":\n\`\`\`csv\n${csv.content}\n\`\`\``;
+
+        attachment.value = null;
+        send(message);
+
+        return;
+    }
+
+    send(draft.value);
+};
 
 const ask = (prompt: string, referenceMediaIds?: string[]): void =>
     send(prompt, referenceMediaIds);
@@ -467,6 +483,7 @@ const onDecide = (decision: ChatApprovalDecision): void => {
 
                         <ChatComposer
                             v-model="draft"
+                            v-model:attachment="attachment"
                             :placeholder="$t('chat.placeholder')"
                             :send-label="$t('chat.send')"
                             :stop-label="$t('chat.stop')"

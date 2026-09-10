@@ -11,6 +11,22 @@ return [
     'stop' => 'إيقاف',
     'retry' => 'حاول مرة أخرى',
     'suggestions_label' => 'جرّب السؤال عن',
+
+    'attachment' => [
+        'attach' => 'إرفاق ملف CSV',
+        'remove' => 'إزالة المرفق',
+        'default_prompt' => 'استيراد هذه الموجزات إلى مسودات.',
+        'errors' => [
+            'file_too_large' => 'هذا الملف كبير جدًا. يُرجى إرفاق ملف CSV بحجم أقل من 1 ميغابايت.',
+            'read_failed' => 'تعذر قراءة هذا الملف. حاول مرة أخرى.',
+        ],
+    ],
+
+    'brief_import' => [
+        'created' => 'تم إنشاء :count مسودات من موجزاتك.',
+        'failed' => 'تعذر تحويل :count موجزات إلى مسودات.',
+        'view_drafts' => 'عرض المسودات التي تحمل التسمية :label',
+    ],
     'suggestions' => [
         'posts' => 'المنشورات الأخيرة',
         'metrics' => 'مقاييس المنشورات',
@@ -62,6 +78,7 @@ return [
         'get_post' => 'تفاصيل المنشور',
         'get_post_metrics' => 'مقاييس المنشور',
         'create_post' => 'إنشاء منشور',
+        'create_posts_from_briefs' => 'استيراد الموجزات',
         'update_post' => 'تحديث منشور',
         'schedule_post' => 'جدولة منشور',
         'publish_post' => 'نشر منشور',
@@ -95,6 +112,7 @@ return [
         'get_post' => 'جارٍ تحميل تفاصيل المنشور…',
         'get_post_metrics' => 'جارٍ تحميل المقاييس…',
         'create_post' => 'جارٍ إنشاء المنشور…',
+        'create_posts_from_briefs' => 'جارٍ استيراد الموجزات…',
         'update_post' => 'جارٍ تحديث المنشور…',
         'delete_post' => 'جارٍ حذف المنشور…',
         'generate_post' => 'جارٍ توليد المنشور…',
@@ -114,6 +132,8 @@ return [
         'create_brand_variant' => 'جارٍ إنشاء متغير العلامة التجارية…',
         'update_brand_variant' => 'جارٍ تحديث متغير العلامة التجارية…',
         'delete_brand_variant' => 'جارٍ حذف متغير العلامة التجارية…',
+        'delete_brand_reference_photo' => 'جارٍ حذف صورة المرجع…',
+        'add_brand_reference_from_url' => 'جارٍ إضافة صورة المرجع…',
         'list_assets' => 'جارٍ جلب الأصول…',
         'get_asset' => 'جارٍ تحميل الأصل…',
         'attach_existing_asset' => 'جارٍ إرفاق الأصل…',
