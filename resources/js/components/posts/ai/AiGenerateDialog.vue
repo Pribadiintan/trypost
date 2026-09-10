@@ -20,6 +20,7 @@ import {
     useAiStream,
 } from '@/composables/echo/useAiStream';
 import { generate as generatePostAi } from '@/routes/app/posts/ai';
+import { uuid } from '@/utils/uuid';
 
 const props = defineProps<{
     postId: string;
@@ -59,7 +60,7 @@ const startGeneration = async () => {
     if (!prompt.value.trim()) return;
     dispatching.value = true;
     promptError.value = undefined;
-    const generationId = crypto.randomUUID();
+    const generationId = uuid();
     const channel = aiGenerationChannel(
         String(page.props.auth.user.id),
         generationId,

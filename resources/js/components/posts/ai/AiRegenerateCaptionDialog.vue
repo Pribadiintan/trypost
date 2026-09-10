@@ -14,6 +14,7 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { useAiStream } from '@/composables/echo/useAiStream';
 import { regenerateCaption } from '@/routes/app/posts/ai';
+import { uuid } from '@/utils/uuid';
 
 const props = defineProps<{ postId: string; content: string }>();
 const open = defineModel<boolean>('open', { required: true });
@@ -31,7 +32,7 @@ const http = useHttp<{
 
 const start = async () => {
     dispatching.value = true;
-    const regenerationId = crypto.randomUUID();
+    const regenerationId = uuid();
     try {
         const subscribed = await subscribe(
             `user.${String(page.props.auth.user.id)}.ai-caption.${regenerationId}`,

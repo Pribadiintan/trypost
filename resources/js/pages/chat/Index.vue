@@ -38,6 +38,7 @@ import type {
     ChatConversationSummary,
     ChatServerMessage,
 } from '@/types/chat';
+import { uuid } from '@/utils/uuid';
 
 const props = defineProps<{
     conversations: ChatConversationSummary[];
@@ -49,7 +50,7 @@ const props = defineProps<{
 // id up front (the backend's claim() creates the row on the first message, keyed
 // by whatever id the client sends), and Inertia remounts this page on every real
 // navigation to a different conversation, so this never needs to be reactive.
-const conversationId = props.conversation?.id ?? crypto.randomUUID();
+const conversationId = props.conversation?.id ?? uuid();
 
 const {
     messages,

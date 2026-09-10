@@ -16,6 +16,7 @@ import {
 } from '@/composables/usePlatformLogo';
 import { credits as creditsRoute } from '@/routes/app/posts/ai';
 import type { MediaItem } from '@/types/media';
+import { uuid } from '@/utils/uuid';
 
 interface CatalogFormat {
     value: string;
@@ -280,7 +281,7 @@ const generate = (): void => {
     const hasReferences =
         imageCount.value > 0 && selectedReferenceIds.value.length > 0;
 
-    const creationId = crypto.randomUUID();
+    const creationId = uuid();
     const query: Record<string, string> = {
         images: String(imageCount.value),
         format: format.value ?? '',
