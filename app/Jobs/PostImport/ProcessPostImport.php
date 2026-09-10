@@ -5,17 +5,21 @@ declare(strict_types=1);
 namespace App\Jobs\PostImport;
 
 use App\Actions\Post\CreatePost;
+use App\Ai\Agents\PostBriefRefiner;
 use App\Enums\Post\CreatedVia;
 use App\Enums\PostImport\RowStatus;
 use App\Enums\PostImport\Status;
 use App\Models\PostImport;
+use App\Models\PostImportRow;
 use App\Models\User;
 use App\Models\Workspace;
+use App\Services\Ai\RecordAiUsage;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
 use Throwable;
 
@@ -26,6 +30,8 @@ class ProcessPostImport implements ShouldQueue
     private const LABEL_NAME = 'Content Brief';
 
     private const LABEL_COLOR = '#7c3aed';
+
+    public int $timeout = 1800;
 
     public function __construct(public string $postImportId)
     {
@@ -52,16 +58,19 @@ class ProcessPostImport implements ShouldQueue
         $import->update(['status' => Status::Processing]);
 
         $labelId = $this->resolveLabelId($workspace);
+        $aiEnabled = Gate::forUser($user)->allows('useAi', $workspace->account);
         $created = $import->created_count;
 
         $import->rows()
             ->whereIn('status', [RowStatus::Valid->value, RowStatus::NeedsReview->value])
             ->orderBy('row_number')
-            ->chunkById(25, function ($rows) use ($workspace, $user, $labelId, &$created): void {
+            ->chunkById(25, function ($rows) use ($workspace, $user, $labelId, $aiEnabled, &$created): void {
                 foreach ($rows as $row) {
                     try {
+                        $content = $this->buildContent($workspace, $user, $row, $aiEnabled);
+
                         $post = CreatePost::execute($workspace, $user, [
-                            'content' => (string) $row->mapped_content,
+                            'content' => $content,
                             'created_via' => CreatedVia::Import,
                             'label_ids' => [$labelId],
                         ]);
@@ -80,6 +89,35 @@ class ProcessPostImport implements ShouldQueue
         ]);
 
         Storage::delete($import->path);
+    }
+
+    private function buildContent(Workspace $workspace, User $user, PostImportRow $row, bool $aiEnabled): string
+    {
+        $fallback = (string) $row->mapped_content;
+
+        if (! $aiEnabled || $fallback === '') {
+            return $fallback;
+        }
+
+        $brand = $workspace->resolvedBrand($row->language_code);
+
+        $refined = rescue(function () use ($workspace, $user, $brand, $fallback): ?string {
+            $response = (new PostBriefRefiner($workspace, $brand))->prompt($fallback);
+
+            RecordAiUsage::recordText(
+                workspace: $workspace,
+                promptTokens: $response->usage?->promptTokens ?? 0,
+                completionTokens: $response->usage?->completionTokens ?? 0,
+                provider: (string) $response->meta?->provider,
+                model: (string) $response->meta?->model,
+                userId: $user->id,
+                metadata: ['agent' => 'post_brief_refiner', 'content_language' => $brand->languageCode],
+            );
+
+            return trim((string) $response->text);
+        });
+
+        return filled($refined) ? $refined : $fallback;
     }
 
     private function resolveLabelId(Workspace $workspace): string

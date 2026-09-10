@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Ai\Agents\PostBriefRefiner;
 use App\Enums\Post\CreatedVia;
 use App\Enums\Post\Status as PostStatus;
 use App\Enums\PostImport\RowStatus;
@@ -99,7 +100,10 @@ test('parse job persists rows and moves the import to preview_ready', function (
     expect($import->rows()->count())->toBe(2);
 });
 
-test('process job creates one Import draft per valid row with the Content Brief label', function () {
+test('process job refines each valid row with AI into an Import draft labelled Content Brief', function () {
+    config()->set('trypost.self_hosted', true);
+    PostBriefRefiner::fake(['Refined caption one.', 'Refined caption two.']);
+
     $csv = "topic,key_insight,target_audience,tone,content_goal\n"
         ."A,B,C,D,E\n"
         ."F,G,H,I,J\n";
@@ -120,6 +124,10 @@ test('process job creates one Import draft per valid row with the Content Brief 
 
     $posts = Post::where('workspace_id', $this->workspace->id)->get();
     expect($posts)->toHaveCount(2);
+    expect($posts->pluck('content')->all())->toEqualCanonicalizing([
+        'Refined caption one.',
+        'Refined caption two.',
+    ]);
     expect($posts->every(fn (Post $post): bool => $post->created_via === CreatedVia::Import))->toBeTrue();
     expect($posts->every(fn (Post $post): bool => $post->status === PostStatus::Draft))->toBeTrue();
 
@@ -128,7 +136,29 @@ test('process job creates one Import draft per valid row with the Content Brief 
     expect($posts->first()->labels()->where('workspace_labels.id', $label->id)->exists())->toBeTrue();
 });
 
+test('process job falls back to the mapped brief when AI is unavailable', function () {
+    config()->set('trypost.self_hosted', false);
+
+    $csv = "topic,key_insight,target_audience,tone,content_goal\nA,B,C,D,E\n";
+
+    $import = PostImport::factory()->create([
+        'workspace_id' => $this->workspace->id,
+        'user_id' => $this->user->id,
+        'path' => writeCsv($csv),
+    ]);
+
+    ParsePostImport::dispatchSync($import->id);
+    ProcessPostImport::dispatchSync($import->id);
+
+    $post = Post::where('workspace_id', $this->workspace->id)->first();
+    expect($post)->not->toBeNull();
+    expect($post->content)->toContain('Topic: A');
+});
+
 test('process job is idempotent and does not duplicate drafts on a second run', function () {
+    config()->set('trypost.self_hosted', true);
+    PostBriefRefiner::fake(['Refined caption.', 'Refined caption again.']);
+
     $csv = "topic,key_insight,target_audience,tone,content_goal\nA,B,C,D,E\n";
 
     $import = PostImport::factory()->create([

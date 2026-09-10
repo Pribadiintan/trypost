@@ -9,7 +9,7 @@ use App\Enums\Workspace\ContentLanguage;
 
 class PostImportParser
 {
-    public const MAX_ROWS = 200;
+    public const MAX_ROWS = 50;
 
     /**
      * @var array<int, string>

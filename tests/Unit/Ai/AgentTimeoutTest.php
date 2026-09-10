@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Ai\Agents\Concerns\AiTimeouts;
+use App\Ai\Agents\PostBriefRefiner;
 use App\Ai\Agents\PostCaptionRegenerator;
 use App\Ai\Agents\PostContentGenerator;
 use App\Ai\Agents\PostContentHumanizer;
@@ -24,6 +25,7 @@ function timeoutSeconds(string $agentClass): ?int
 it('declares the shared text timeout on every text-generation agent', function (string $agentClass): void {
     expect(timeoutSeconds($agentClass))->toBe(AiTimeouts::TEXT_SECONDS);
 })->with([
+    PostBriefRefiner::class,
     PostCaptionRegenerator::class,
     PostContentGenerator::class,
     PostContentHumanizer::class,
