@@ -23,10 +23,12 @@ class ChatBrandResource extends JsonResource
     {
         $workspace = $this->resource;
 
-        $variants = $workspace->brandVariants()
-            ->orderBy('sort_order')
-            ->get()
+        $variants = ($workspace->relationLoaded('brandVariants')
+            ? $workspace->brandVariants
+            : $workspace->brandVariants()->get())
+            ->sortBy('sort_order')
             ->map(fn (BrandVariant $variant): array => self::variantData($variant))
+            ->values()
             ->all();
 
         $references = $workspace->getMedia('brand_references')

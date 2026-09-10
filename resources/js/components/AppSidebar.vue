@@ -13,6 +13,7 @@ import {
     IconPencil,
     IconPhoto,
     IconPlugConnected,
+    IconRepeat,
     IconSelector,
     IconSparkles,
     IconTag,
@@ -23,7 +24,6 @@ import { computed, ref } from 'vue';
 
 import {
     index as postsIndex,
-    store as storePost,
 } from '@/actions/App/Http/Controllers/App/PostController';
 import NavMain from '@/components/NavMain.vue';
 import NotificationBell from '@/components/NotificationBell.vue';
@@ -52,6 +52,8 @@ import { index as assets } from '@/routes/app/assets';
 import { portal } from '@/routes/app/billing';
 import { index as labels } from '@/routes/app/labels';
 import { index as mcp } from '@/routes/app/mcp';
+import { create as createPostRoute } from '@/routes/app/posts';
+import { index as repurposes } from '@/routes/app/repurposes';
 import { index as signatures } from '@/routes/app/signatures';
 import { index as webhooks } from '@/routes/app/webhooks';
 import type { NavItem, User } from '@/types';
@@ -76,6 +78,7 @@ const subscriptionPastDue = computed<boolean>(() =>
 
 const {
     canCreatePost,
+    canManageRepurposes,
     canManageAccounts,
     canManageWebhooks,
     canCreateWorkspace,
@@ -88,8 +91,8 @@ const createPost = () => {
     if (creatingPost.value) return;
 
     creatingPost.value = true;
-    router.post(
-        storePost.url(),
+    router.get(
+        createPostRoute.url(),
         {},
         {
             onFinish: () => {
@@ -115,6 +118,16 @@ const mainNavItems = computed<NavItem[]>(() => [
         href: chat.url(),
         icon: IconSparkles,
     },
+    ...(canManageRepurposes.value
+        ? [
+              {
+                  title: trans('sidebar.repurposes'),
+                  href: repurposes.url(),
+                  icon: IconRepeat,
+                  badge: trans('common.beta'),
+              },
+          ]
+        : []),
 ]);
 
 const postsNavItems = computed<NavItem[]>(() => [

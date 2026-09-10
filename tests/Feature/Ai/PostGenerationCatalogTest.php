@@ -2,15 +2,36 @@
 
 declare(strict_types=1);
 
+use App\Models\BrandVariant;
 use App\Models\SocialAccount;
 use App\Models\Workspace;
 use App\Services\Ai\PostGenerationCardCopy;
 use App\Services\Ai\PostGenerationCatalog;
+use Illuminate\Support\Facades\Cache;
 
 beforeEach(function (): void {
     // Several tests connect two accounts on the same network; the suite
     // default (phpunit.xml) only allows one, so opt into multiples here.
     config()->set('trypost.allow_multiple_social_accounts', true);
+});
+
+it('clearCache forgets locale-keyed entries, not only the default key', function (): void {
+    $workspace = Workspace::factory()->create();
+
+    // Warm both a default-locale entry and a specific-locale entry.
+    PostGenerationCatalog::forWorkspace($workspace);
+    PostGenerationCatalog::forWorkspace($workspace, 'ja');
+
+    $defaultKey = "post_generation_catalog:{$workspace->id}:default";
+    $jaKey = "post_generation_catalog:{$workspace->id}:ja";
+
+    expect(Cache::has($defaultKey))->toBeTrue()
+        ->and(Cache::has($jaKey))->toBeTrue();
+
+    PostGenerationCatalog::clearCache($workspace);
+
+    expect(Cache::has($defaultKey))->toBeFalse()
+        ->and(Cache::has($jaKey))->toBeFalse();
 });
 
 it('offers only formats whose platform has a connected account', function (): void {
@@ -172,4 +193,29 @@ it('ships the unsupported-platforms copy line for the empty-catalog card', funct
 
     expect($copy)->toHaveKey('unavailable_unsupported')
         ->and($copy['unavailable_unsupported'])->toContain(':platforms');
+});
+
+it('lists the default content language first, then variant languages', function (): void {
+    $workspace = Workspace::factory()->create(['content_language' => 'en']);
+    BrandVariant::factory()->for($workspace)->create([
+        'language_code' => 'pt-BR',
+        'label' => 'Português (Brasil)',
+    ]);
+
+    $catalog = PostGenerationCatalog::forWorkspace($workspace);
+
+    expect($catalog['content_language'])->toBe('en')
+        ->and($catalog['languages'])->toHaveCount(2)
+        ->and($catalog['languages'][0]['language_code'])->toBe('en')
+        ->and($catalog['languages'][0]['label'])->toBe('English')
+        ->and($catalog['languages'][1]['language_code'])->toBe('pt-BR')
+        ->and($catalog['languages'][1]['label'])->toBe('Português (Brasil)');
+});
+
+it('reports how many brand reference photos the workspace has', function (): void {
+    $workspace = Workspace::factory()->create();
+
+    $catalog = PostGenerationCatalog::forWorkspace($workspace);
+
+    expect($catalog['brand_reference_count'])->toBe(0);
 });

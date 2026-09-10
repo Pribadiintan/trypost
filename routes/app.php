@@ -16,14 +16,15 @@ use App\Http\Controllers\App\LinkPreviewController;
 use App\Http\Controllers\App\McpSettingsController;
 use App\Http\Controllers\App\NotificationController;
 use App\Http\Controllers\App\OnboardingController;
-use App\Http\Controllers\App\PostAiCreateController;
 use App\Http\Controllers\App\PostAiGenerateController;
 use App\Http\Controllers\App\PostAiRegenerateCaptionController;
 use App\Http\Controllers\App\PostAiRegenerateMediaController;
 use App\Http\Controllers\App\PostAiReviewController;
 use App\Http\Controllers\App\PostCommentController;
 use App\Http\Controllers\App\PostController;
+use App\Http\Controllers\App\PostCreateController;
 use App\Http\Controllers\App\PresenceController;
+use App\Http\Controllers\App\RepurposeController;
 use App\Http\Controllers\App\Settings\AccountController;
 use App\Http\Controllers\App\Settings\AuthenticationController;
 use App\Http\Controllers\App\Settings\NotificationPreferenceController;
@@ -231,9 +232,20 @@ Route::middleware(['auth', EnsureAccountReady::class, EnsureHasWorkspace::class]
     // Calendar
     Route::get('calendar', [PostController::class, 'calendar'])->name('app.calendar');
 
+    // Post creation (AI wizard + scratch). Declared before the `posts/{post}`
+    // wildcard so `posts/create` is not captured as a post id.
+    Route::get('posts/create', [PostCreateController::class, 'create'])->name('app.posts.create');
+    Route::get('posts/ai/{creationId}/loading', [PostCreateController::class, 'loading'])
+        ->name('app.posts.ai.loading')
+        ->whereUuid('creationId');
+    Route::post('posts/ai/start', [PostCreateController::class, 'start'])->name('app.posts.ai.start');
+    Route::get('posts/ai/{creationId}/status', [PostCreateController::class, 'status'])
+        ->name('app.posts.ai.status')
+        ->whereUuid('creationId');
+    Route::get('posts/ai/credits', [PostCreateController::class, 'credits'])->name('app.posts.ai.credits');
+
     // Posts
     Route::get('posts/{status?}', [PostController::class, 'index'])->name('app.posts.index')->where('status', 'draft|scheduled|published');
-    Route::get('posts/create', [PostController::class, 'create'])->name('app.posts.create');
     Route::post('posts', [PostController::class, 'store'])->name('app.posts.store');
     Route::get('posts/{post}/edit', [PostController::class, 'edit'])->name('app.posts.edit');
     Route::get('posts/{post}', [PostController::class, 'show'])->name('app.posts.show');
@@ -251,8 +263,6 @@ Route::middleware(['auth', EnsureAccountReady::class, EnsureHasWorkspace::class]
     Route::post('posts/{post}/ai/regenerate-caption', [PostAiRegenerateCaptionController::class, 'regenerate'])->name('app.posts.ai.regenerate-caption');
     Route::post('posts/{post}/media/{mediaId}/ai/regenerate', [PostAiRegenerateMediaController::class, 'regenerate'])->name('app.posts.ai.regenerate-media');
     Route::post('posts/{post}/ai/review', [PostAiReviewController::class, 'review'])->name('app.posts.ai.review');
-    Route::post('posts/ai/create', [PostAiCreateController::class, 'start'])->name('app.posts.ai.create');
-    Route::get('posts/ai/{creationId}/loading', [PostAiCreateController::class, 'loading'])->name('app.posts.ai.loading')->whereUuid('creationId');
 
     // Post Comments
     Route::get('posts/{post}/comments', [PostCommentController::class, 'index'])->name('app.posts.comments.index');
@@ -300,6 +310,17 @@ Route::middleware(['auth', EnsureAccountReady::class, EnsureHasWorkspace::class]
     // MCP
     Route::get('settings/workspace/mcp', [McpSettingsController::class, 'index'])->name('app.mcp.index');
     Route::delete('settings/workspace/mcp/{client}', [McpSettingsController::class, 'disconnect'])->name('app.mcp.disconnect');
+
+    // Repurpose
+    Route::get('repurposes', [RepurposeController::class, 'index'])->name('app.repurposes.index');
+    Route::post('repurposes', [RepurposeController::class, 'store'])->name('app.repurposes.store');
+    Route::get('repurposes/{repurpose}', [RepurposeController::class, 'show'])->name('app.repurposes.show');
+    Route::put('repurposes/{repurpose}', [RepurposeController::class, 'update'])->name('app.repurposes.update');
+    Route::post('repurposes/{repurpose}/activate', [RepurposeController::class, 'activate'])->name('app.repurposes.activate');
+    Route::post('repurposes/{repurpose}/pause', [RepurposeController::class, 'pause'])->name('app.repurposes.pause');
+    Route::post('repurposes/{repurpose}/resume', [RepurposeController::class, 'resume'])->name('app.repurposes.resume');
+    Route::post('repurposes/{repurpose}/disable', [RepurposeController::class, 'disable'])->name('app.repurposes.disable');
+    Route::delete('repurposes/{repurpose}', [RepurposeController::class, 'destroy'])->name('app.repurposes.destroy');
 
     // Webhooks
     Route::get('webhooks', [WebhookController::class, 'index'])->name('app.webhooks.index');

@@ -23,8 +23,10 @@ return [
     'groups' => [
         'posts' => 'Post',
         'workspace' => 'Workspace',
+        'others' => 'Altro',
     ],
     'analytics' => 'Statistiche',
+    'repurposes' => 'Repurpose',
     'onboarding' => 'Primi passi',
     'onboarding_hint' => 'Completa la configurazione',
     'chat' => 'Chat',
@@ -43,4 +45,9 @@ return [
     'mark_as_read' => 'Segna come letta',
     'archive_all' => 'Archivia tutte',
     'no_notifications' => 'Nessuna notifica',
+    'support' => [
+        'docs' => 'Documentazione',
+        'referral' => 'Guadagna il 30% di referral',
+        'discord' => 'Community Discord',
+    ],
 ];

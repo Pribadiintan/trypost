@@ -19,9 +19,19 @@ beforeEach(function () {
     $this->workspace->members()->attach($this->user->id, ['role' => Role::Member->value]);
 });
 
+test('pinterest authorize url carries the publishing scopes', function () {
+    $response = $this->actingAs($this->user)->get(route('app.social.pinterest.connect'));
+
+    expect(urldecode((string) $response->headers->get('Location')))
+        ->toStartWith('https://www.pinterest.com/oauth')
+        ->toContain('boards:read')
+        ->toContain('pins:write');
+});
+
 test('pinterest connect redirects to oauth provider', function () {
     $driverMock = Mockery::mock();
     $driverMock->shouldReceive('scopes')->andReturnSelf();
+    $driverMock->shouldReceive('with')->with([])->andReturnSelf();
     $driverMock->shouldReceive('redirect')->andReturn(Mockery::mock([
         'getTargetUrl' => 'https://www.pinterest.com/oauth?test=1',
     ]));
@@ -31,10 +41,9 @@ test('pinterest connect redirects to oauth provider', function () {
         ->andReturn($driverMock);
 
     $response = $this->actingAs($this->user)
-        ->withHeader('X-Inertia', 'true')
         ->get(route('app.social.pinterest.connect'));
 
-    $response->assertStatus(409); // Inertia::location returns 409 with X-Inertia header
+    $response->assertRedirect('https://www.pinterest.com/oauth?test=1');
 
     expect(session('social_connect_workspace'))->toBe($this->workspace->id);
 });

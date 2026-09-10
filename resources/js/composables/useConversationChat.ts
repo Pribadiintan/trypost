@@ -40,6 +40,19 @@ const readXsrfToken = (): string | null => {
         : decodeURIComponent(match.slice('XSRF-TOKEN='.length));
 };
 
+/**
+ * The caller's IANA timezone (e.g. "Asia/Jakarta"), sent with each message so
+ * the agent resolves relative dates ("tomorrow 10am") against the user's clock
+ * instead of UTC. Falls back to an empty string if the browser cannot report it.
+ */
+const browserTimezone = (): string => {
+    try {
+        return Intl.DateTimeFormat().resolvedOptions().timeZone ?? '';
+    } catch {
+        return '';
+    }
+};
+
 const requestHeaders = (): Record<string, string> => {
     const headers: Record<string, string> = {
         Accept: 'text/event-stream, application/json',
@@ -80,6 +93,35 @@ const latestMessageText = (messages: UIMessage[]): string => {
     }
 
     return '';
+};
+
+/**
+ * Structured fields the latest user message carries out-of-band in its
+ * metadata — currently the brand-reference photo ids picked in the generation
+ * card. They travel here rather than in the prompt text because the tool needs
+ * exact ids, which the model cannot reliably transcribe from prose.
+ */
+const latestMessageExtras = (
+    messages: UIMessage[],
+): { reference_media_ids?: string[] } => {
+    for (let index = messages.length - 1; index >= 0; index--) {
+        const message = messages[index];
+
+        if (message?.role === 'user') {
+            const meta = message.metadata as
+                | { reference_media_ids?: unknown }
+                | undefined;
+            const ids = meta?.reference_media_ids;
+
+            if (Array.isArray(ids) && ids.length > 0) {
+                return { reference_media_ids: ids.map((id) => String(id)) };
+            }
+
+            return {};
+        }
+    }
+
+    return {};
 };
 
 /**
@@ -275,7 +317,11 @@ export const useConversationChat = (
             }
 
             return {
-                body: { message: latestMessageText(messages) },
+                body: {
+                    message: latestMessageText(messages),
+                    timezone: browserTimezone(),
+                    ...latestMessageExtras(messages),
+                },
                 headers: requestHeaders(),
             };
         },

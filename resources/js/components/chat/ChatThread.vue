@@ -40,7 +40,7 @@ withDefaults(
 );
 
 const emit = defineEmits<{
-    submit: [string];
+    submit: [text: string, referenceMediaIds?: string[]];
     decide: [ChatApprovalDecision];
 }>();
 
@@ -75,7 +75,8 @@ const isStaleAfterCard = (message: UIMessage, index: number): boolean => {
     });
 };
 
-const onSubmit = (text: string): void => emit('submit', text);
+const onSubmit = (text: string, referenceMediaIds?: string[]): void =>
+    emit('submit', text, referenceMediaIds);
 const onDecide = (decision: ChatApprovalDecision): void =>
     emit('decide', decision);
 </script>

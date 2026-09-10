@@ -30,6 +30,17 @@ use App\Mcp\Tools\Post\PreviewPostTool;
 use App\Mcp\Tools\Post\PublishPostTool;
 use App\Mcp\Tools\Post\RequestMediaUploadTool;
 use App\Mcp\Tools\Post\UpdatePostTool;
+use App\Mcp\Tools\Repurpose\ActivateRepurposeTool;
+use App\Mcp\Tools\Repurpose\CreateRepurposeTool;
+use App\Mcp\Tools\Repurpose\DeleteRepurposeTool;
+use App\Mcp\Tools\Repurpose\DisableRepurposeTool;
+use App\Mcp\Tools\Repurpose\GetRepurposeTool;
+use App\Mcp\Tools\Repurpose\ListRepurposeItemsTool;
+use App\Mcp\Tools\Repurpose\ListRepurposeSourceFormatsTool;
+use App\Mcp\Tools\Repurpose\ListRepurposesTool;
+use App\Mcp\Tools\Repurpose\PauseRepurposeTool;
+use App\Mcp\Tools\Repurpose\ResumeRepurposeTool;
+use App\Mcp\Tools\Repurpose\UpdateRepurposeTool;
 use App\Mcp\Tools\Signature\CreateSignatureTool;
 use App\Mcp\Tools\Signature\DeleteSignatureTool;
 use App\Mcp\Tools\Signature\ListSignaturesTool;
@@ -57,7 +68,7 @@ use Laravel\Mcp\Server\Attributes\Version;
 #[Name('TryPost')]
 #[Version('1.0.0')]
 #[Icon('images/trypost/icon.png', mimeType: 'image/png')]
-#[Instructions('TryPost is a social media scheduling platform. Use this server to manage posts, the Asset Library, signatures, labels, social accounts, workspaces, outgoing webhooks, and API keys.')]
+#[Instructions('TryPost is a social media scheduling platform. Use this server to manage posts, the Asset Library, signatures, labels, social accounts, workspaces, outgoing webhooks, repurposes (auto-replicating videos posted outside TryPost), and API keys.')]
 class TryPostServer extends Server
 {
     public int $defaultPaginationLength = 100;
@@ -107,6 +118,17 @@ class TryPostServer extends Server
         ListPinterestBoardsTool::class,
         ListDiscordChannelsTool::class,
         ToggleSocialAccountTool::class,
+        ListRepurposesTool::class,
+        CreateRepurposeTool::class,
+        GetRepurposeTool::class,
+        UpdateRepurposeTool::class,
+        ActivateRepurposeTool::class,
+        PauseRepurposeTool::class,
+        ResumeRepurposeTool::class,
+        DisableRepurposeTool::class,
+        ListRepurposeItemsTool::class,
+        ListRepurposeSourceFormatsTool::class,
+        DeleteRepurposeTool::class,
 
         // Webhooks
         ListWebhooksTool::class,

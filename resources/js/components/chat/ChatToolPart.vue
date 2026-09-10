@@ -27,7 +27,7 @@ const props = withDefaults(
 );
 
 const emit = defineEmits<{
-    submit: [string];
+    submit: [text: string, referenceMediaIds?: string[]];
     decide: [ChatApprovalDecision];
 }>();
 
@@ -44,6 +44,13 @@ const toolLabel = computed<string>(() => {
     const label = trans(key);
 
     return label === key ? toolName.value : label;
+});
+
+const toolActionLabel = computed<string>(() => {
+    const key = `chat.tool_actions.${toolName.value}`;
+    const label = trans(key);
+
+    return label === key ? `${toolLabel.value}…` : label;
 });
 
 const toolEntry = computed(() => resolveToolComponent(toolName.value));
@@ -104,7 +111,8 @@ const parsedResult = computed<ParsedResult>(() => {
     return { kind: 'data', data: value };
 });
 
-const onSubmit = (text: string): void => emit('submit', text);
+const onSubmit = (text: string, referenceMediaIds?: string[]): void =>
+    emit('submit', text, referenceMediaIds);
 const onDecide = (decision: ChatApprovalDecision): void =>
     emit('decide', decision);
 </script>
@@ -125,7 +133,7 @@ const onDecide = (decision: ChatApprovalDecision): void =>
             data-testid="chat-tool-part-running"
         >
             <IconLoader2 class="size-4 shrink-0 animate-spin" />
-            <span>{{ toolLabel }} — {{ $t('chat.tool_card.running') }}</span>
+            <span>{{ toolActionLabel }}</span>
         </div>
 
         <ChatApprovalCard

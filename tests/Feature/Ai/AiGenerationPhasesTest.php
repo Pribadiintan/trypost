@@ -6,11 +6,14 @@ use App\Ai\Agents\PostContentGenerator;
 use App\Ai\Agents\PostContentHumanizer;
 use App\Ai\Tools\ToolReplayer;
 use App\Enums\Ai\GenerationStatus;
+use App\Enums\Ai\UsageType;
+use App\Enums\Media\Source;
 use App\Enums\UserWorkspace\Role;
 use App\Enums\WorkspaceConversation\Message\Role as MessageRole;
 use App\Jobs\Ai\RenderPostImages;
 use App\Jobs\Ai\StreamPostCreation;
 use App\Models\AiGeneration;
+use App\Models\AiUsageLog;
 use App\Models\SocialAccount;
 use App\Models\User;
 use App\Models\Workspace;
@@ -34,6 +37,78 @@ beforeEach(function () {
     $this->account = SocialAccount::factory()->instagram()->create([
         'workspace_id' => $this->workspace->id,
     ]);
+});
+
+test('carousel image phase resumes without re-rendering or re-billing already-done slides', function () {
+    // A valid 1x1 PNG so the real render path can decode the faked image.
+    $png = base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==');
+    Image::fake([base64_encode($png)]);
+
+    $post = $this->workspace->posts()->create([
+        'user_id' => $this->user->id,
+        'content' => 'Swipe to see the tips',
+        'media' => [],
+        'status' => 'draft',
+        'creation_id' => 'call_resume',
+    ]);
+
+    // A user-attached (non-AI) media item must survive the retry merge.
+    $userMedia = [
+        'id' => (string) Str::uuid(),
+        'path' => 'uploads/user.jpg',
+        'type' => 'image',
+        'source' => Source::Unsplash->value,
+    ];
+    // Slide 0 already rendered on a prior attempt (kept AI media on the post).
+    $keptSlide = [
+        'id' => (string) Str::uuid(),
+        'path' => 'ai-images/kept.webp',
+        'type' => 'image',
+        'source' => Source::Ai->value,
+    ];
+    $post->update(['media' => [$userMedia, $keptSlide]]);
+
+    $generation = AiGeneration::factory()->for($this->workspace)->for($this->user)->create([
+        'creation_id' => 'call_resume',
+        'status' => GenerationStatus::TextReady,
+        'format' => 'instagram_carousel',
+        'template' => 'image_card',
+        'social_account_id' => $this->account->id,
+        'image_expected' => 2,
+        'image_done' => 1,
+        'post_id' => $post->id,
+        'structured' => [
+            'caption' => 'Swipe to see the tips',
+            'slides' => [
+                ['title' => 'Tip 1', 'body' => 'First', 'image_keywords' => ['a']],
+                ['title' => 'Tip 2', 'body' => 'Second', 'image_keywords' => ['b']],
+            ],
+        ],
+        'slide_media' => [0 => $keptSlide],
+    ]);
+
+    // The generator renders the still-missing slide 1 via the faked Image SDK
+    // (real render path so RecordAiUsage fires exactly once for the new slide).
+    (new RenderPostImages(
+        userId: $this->user->id,
+        creationId: 'call_resume',
+        workspaceId: $this->workspace->id,
+    ))->handle();
+
+    $generation->refresh();
+    $post->refresh();
+
+    expect($generation->status)->toBe(GenerationStatus::Ready)
+        ->and($generation->image_done)->toBe(2);
+
+    // Only ONE new image billed — the reused slide is not re-rendered/re-billed.
+    expect(AiUsageLog::where('workspace_id', $this->workspace->id)
+        ->where('type', UsageType::Image->value)->count())->toBe(1);
+
+    // User media survived; two AI slides present.
+    $media = collect($post->media ?? []);
+    expect($media->firstWhere('id', $userMedia['id']))->not->toBeNull()
+        ->and($media->where('source', Source::Ai->value)->count())->toBe(2);
 });
 
 test('text phase creates a draft post linked by creation_id and marks text_ready', function () {

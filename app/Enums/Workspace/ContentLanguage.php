@@ -32,6 +32,7 @@ enum ContentLanguage: string
     case Russian = 'ru';
     case Turkish = 'tr';
     case Arabic = 'ar';
+    case Malay = 'ms';
 
     public const DEFAULT = self::English;
 
@@ -57,6 +58,7 @@ enum ContentLanguage: string
             self::Russian => 'Русский',
             self::Turkish => 'Türkçe',
             self::Arabic => 'العربية',
+            self::Malay => 'Bahasa Melayu',
         };
     }
 
@@ -83,6 +85,7 @@ enum ContentLanguage: string
             self::Russian => 'Russian',
             self::Turkish => 'Turkish',
             self::Arabic => 'Arabic',
+            self::Malay => 'Malay',
         };
     }
 

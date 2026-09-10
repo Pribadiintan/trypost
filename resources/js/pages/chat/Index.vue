@@ -246,7 +246,7 @@ useWorkspaceEcho<PostPlatformStatusPayload>(
     },
 );
 
-const send = (text: string): void => {
+const send = (text: string, referenceMediaIds?: string[]): void => {
     const trimmed = text.trim();
 
     if (trimmed === '' || isBusy.value) {
@@ -262,12 +262,18 @@ const send = (text: string): void => {
     }
 
     draft.value = '';
-    sendMessage({ text: trimmed });
+    sendMessage({
+        text: trimmed,
+        ...(referenceMediaIds && referenceMediaIds.length > 0
+            ? { metadata: { reference_media_ids: referenceMediaIds } }
+            : {}),
+    });
 };
 
 const submitDraft = (): void => send(draft.value);
 
-const ask = (prompt: string): void => send(prompt);
+const ask = (prompt: string, referenceMediaIds?: string[]): void =>
+    send(prompt, referenceMediaIds);
 
 /**
  * Abort the in-flight turn and release its server-side claim immediately.
@@ -468,6 +474,21 @@ const onDecide = (decision: ChatApprovalDecision): void => {
                             @submit="submitDraft"
                             @stop="stopTurn"
                         />
+
+                        <div
+                            v-if="messages.length && !isBusy"
+                            class="mt-3 flex justify-center"
+                        >
+                            <button
+                                type="button"
+                                class="inline-flex items-center gap-1.5 rounded-full border-2 border-foreground bg-card px-3 py-1.5 text-sm font-semibold shadow-2xs hover:bg-accent"
+                                data-testid="chat-draft-post-shortcut"
+                                @click="draft = $t('chat.suggestions.posts')"
+                            >
+                                <IconFileText class="size-4" />
+                                {{ $t('chat.suggestions.posts') }}
+                            </button>
+                        </div>
 
                         <div v-if="!messages.length" class="mt-4">
                             <p

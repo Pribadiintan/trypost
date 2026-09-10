@@ -26,11 +26,13 @@ class AiGeneration extends Model
         'apply_brand_visuals',
         'reference_media_ids',
         'use_brand_references',
+        'language_code',
         'social_account_id',
         'image_expected',
         'image_done',
         'post_id',
         'structured',
+        'slide_media',
         'error_phase',
         'error',
     ];
@@ -45,6 +47,7 @@ class AiGeneration extends Model
             'image_expected' => 'integer',
             'image_done' => 'integer',
             'structured' => 'array',
+            'slide_media' => 'array',
         ];
     }
 

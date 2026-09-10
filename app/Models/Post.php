@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
-use App\DataTransferObjects\MediaItem;
+use App\Dto\MediaItem;
 use App\Enums\Media\Type;
 use App\Enums\Post\CreatedVia;
 use App\Enums\Post\Status as PostStatus;
@@ -37,6 +37,7 @@ class Post extends Model
         'status',
         'created_via',
         'creation_id',
+        'repurpose_item_id',
         'scheduled_at',
         'published_at',
     ];

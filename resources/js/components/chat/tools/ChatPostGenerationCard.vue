@@ -5,9 +5,16 @@ import { computed, ref, useId, watch } from 'vue';
 
 import ChatAssistantMessage from '@/components/chat/ChatAssistantMessage.vue';
 import ChatPostGenerationChoice from '@/components/chat/tools/ChatPostGenerationChoice.vue';
+import BrandReferencePicker from '@/components/posts/create/BrandReferencePicker.vue';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 import {
     getPlatformLabel,
     getPlatformLogo,
@@ -16,8 +23,10 @@ import type {
     ChatPostGenerationAccount,
     ChatPostGenerationCatalog,
     ChatPostGenerationCopy,
+    ChatPostGenerationLanguage,
     ChatPostGenerationStyle,
 } from '@/types/chat';
+import type { MediaItem } from '@/types/media';
 
 const props = withDefaults(
     defineProps<{
@@ -36,7 +45,7 @@ const props = withDefaults(
 );
 
 const emit = defineEmits<{
-    submit: [string];
+    submit: [text: string, referenceMediaIds?: string[]];
 }>();
 
 /**
@@ -106,6 +115,7 @@ type RecordedStep = 'format' | 'style' | 'account';
 const TOPIC_MIN_LENGTH = 3;
 
 const brandColorsId = useId();
+const referencesId = useId();
 
 /**
  * One line of the card, in the language of the conversation.
@@ -199,12 +209,103 @@ const useBrandColors = computed<boolean>({
     },
 });
 
+const languages = computed<ChatPostGenerationLanguage[]>(
+    () => props.data?.languages ?? [],
+);
+
+const selectedLanguageCode = ref<string | null>(null);
+
 /**
- * What the post should be about. The card always asks, pre-filled with
- * whatever the model extracted from the conversation: "post about the X
- * launch" carries a topic and "make me a post" does not, and only the user can
- * tell the difference between a topic they meant and one that was inferred.
+ * The brand reference photos the workspace has, mapped to the shape
+ * BrandReferencePicker (and the lightbox) consume. Empty when the workspace has
+ * none — the references step then never shows.
  */
+const referenceItems = computed<MediaItem[]>(() =>
+    (props.data?.brand_references ?? []).map(
+        (ref): MediaItem => ({
+            id: ref.id,
+            url: ref.url,
+            // The catalog sends the same label/kind string values MediaItem
+            // uses; cast the metadata bag whole so the picker's kind badge works.
+            meta: {
+                label: ref.label ?? undefined,
+                kind: ref.kind ?? undefined,
+            } as MediaItem['meta'],
+        }),
+    ),
+);
+
+// Every reference is selected by default (matches the old "on" behaviour); the
+// user deselects the ones they do not want. An empty selection means "no
+// references" — the same as the old toggle turned off.
+const selectedReferenceIds = ref<string[]>([]);
+
+// Seed / re-seed the default selection (all) whenever the reference set arrives.
+watch(
+    referenceItems,
+    (items) => {
+        if (selectedReferenceIds.value.length === 0) {
+            selectedReferenceIds.value = items.map((item) => item.id);
+        }
+    },
+    { immediate: true },
+);
+
+const useBrandReferences = computed<boolean>(
+    () => selectedReferenceIds.value.length > 0,
+);
+
+const selectedLanguage = computed(
+    () =>
+        languages.value.find(
+            (language) => language.language_code === selectedLanguageCode.value,
+        ) ?? null,
+);
+
+const hasReferences = computed(
+    () => (props.data?.brand_reference_count ?? 0) > 0,
+);
+
+const showsLanguageStep = computed(() => languages.value.length > 1);
+
+const referencesStepVisible = computed(
+    () => hasReferences.value && submittedImageCount.value > 0,
+);
+
+const languagePhrase = computed(() =>
+    showsLanguageStep.value && selectedLanguage.value !== null
+        ? fill(line('sentence_language'), {
+              language: selectedLanguage.value.label,
+          })
+        : '',
+);
+
+const referencesPhrase = computed(() =>
+    line(
+        useBrandReferences.value
+            ? 'sentence_references_on'
+            : 'sentence_references_off',
+    ),
+);
+
+watch(
+    languages,
+    (list) => {
+        if (selectedLanguageCode.value !== null) {
+            return;
+        }
+
+        const preferred =
+            list.find(
+                (language) =>
+                    language.language_code === props.data?.content_language,
+            ) ?? list[0];
+
+        selectedLanguageCode.value = preferred?.language_code ?? null;
+    },
+    { immediate: true },
+);
+
 const topicValue = computed<string>(() => (props.data?.topic ?? '').trim());
 
 /**
@@ -736,14 +837,23 @@ const sentence = computed<string>(() => {
         account: accountPhrase.value,
     };
 
-    if (!brandStepVisible.value) {
-        return fill(line('sentence'), replacements);
+    const base = brandStepVisible.value
+        ? fill(line('sentence_with_brand'), {
+              ...replacements,
+              brand: brandPhrase.value,
+          })
+        : fill(line('sentence'), replacements);
+
+    const extras = [
+        languagePhrase.value,
+        referencesStepVisible.value ? referencesPhrase.value : '',
+    ].filter(Boolean);
+
+    if (extras.length === 0) {
+        return base;
     }
 
-    return fill(line('sentence_with_brand'), {
-        ...replacements,
-        brand: brandPhrase.value,
-    });
+    return `${base.replace(/[.。!！?？]+$/, '')}, ${extras.join(', ')}.`;
 });
 
 /**
@@ -779,6 +889,14 @@ const summaryParts = computed<string[]>(() => {
         parts.push(brandPhrase.value);
     }
 
+    if (showsLanguageStep.value && selectedLanguage.value !== null) {
+        parts.push(selectedLanguage.value.label);
+    }
+
+    if (referencesStepVisible.value) {
+        parts.push(referencesPhrase.value);
+    }
+
     return parts;
 });
 
@@ -793,8 +911,20 @@ const submit = (): void => {
 
     const text = sentence.value;
 
+    // Only carry the picked ids when the references step actually applied and
+    // the user kept a subset (not all, not none) — a full/empty selection is
+    // already expressed by use_brand_references in the sentence, so sending
+    // every id would be redundant. A partial pick is the case the sentence
+    // cannot express, so it travels as structured data.
+    const referenceMediaIds =
+        referencesStepVisible.value &&
+        selectedReferenceIds.value.length > 0 &&
+        selectedReferenceIds.value.length < referenceItems.value.length
+            ? [...selectedReferenceIds.value]
+            : undefined;
+
     submitted.value = true;
-    emit('submit', text);
+    emit('submit', text, referenceMediaIds);
 };
 </script>
 
@@ -1111,6 +1241,63 @@ const submit = (): void => {
                         data-testid="chat-post-generation-brand-toggle"
                         dusk="chat-post-generation-brand-toggle"
                     />
+                </div>
+
+                <div
+                    v-if="referencesStepVisible"
+                    class="space-y-2 border-t border-foreground/15 pt-3"
+                    data-testid="chat-post-generation-references-step"
+                    dusk="chat-post-generation-references-step"
+                >
+                    <div class="min-w-0 space-y-0.5">
+                        <Label
+                            :for="referencesId"
+                            class="text-sm font-semibold"
+                        >
+                            {{ line('brand_references_label') }}
+                        </Label>
+                        <p class="text-xs text-muted-foreground">
+                            {{ line('brand_references_description') }}
+                        </p>
+                    </div>
+
+                    <BrandReferencePicker
+                        :id="referencesId"
+                        v-model:selected-ids="selectedReferenceIds"
+                        :references="referenceItems"
+                        :can-manage="false"
+                        data-testid="chat-post-generation-references-picker"
+                    />
+                </div>
+
+                <div
+                    v-if="showsLanguageStep"
+                    class="flex items-center justify-between gap-3 border-t border-foreground/15 pt-3"
+                    data-testid="chat-post-generation-language-step"
+                    dusk="chat-post-generation-language-step"
+                >
+                    <Label class="text-sm font-semibold">
+                        {{ line('language_question') }}
+                    </Label>
+
+                    <Select v-model="selectedLanguageCode">
+                        <SelectTrigger
+                            class="w-44"
+                            data-testid="chat-post-generation-language-select"
+                            dusk="chat-post-generation-language-select"
+                        >
+                            <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem
+                                v-for="language in languages"
+                                :key="language.language_code"
+                                :value="language.language_code"
+                            >
+                                {{ language.label }}
+                            </SelectItem>
+                        </SelectContent>
+                    </Select>
                 </div>
 
                 <div class="flex justify-end">

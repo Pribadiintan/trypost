@@ -76,7 +76,11 @@ class ChatMessageController extends Controller
 
         $model = $this->claim($conversation, $workspace, $user, $prompt);
 
-        return (new WorkspaceConversationAgent($workspace, $user))
+        $timezone = $request->filled('timezone')
+            ? (string) $request->string('timezone')
+            : config('app.timezone');
+
+        return (new WorkspaceConversationAgent($workspace, $user, $timezone))
             ->continue($model->id, as: $user)
             ->stream($prompt)
             ->usingVercelDataProtocol()

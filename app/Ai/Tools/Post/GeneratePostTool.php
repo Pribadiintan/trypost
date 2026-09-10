@@ -9,6 +9,7 @@ use App\Ai\Templates\Concerns\ResolvesContentType;
 use App\Ai\Tools\WorkspaceWriteTool;
 use App\Enums\PostPlatform\ContentType;
 use App\Enums\SocialAccount\Platform;
+use App\Enums\Workspace\ContentLanguage;
 use App\Events\Ai\PostCreationReady;
 use App\Jobs\Ai\StreamPostCreation;
 use App\Services\Ai\PostGenerationCatalog;
@@ -51,7 +52,7 @@ class GeneratePostTool extends WorkspaceWriteTool
 
     public function description(): Stringable|string
     {
-        return 'Generate a post with AI in the current workspace, using the format, style and prompt the user chose. Generation follows the workspace brand (variant plus photo references) on its own. Call start_post_generation first to learn which formats and styles this workspace supports, and confirm those choices with the user before calling this. Generation runs in the background: this tool returns as soon as it starts, with a creation id and the channel the finished post is announced on. Say one short sentence BEFORE the call naming what is being generated, and nothing after it: the result card above reports waiting, progress, readiness and failure on its own, and any narration added afterwards lands below it as stale text that can never update. When the user asks to retry only the images of a failed generation, call retry_post_images with that result\'s creation_id instead of generating a fresh post. Pass label_ids from list_labels to tag it; add a signature or library asset afterwards with update_post / attach_existing_asset.';
+        return 'Generate a post with AI in the current workspace, using the format, style and prompt the user chose. Generation follows the workspace brand (variant plus photo references) on its own. Call start_post_generation first to learn which formats, styles and brand languages this workspace supports, and confirm those choices with the user before calling this. Pass the language_code the user chose for a brand language variant, and set use_brand_references to false only when the user asked to leave their brand reference photos out. Generation runs in the background: this tool returns as soon as it starts, with a creation id and the channel the finished post is announced on. Say one short sentence BEFORE the call naming what is being generated, and nothing after it: the result card above reports waiting, progress, readiness and failure on its own, and any narration added afterwards lands below it as stale text that can never update. When the user asks to retry only the images of a failed generation, call retry_post_images with that result\'s creation_id instead of generating a fresh post. Pass label_ids from list_labels to tag it; add a signature or library asset afterwards with update_post / attach_existing_asset.';
     }
 
     /**
@@ -67,6 +68,8 @@ class GeneratePostTool extends WorkspaceWriteTool
             'image_count' => $schema->integer()->min(0)->max(self::MAX_IMAGE_COUNT)->description('How many images to generate. 0 for a text-only post. Defaults to 0.'),
             'date' => $schema->string()->description('Optional date the post is meant for, as Y-m-d.'),
             'apply_brand_visuals' => $schema->boolean()->description('Whether the generated images use the workspace brand palette. Defaults to true.'),
+            'use_brand_references' => $schema->boolean()->description('Whether the generated images follow the workspace brand reference photos. Defaults to true when references exist.'),
+            'language_code' => $schema->string()->enum(ContentLanguage::values())->description('The language the post should be written in, when the user picked a brand language variant. Omit to use the workspace default.'),
             'label_ids' => $schema->array()->items($schema->string())->description('Optional. Label ids from list_labels to tag the generated post with.'),
         ];
     }
@@ -77,6 +80,10 @@ class GeneratePostTool extends WorkspaceWriteTool
         $style = $request->string('style')->trim()->value();
         $socialAccountId = $request->filled('social_account_id')
             ? $request->string('social_account_id')->trim()->value()
+            : null;
+
+        $languageCode = $request->filled('language_code')
+            ? $request->string('language_code')->trim()->value()
             : null;
 
         $error = $this->aiAccessError() ?? $this->argumentError($request);
@@ -90,7 +97,8 @@ class GeneratePostTool extends WorkspaceWriteTool
         $error = $this->formatError($catalog, $format)
             ?? $this->styleError($style, $socialAccountId)
             ?? $this->socialAccountError($catalog, $format, $socialAccountId, $request->integer('image_count'))
-            ?? $this->imageCountError($format, $request->integer('image_count'));
+            ?? $this->imageCountError($format, $request->integer('image_count'))
+            ?? $this->languageCodeError($catalog, $languageCode);
 
         if ($error !== null) {
             return $this->error($error);
@@ -115,6 +123,9 @@ class GeneratePostTool extends WorkspaceWriteTool
             date: $request->filled('date') ? $request->string('date')->trim()->value() : null,
             template: $style,
             applyBrandVisuals: $request->boolean('apply_brand_visuals', true),
+            useBrandReferences: $request->boolean('use_brand_references', true),
+            languageCode: $languageCode,
+            referenceMediaIds: $this->selectedReferenceMediaIds(),
             labelIds: $labelIds,
         );
 
@@ -150,6 +161,8 @@ class GeneratePostTool extends WorkspaceWriteTool
             'social_account_id' => ['nullable', 'uuid'],
             'image_count' => ['nullable', 'integer', 'min:0', 'max:'.self::MAX_IMAGE_COUNT],
             'date' => ['nullable', 'date_format:Y-m-d'],
+            'use_brand_references' => ['nullable', 'boolean'],
+            'language_code' => ['nullable', 'string'],
         ], attributes: [
             'social_account_id' => 'social_account_id',
             'image_count' => 'image_count',
@@ -372,6 +385,30 @@ class GeneratePostTool extends WorkspaceWriteTool
         return "The format \"{$format}\" accepts at most {$max} images. Call generate_post again with image_count set to {$max} or fewer.";
     }
 
+    private function languageCodeError(array $catalog, ?string $languageCode): ?string
+    {
+        if ($languageCode === null || $languageCode === '') {
+            return null;
+        }
+
+        $available = array_values(array_filter(
+            array_column(data_get($catalog, 'languages', []), 'language_code'),
+            fn ($code): bool => is_string($code) && $code !== '',
+        ));
+
+        if ($available === []) {
+            return null;
+        }
+
+        if (in_array($languageCode, $available, true)) {
+            return null;
+        }
+
+        $options = implode(', ', $available);
+
+        return "The language \"{$languageCode}\" isn't offered in this workspace. Call start_post_generation and pass one of: {$options}.";
+    }
+
     /**
      * The private channel the finished post is announced on, taken from the
      * event itself so the name is never spelled out a second time. Echo
@@ -382,5 +419,40 @@ class GeneratePostTool extends WorkspaceWriteTool
         $channel = (new PostCreationReady($this->user->id, $creationId))->broadcastOn();
 
         return Str::after($channel->name, 'private-');
+    }
+
+    /**
+     * Reference-photo ids the user picked in the chat generation card. These
+     * arrive as a STRUCTURED field on the chat HTTP request, not through the
+     * model's tool arguments — passing UUIDs through the prompt is unreliable,
+     * so the frontend sends them out-of-band and the tool reads them here. Only
+     * ids that really belong to this workspace's brand_references survive, so a
+     * spoofed or stale id is silently dropped. An empty result leaves
+     * generation on its default (all references when use_brand_references).
+     *
+     * @return array<int, string>
+     */
+    private function selectedReferenceMediaIds(): array
+    {
+        $raw = request()->input('reference_media_ids');
+
+        if (! is_array($raw) || $raw === []) {
+            return [];
+        }
+
+        $requested = array_values(array_unique(array_filter(
+            array_map(fn ($id): string => (string) $id, $raw),
+            fn (string $id): bool => $id !== '',
+        )));
+
+        if ($requested === []) {
+            return [];
+        }
+
+        return $this->workspace->getMedia('brand_references')
+            ->whereIn('id', $requested)
+            ->pluck('id')
+            ->map(fn ($id): string => (string) $id)
+            ->all();
     }
 }

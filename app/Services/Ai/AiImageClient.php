@@ -43,6 +43,7 @@ class AiImageClient
         int $timeout = 180,
         array $typography = [],
         array $referenceImages = [],
+        array $referenceKinds = [],
     ): ?array {
         $keywords = $this->cleanKeywords($keywords);
 
@@ -50,7 +51,15 @@ class AiImageClient
             return null;
         }
 
-        $attachments = $this->resolveAttachments($referenceImages);
+        $isSeedream = config('ai.default_for_images') === 'seedream';
+
+        // Seedream conditions on reference images through its `image` array on
+        // the same generations endpoint; the SDK path uses OpenAI-style
+        // attachments. Build the prompt with the correct "has references" flag
+        // either way.
+        $attachments = $isSeedream ? [] : $this->resolveAttachments($referenceImages);
+        $seedreamReferences = $isSeedream ? $this->resolveSeedreamReferences($referenceImages) : [];
+        $hasReferences = $isSeedream ? $seedreamReferences !== [] : ! empty($attachments);
 
         $prompt = $this->buildPrompt(
             keywords: $keywords,
@@ -64,35 +73,166 @@ class AiImageClient
             visualNotes: $visualNotes,
             brandGuidelines: $brandGuidelines,
             typography: $typography,
-            hasReferenceImages: ! empty($attachments),
+            hasReferenceImages: $hasReferences,
+            referenceKinds: $hasReferences ? $referenceKinds : [],
         );
 
-        try {
-            $builder = Image::of($prompt)->quality($quality)->timeout($timeout);
+        $seedreamSize = match ($orientation) {
+            'portrait' => '1664x2496',
+            'landscape' => '2496x1664',
+            default => '2048x2048',
+        };
 
-            if (! empty($attachments)) {
-                $builder = $builder->attachments($attachments);
+        // The image endpoint is the flakiest hop in the pipeline: a provider
+        // timeout, a 5xx, or an unparsable body all surface here as a thrown
+        // Throwable. Rather than fail the whole generation on the first hiccup,
+        // retry a few times with a short backoff; only a run of failures
+        // returns null so the caller can fall back to a stock photo.
+        $attempts = max(1, (int) config('ai.image.max_attempts', 3));
+        $baseDelayMs = max(0, (int) config('ai.image.retry_delay_ms', 500));
+
+        $lastError = null;
+
+        for ($attempt = 1; $attempt <= $attempts; $attempt++) {
+            try {
+                $result = $isSeedream
+                    ? app(SeedreamImageClient::class)->generate(
+                        prompt: $prompt,
+                        size: $seedreamSize,
+                        referenceImages: $seedreamReferences,
+                        timeout: $timeout,
+                    )
+                    : $this->generateViaSdk($prompt, $orientation, $quality, $timeout, $attachments);
+
+                // A null result means the provider answered but produced no
+                // usable image — not a transient fault a retry fixes.
+                if ($result === null) {
+                    Log::warning('AiImageClient: generation produced no image', [
+                        'style' => $style->value,
+                        'orientation' => $orientation,
+                        'attempt' => $attempt,
+                    ]);
+
+                    return null;
+                }
+
+                return $result;
+            } catch (Throwable $e) {
+                $lastError = $e;
+
+                Log::warning('AiImageClient: generation attempt failed', [
+                    'style' => $style->value,
+                    'orientation' => $orientation,
+                    'attempt' => $attempt,
+                    'max_attempts' => $attempts,
+                    'error' => $e->getMessage(),
+                ]);
+
+                if ($attempt < $attempts && $baseDelayMs > 0) {
+                    // Linear backoff (500ms, 1000ms, ...). usleep takes µs.
+                    usleep($baseDelayMs * 1000 * $attempt);
+                }
             }
-
-            $isSeedream = str_contains((string) config('ai.providers.openai.models.image.default'), 'seedream')
-                || str_contains((string) config('ai.providers.openai.url'), 'byteplus');
-
-            $builder = match ($orientation) {
-                'portrait' => $isSeedream ? $builder->size('1664x2496') : $builder->portrait(),
-                'landscape' => $isSeedream ? $builder->size('2496x1664') : $builder->landscape(),
-                default => $isSeedream ? $builder->size('2048x2048') : $builder->square(),
-            };
-
-            return $this->toResult($builder->generate());
-        } catch (Throwable $e) {
-            Log::warning('AiImageClient: generation failed', [
-                'style' => $style->value,
-                'orientation' => $orientation,
-                'error' => $e->getMessage(),
-            ]);
-
-            return null;
         }
+
+        Log::warning('AiImageClient: generation failed after retries', [
+            'style' => $style->value,
+            'orientation' => $orientation,
+            'attempts' => $attempts,
+            'error' => $lastError?->getMessage(),
+        ]);
+
+        return null;
+    }
+
+    /**
+     * Generate one image through the laravel/ai SDK (OpenAI, Gemini, xAI, ...).
+     *
+     * @param  array<int, AiImageFile>  $attachments
+     * @return array{bytes: string, provider: string, model: string}|null
+     */
+    private function generateViaSdk(
+        string $prompt,
+        string $orientation,
+        string $quality,
+        int $timeout,
+        array $attachments,
+    ): ?array {
+        $builder = Image::of($prompt)->quality($quality)->timeout($timeout);
+
+        if (! empty($attachments)) {
+            $builder = $builder->attachments($attachments);
+        }
+
+        $builder = match ($orientation) {
+            'portrait' => $builder->portrait(),
+            'landscape' => $builder->landscape(),
+            default => $builder->square(),
+        };
+
+        return $this->toResult($builder->generate());
+    }
+
+    /**
+     * Resolve reference inputs into values Seedream's `image` array accepts:
+     * a public URL is passed through; a stored/local file is inlined as a
+     * lowercase `data:image/...;base64,...` URI (Seedream accepts both, and can
+     * mix them). Anything unreadable is dropped.
+     *
+     * The generation pipeline only ever passes string paths/URLs here (see
+     * TemplateImageGenerator), so non-string inputs are not handled.
+     *
+     * @param  array<int, string>  $referenceImages
+     * @return array<int, string>
+     */
+    private function resolveSeedreamReferences(array $referenceImages): array
+    {
+        return collect($referenceImages)
+            ->map(function (mixed $ref): ?string {
+                if (! is_string($ref) || trim($ref) === '') {
+                    return null;
+                }
+
+                $ref = trim($ref);
+
+                if (filter_var($ref, FILTER_VALIDATE_URL)) {
+                    return $ref;
+                }
+
+                $contents = null;
+                if (Storage::exists($ref)) {
+                    $contents = Storage::get($ref);
+                } elseif (file_exists($ref)) {
+                    $contents = file_get_contents($ref);
+                }
+
+                if (! is_string($contents) || $contents === '') {
+                    return null;
+                }
+
+                $mime = $this->guessImageMime($ref, $contents);
+
+                return 'data:'.$mime.';base64,'.base64_encode($contents);
+            })
+            ->filter()
+            ->values()
+            ->all();
+    }
+
+    /**
+     * Best-effort image MIME for a data-URI, from extension then binary sniff.
+     */
+    private function guessImageMime(string $path, string $contents): string
+    {
+        $ext = strtolower(pathinfo($path, PATHINFO_EXTENSION));
+
+        return match ($ext) {
+            'png' => 'image/png',
+            'webp' => 'image/webp',
+            'gif' => 'image/gif',
+            'jpg', 'jpeg' => 'image/jpeg',
+            default => str_starts_with($contents, "\x89PNG") ? 'image/png' : 'image/jpeg',
+        };
     }
 
     /**
@@ -164,9 +304,19 @@ class AiImageClient
         ?string $brandGuidelines = null,
         array $typography = [],
         bool $hasReferenceImages = false,
+        array $referenceKinds = [],
     ): string {
         $palette = $this->buildPaletteContext($brandColor, $backgroundColor, $textColor);
         $extendedPalette = $this->cleanExtendedPalette($extendedPalette);
+
+        // Categorise the reference photos so the prompt can treat a logo /
+        // product / style board differently from a person: without this every
+        // reference is prompted as a face to preserve, which mangles a logo.
+        $kinds = array_map('strval', $referenceKinds);
+        $hasPersonReference = (bool) array_intersect($kinds, ['face_closeup', 'full_body']);
+        $hasLogoReference = in_array('logo', $kinds, true);
+        $hasProductReference = in_array('product', $kinds, true);
+        $hasStyleReference = in_array('style', $kinds, true);
 
         return view('prompts.post_image.generator', [
             'style' => $style->value,
@@ -187,6 +337,12 @@ class AiImageClient
             'brand_guidelines' => $this->resolveBrandContext($brandGuidelines, 500),
             'brand_typography' => $this->cleanTypography($typography),
             'has_reference_images' => $hasReferenceImages,
+            // When kinds are unknown (empty) default to the person treatment,
+            // preserving the prior behaviour for callers that pass no kinds.
+            'has_person_reference' => $hasReferenceImages && ($kinds === [] || $hasPersonReference),
+            'has_logo_reference' => $hasReferenceImages && $hasLogoReference,
+            'has_product_reference' => $hasReferenceImages && $hasProductReference,
+            'has_style_reference' => $hasReferenceImages && $hasStyleReference,
         ])->render();
     }
 

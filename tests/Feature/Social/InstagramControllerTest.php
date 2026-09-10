@@ -21,6 +21,14 @@ beforeEach(function () {
     $this->workspace->members()->attach($this->user->id, ['role' => Role::Member->value]);
 });
 
+test('instagram authorize url forces reauth so a second account is reachable', function () {
+    $response = $this->actingAs($this->user)->get(route('app.social.instagram.connect'));
+
+    expect($response->headers->get('Location'))
+        ->toStartWith('https://www.instagram.com/oauth/authorize')
+        ->toContain('force_reauth=true');
+});
+
 test('instagram connect redirects to oauth provider', function () {
     $driverMock = Mockery::mock();
     $driverMock->shouldReceive('scopes')->andReturnSelf();
@@ -32,11 +40,12 @@ test('instagram connect redirects to oauth provider', function () {
         ->with('instagram')
         ->andReturn($driverMock);
 
+    $this->withoutExceptionHandling();
+
     $response = $this->actingAs($this->user)
-        ->withHeader('X-Inertia', 'true')
         ->get(route('app.social.instagram.connect'));
 
-    $response->assertStatus(409);
+    $response->assertRedirect('https://www.instagram.com/oauth/authorize?test=1');
 
     expect(session('social_connect_workspace'))->toBe($this->workspace->id);
 });

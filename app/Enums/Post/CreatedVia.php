@@ -10,4 +10,5 @@ enum CreatedVia: string
     case Mcp = 'mcp';
     case Api = 'api';
     case Chat = 'chat';
+    case Repurpose = 'repurpose';
 }

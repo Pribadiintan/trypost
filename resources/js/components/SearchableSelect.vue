@@ -1,4 +1,8 @@
-<script setup lang="ts">
+<script
+    setup
+    lang="ts"
+    generic="TOption extends { value: string; label: string }"
+>
 import { IconCheck, IconChevronDown } from '@tabler/icons-vue';
 import { computed, ref } from 'vue';
 
@@ -18,14 +22,9 @@ import {
 } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
 
-interface Option {
-    value: string;
-    label: string;
-}
-
 const props = withDefaults(
     defineProps<{
-        options: Option[];
+        options: TOption[];
         placeholder?: string;
         searchPlaceholder?: string;
         emptyText?: string;
@@ -48,7 +47,7 @@ const selected = computed(() =>
     props.options.find((option) => option.value === value.value),
 );
 
-const select = (option: Option) => {
+const select = (option: TOption) => {
     value.value = option.value;
     open.value = false;
 };
@@ -67,10 +66,14 @@ const select = (option: Option) => {
                 :class="invalid ? 'border-rose-500' : ''"
             >
                 <span
-                    :class="selected ? 'text-foreground' : 'text-foreground/50'"
+                    v-if="selected"
+                    class="flex min-w-0 items-center gap-2 text-foreground"
                 >
-                    {{ selected ? selected.label : placeholder }}
+                    <slot name="option" :option="selected" :compact="true">{{
+                        selected.label
+                    }}</slot>
                 </span>
+                <span v-else class="text-foreground/50">{{ placeholder }}</span>
                 <IconChevronDown class="ml-2 size-4 shrink-0 opacity-50" />
             </Button>
         </PopoverTrigger>
@@ -90,7 +93,14 @@ const select = (option: Option) => {
                             :value="option.label"
                             @select="select(option)"
                         >
-                            {{ option.label }}
+                            <span class="flex min-w-0 items-center gap-2">
+                                <slot
+                                    name="option"
+                                    :option="option"
+                                    :compact="false"
+                                    >{{ option.label }}</slot
+                                >
+                            </span>
                             <IconCheck
                                 :class="
                                     cn(

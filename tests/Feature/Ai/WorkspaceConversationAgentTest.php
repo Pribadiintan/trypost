@@ -73,3 +73,74 @@ test('the instructions carry the workspace brand and content language', function
         ->and($instructions)->toContain('confident')
         ->and($instructions)->toContain('linkedin');
 });
+
+test('provider() is null by default so the single default provider is used', function () {
+    config()->set('ai.text.failover', []);
+
+    $agent = new WorkspaceConversationAgent(Workspace::factory()->create(), User::factory()->create());
+
+    expect($agent->provider())->toBeNull();
+});
+
+test('provider() returns the configured failover chain when set', function () {
+    config()->set('ai.text.failover', ['openai', 'gemini']);
+
+    $agent = new WorkspaceConversationAgent(Workspace::factory()->create(), User::factory()->create());
+
+    expect($agent->provider())->toBe(['openai', 'gemini']);
+});
+
+test('the conversation window is capped from config', function () {
+    config()->set('ai.text.chat.max_conversation_messages', 25);
+
+    $agent = new WorkspaceConversationAgent(Workspace::factory()->create(), User::factory()->create());
+
+    $method = new ReflectionMethod($agent, 'maxConversationMessages');
+    $method->setAccessible(true);
+
+    expect($method->invoke($agent))->toBe(25);
+});
+
+test('the conversation window never drops below one', function () {
+    config()->set('ai.text.chat.max_conversation_messages', 0);
+
+    $agent = new WorkspaceConversationAgent(Workspace::factory()->create(), User::factory()->create());
+
+    $method = new ReflectionMethod($agent, 'maxConversationMessages');
+    $method->setAccessible(true);
+
+    expect($method->invoke($agent))->toBe(1);
+});
+
+test('the instructions carry the current date, time and timezone for relative scheduling', function () {
+    $agent = new WorkspaceConversationAgent(
+        Workspace::factory()->create(),
+        User::factory()->create(),
+        'Asia/Jakarta',
+    );
+
+    $instructions = $agent->instructions();
+
+    $expectedYear = now('Asia/Jakarta')->format('Y');
+
+    expect($instructions)->toContain('Current date & time')
+        ->and($instructions)->toContain('Asia/Jakarta')
+        ->and($instructions)->toContain($expectedYear)
+        // The +07:00 offset must be present so scheduled_at round-trips unambiguously.
+        ->and($instructions)->toContain('+07:00');
+});
+
+test('an unknown timezone falls back to the app default without throwing', function () {
+    config()->set('app.timezone', 'UTC');
+
+    $agent = new WorkspaceConversationAgent(
+        Workspace::factory()->create(),
+        User::factory()->create(),
+        'Not/AZone',
+    );
+
+    // Must not throw, and must anchor on the app default (UTC).
+    $instructions = $agent->instructions();
+
+    expect($instructions)->toContain('timezone UTC');
+});

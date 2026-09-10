@@ -23,8 +23,10 @@ return [
     'groups' => [
         'posts' => '投稿',
         'workspace' => 'ワークスペース',
+        'others' => 'その他',
     ],
     'analytics' => 'アナリティクス',
+    'repurposes' => 'Repurpose',
     'onboarding' => 'はじめに',
     'onboarding_hint' => 'セットアップを完了',
     'chat' => 'チャット',
@@ -43,4 +45,9 @@ return [
     'mark_as_read' => '既読にする',
     'archive_all' => 'すべてアーカイブ',
     'no_notifications' => '通知はありません',
+    'support' => [
+        'docs' => 'ドキュメント',
+        'referral' => '30% の紹介報酬を獲得',
+        'discord' => 'Discord コミュニティ',
+    ],
 ];

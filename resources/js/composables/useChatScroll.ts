@@ -48,12 +48,32 @@ export const scrollWindowToBottom = (smooth = false): void => {
 };
 
 /**
- * Chat pin-to-bottom: whenever the thread grows (new bubble, image, chips, or
- * a tool card revealing its next step), the view jumps to the end. Same rule
- * for every step.
+ * Chat pin-to-bottom: when the thread grows (new bubble, image, chips, or a
+ * tool card revealing its next step), the view follows to the end — but ONLY
+ * while the user is already parked near the bottom. If they have scrolled up
+ * to read an earlier message, a resize (streaming tokens, an expanding preview
+ * card) must NOT yank them back down. `scrollToBottom()` called explicitly
+ * (e.g. right after the user sends a message) always jumps regardless.
  */
 export const useChatScroll = (root: Ref<HTMLElement | null>) => {
     let observer: ResizeObserver | null = null;
+
+    // Distance from the bottom (px) within which we still consider the user
+    // "pinned" and keep following new content.
+    const NEAR_BOTTOM_THRESHOLD = 120;
+
+    const nearBottomOf = (scroller: HTMLElement | null): boolean => {
+        if (scroller === null) {
+            const scrolledBottom = window.innerHeight + window.scrollY;
+
+            return documentHeight() - scrolledBottom <= NEAR_BOTTOM_THRESHOLD;
+        }
+
+        const distance =
+            scroller.scrollHeight - scroller.scrollTop - scroller.clientHeight;
+
+        return distance <= NEAR_BOTTOM_THRESHOLD;
+    };
 
     const scrollToBottom = (smooth = false): void => {
         requestAnimationFrame(() => {
@@ -81,7 +101,10 @@ export const useChatScroll = (root: Ref<HTMLElement | null>) => {
         }
 
         observer = new ResizeObserver(() => {
-            scrollToBottom();
+            // Only follow the growing thread when the user hasn't scrolled away.
+            if (nearBottomOf(scrollingAncestor(root.value))) {
+                scrollToBottom();
+            }
         });
         observer.observe(root.value);
         scrollToBottom();

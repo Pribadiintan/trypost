@@ -6,10 +6,15 @@ namespace App\Services\Ai;
 
 use App\Ai\Templates\AiContentTemplate;
 use App\Ai\Templates\AiTemplateRegistry;
+use App\Enums\Media\BrandReferenceKind;
 use App\Enums\PostPlatform\ContentType;
+use App\Enums\User\Locale;
+use App\Enums\Workspace\ContentLanguage;
+use App\Models\BrandVariant;
 use App\Models\SocialAccount;
 use App\Models\Workspace;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Cache;
 
 /**
  * Builds the AI post-generation catalog (formats, styles, and brand-visuals
@@ -42,19 +47,35 @@ final class PostGenerationCatalog
      *     styles: list<array{key: string, name: string, description: string, preview: string, needs_account: bool, supported_formats: list<string>, applies_brand_visuals: bool}>,
      *     applies_brand_visuals_default: bool,
      *     connected_platforms: list<string>,
+     *     content_language: ?string,
+     *     languages: list<array{language_code: string, label: string, swatch: list<string>}>,
+     *     brand_references: list<array{id: string, url: string, label: ?string, kind: ?string}>,
+     *     brand_reference_count: int,
      * }
      */
+    private const CACHE_TTL_SECONDS = 60;
+
     public static function forWorkspace(Workspace $workspace, ?string $locale = null): array
     {
-        $accountsByPlatform = $workspace->socialAccounts()->active()->get()
-            ->groupBy(fn (SocialAccount $account): string => $account->platform->value);
+        $cacheKey = "post_generation_catalog:{$workspace->id}:".($locale ?? 'default');
 
-        return [
-            'formats' => self::buildFormats($accountsByPlatform, $locale),
-            'styles' => self::buildStyles($locale),
-            'applies_brand_visuals_default' => true,
-            'connected_platforms' => $accountsByPlatform->keys()->all(),
-        ];
+        return Cache::remember($cacheKey, self::CACHE_TTL_SECONDS, function () use ($workspace, $locale) {
+            $accountsByPlatform = $workspace->socialAccounts()->active()->get()
+                ->groupBy(fn (SocialAccount $account): string => $account->platform->value);
+
+            $references = self::buildReferences($workspace);
+
+            return [
+                'formats' => self::buildFormats($accountsByPlatform, $locale),
+                'styles' => self::buildStyles($locale),
+                'applies_brand_visuals_default' => true,
+                'connected_platforms' => $accountsByPlatform->keys()->all(),
+                'content_language' => $workspace->content_language,
+                'languages' => self::buildLanguages($workspace),
+                'brand_references' => $references,
+                'brand_reference_count' => count($references),
+            ];
+        });
     }
 
     /**
@@ -165,5 +186,106 @@ final class PostGenerationCatalog
             'supported_formats' => $template->supportedFormats(),
             'applies_brand_visuals' => $template->appliesBrandVisuals(),
         ], app(AiTemplateRegistry::class)->all());
+    }
+
+    /**
+     * The languages the card can offer, the workspace default first. A variant
+     * label wins over the plain language name for the same code; the full
+     * variant payload already travels through `get_brand`.
+     *
+     * @return list<array{language_code: string, label: string, swatch: list<string>}>
+     */
+    private static function buildLanguages(Workspace $workspace): array
+    {
+        $variants = ($workspace->relationLoaded('brandVariants')
+            ? $workspace->brandVariants
+            : $workspace->brandVariants()->get())
+            ->sortBy('sort_order');
+
+        $labels = $variants
+            ->mapWithKeys(fn (BrandVariant $variant): array => [
+                $variant->language_code => $variant->label ?: $variant->language_code,
+            ])
+            ->all();
+
+        // Per-language swatch (brand/background/text) so the wizard can show
+        // that picking a language also applies that variant's visual brand.
+        $swatches = $variants
+            ->mapWithKeys(fn (BrandVariant $variant): array => [
+                $variant->language_code => array_values(array_filter([
+                    $variant->brand_color,
+                    $variant->background_color,
+                    $variant->text_color,
+                ])),
+            ])
+            ->all();
+
+        $languages = [];
+        $default = $workspace->content_language;
+
+        $entry = static fn (string $code, string $label): array => [
+            'language_code' => $code,
+            'label' => $label,
+            'swatch' => $swatches[$code] ?? [],
+        ];
+
+        if (is_string($default) && $default !== '') {
+            $languages[] = $entry($default, $labels[$default] ?? self::languageLabel($default));
+
+            unset($labels[$default]);
+        }
+
+        foreach ($labels as $languageCode => $label) {
+            $languages[] = $entry($languageCode, $label);
+        }
+
+        return $languages;
+    }
+
+    /**
+     * The brand reference photos the chat card can offer as a picker, capped at
+     * the model's reference limit. Shape mirrors what BrandReferencePicker and
+     * ImagePreviewDialog consume on the frontend.
+     *
+     * @return list<array{id: string, url: string, label: ?string, kind: ?string}>
+     */
+    private static function buildReferences(Workspace $workspace): array
+    {
+        return $workspace->getMedia('brand_references')
+            ->get()
+            ->take(BrandReferenceKind::MAX_REFERENCES)
+            ->map(fn ($media): array => [
+                'id' => (string) $media->id,
+                'url' => $media->url,
+                'label' => data_get($media->meta, 'label'),
+                'kind' => data_get($media->meta, 'kind'),
+            ])
+            ->values()
+            ->all();
+    }
+
+    /**
+     * Clear the cached catalog for a workspace. Call this when social
+     * accounts, brand references, or brand variants change.
+     */
+    public static function clearCache(Workspace $workspace): void
+    {
+        // The catalog is cached per resolved locale (see forWorkspace's key), so
+        // forgetting only ':default' left every locale-keyed entry (':en', ':ja',
+        // …) serving stale brand data until its TTL. File/array drivers do not
+        // support tag or pattern deletes, so forget the full known key set: the
+        // application-default entry plus one per supported UI locale.
+        $prefix = "post_generation_catalog:{$workspace->id}:";
+
+        Cache::forget($prefix.'default');
+
+        foreach (Locale::values() as $locale) {
+            Cache::forget($prefix.$locale);
+        }
+    }
+
+    private static function languageLabel(string $languageCode): string
+    {
+        return ContentLanguage::tryFrom($languageCode)?->label() ?? $languageCode;
     }
 }

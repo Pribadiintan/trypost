@@ -42,6 +42,7 @@ interface BrandFields {
 interface AutofillResponse {
     name: string | null;
     brand_description: string | null;
+    brand_guidelines: string | null;
     content_language: string | null;
     brand_color: string | null;
     background_color: string | null;
@@ -114,6 +115,8 @@ const runAutofill = async () => {
             props.fields.name = data.name;
         if (data?.brand_description)
             props.fields.brand_description = data.brand_description;
+        if (data?.brand_guidelines && !props.fields.brand_guidelines)
+            props.fields.brand_guidelines = data.brand_guidelines;
         if (data?.content_language)
             props.fields.content_language = data.content_language;
         if (data?.brand_voice_traits?.length) {
@@ -252,7 +255,16 @@ const runAutofill = async () => {
                 :key="group"
                 class="grid gap-2"
             >
-                <Label>{{ $t(`settings.brand.voice_group.${group}`) }}</Label>
+                <Label class="flex items-center gap-2">
+                    {{ $t(`settings.brand.voice_group.${group}`) }}
+                    <span class="text-xs font-normal text-muted-foreground">
+                        {{
+                            group === 'style'
+                                ? $t('settings.brand.voice_select_any')
+                                : $t('settings.brand.voice_select_one')
+                        }}
+                    </span>
+                </Label>
                 <FieldGroup
                     class="flex flex-row flex-wrap gap-2 [--radius:9999rem]"
                 >
@@ -316,6 +328,46 @@ const runAutofill = async () => {
                 :empty-text="$t('settings.brand.font_empty')"
             />
             <InputError :message="errors.brand_font" />
+        </div>
+
+        <div v-if="showDefaultVisuals" class="grid gap-2">
+            <Label>{{ $t('settings.brand.preview_label') }}</Label>
+            <p class="text-xs font-medium text-foreground/60">
+                {{ $t('settings.brand.preview_description') }}
+            </p>
+            <div
+                class="overflow-hidden rounded-xl border-2 border-foreground shadow-2xs"
+                data-testid="brand-preview"
+                :style="{
+                    backgroundColor: fields.background_color || '#ffffff',
+                    color: fields.text_color || '#0a0a0a',
+                    fontFamily: fields.brand_font
+                        ? `'${fields.brand_font}', sans-serif`
+                        : undefined,
+                }"
+            >
+                <div
+                    class="h-1.5 w-full"
+                    :style="{ backgroundColor: fields.brand_color || '#7c3aed' }"
+                />
+                <div class="space-y-2 p-5">
+                    <p class="text-lg font-bold">
+                        {{ $t('settings.brand.preview_headline') }}
+                    </p>
+                    <p class="text-sm opacity-90">
+                        {{ $t('settings.brand.preview_body') }}
+                    </p>
+                    <span
+                        class="mt-1 inline-block rounded-full px-3 py-1 text-xs font-bold"
+                        :style="{
+                            backgroundColor: fields.brand_color || '#7c3aed',
+                            color: fields.background_color || '#ffffff',
+                        }"
+                    >
+                        {{ $t('settings.brand.preview_cta') }}
+                    </span>
+                </div>
+            </div>
         </div>
 
         <div class="grid gap-2">

@@ -11,6 +11,7 @@ use App\Ai\Templates\AiTemplateRegistry;
 use App\Ai\Templates\GeneratedPost;
 use App\Ai\Templates\TemplateContext;
 use App\Enums\Ai\ContentStyle;
+use App\Enums\Ai\GenerationFailure;
 use App\Enums\Ai\GenerationStatus;
 use App\Enums\Ai\GeneratorFormat;
 use App\Enums\Notification\Channel as NotificationChannel;
@@ -41,6 +42,23 @@ class StreamPostCreation implements ShouldBeUnique, ShouldQueue
 
     public int $uniqueFor = 990;
 
+    /**
+     * Retry a transient text-phase failure (provider 5xx / timeout). Safe to
+     * retry: the row is firstOrCreate'd on creation_id, a terminal status
+     * short-circuits handle(), createPostFromGenerated adopts any orphan draft,
+     * and text usage is billed only after the draft is created — so a retry
+     * neither duplicates the post nor double-bills.
+     */
+    public int $tries = 3;
+
+    /**
+     * @return array<int, int>
+     */
+    public function backoff(): array
+    {
+        return [10, 30];
+    }
+
     public function __construct(
         public string $userId,
         public string $creationId,
@@ -55,6 +73,7 @@ class StreamPostCreation implements ShouldBeUnique, ShouldQueue
         public array $referenceMediaIds = [],
         public bool $useBrandReferences = true,
         public array $labelIds = [],
+        public ?string $languageCode = null,
     ) {
         $this->onQueue('ai');
     }
@@ -78,7 +97,8 @@ class StreamPostCreation implements ShouldBeUnique, ShouldQueue
         $generation->update([
             'status' => GenerationStatus::FailedText,
             'error_phase' => 'text',
-            'error' => $exception?->getMessage() ?? 'Text generation failed.',
+            'error' => ($exception ? GenerationFailure::fromThrowable($exception, GenerationFailure::Text) : GenerationFailure::Text)
+                ->message($generation->language_code),
         ]);
 
         PostCreationReady::dispatch($this->userId, $this->creationId, $generation->post_id, (string) $generation->error);
@@ -97,6 +117,7 @@ class StreamPostCreation implements ShouldBeUnique, ShouldQueue
                 'apply_brand_visuals' => $this->applyBrandVisuals,
                 'reference_media_ids' => $this->referenceMediaIds,
                 'use_brand_references' => $this->useBrandReferences,
+                'language_code' => $this->languageCode,
                 'social_account_id' => $this->socialAccountId,
                 'image_expected' => $this->imageCount,
             ],
@@ -107,6 +128,7 @@ class StreamPostCreation implements ShouldBeUnique, ShouldQueue
         }
 
         $workspace = Workspace::findOrFail($this->workspaceId);
+        $workspace->loadMissing('brandVariants');
         $socialAccount = $this->socialAccountId ? SocialAccount::find($this->socialAccountId) : null;
 
         $style = app(AiTemplateRegistry::class)->find($this->template);
@@ -114,7 +136,7 @@ class StreamPostCreation implements ShouldBeUnique, ShouldQueue
         $isCarousel = $this->format === ContentType::CAROUSEL_FORMAT;
         $agentFormat = $isCarousel ? GeneratorFormat::Carousel : GeneratorFormat::Single;
         $slideCount = $isCarousel && $this->imageCount > 0 ? $this->imageCount : 1;
-        $brand = $workspace->resolvedBrand();
+        $brand = $workspace->resolvedBrand($this->languageCode);
 
         // Text phase never touches the image model: assembling with a null
         // account yields caption plus content type with empty media on every
@@ -144,6 +166,16 @@ class StreamPostCreation implements ShouldBeUnique, ShouldQueue
         try {
             $response = $agent->prompt($this->prompt);
 
+            $structured = $response->structured ?? [];
+
+            $structured = $this->humanize($workspace, $structured, $agentFormat, $style->style(), $brand);
+
+            $textOnly = $style->assemble($structured, $textContext);
+            $post = $this->createPostFromGenerated($workspace, $textOnly, $socialAccount);
+
+            // Bill text usage only once the draft is durably created. Doing it
+            // earlier meant a throw in humanize()/assemble()/createPost() spent
+            // credits for nothing AND a retry (same creation_id) billed again.
             RecordAiUsage::recordText(
                 workspace: $workspace,
                 promptTokens: $response->usage->promptTokens,
@@ -151,6 +183,7 @@ class StreamPostCreation implements ShouldBeUnique, ShouldQueue
                 provider: (string) $response->meta->provider,
                 model: (string) $response->meta->model,
                 userId: $this->userId,
+                postId: $post->id,
                 metadata: [
                     'agent' => 'post_generator',
                     'format' => $this->format,
@@ -161,13 +194,6 @@ class StreamPostCreation implements ShouldBeUnique, ShouldQueue
                     'apply_brand_visuals' => $this->applyBrandVisuals,
                 ],
             );
-
-            $structured = $response->structured ?? [];
-
-            $structured = $this->humanize($workspace, $structured, $agentFormat, $style->style(), $brand);
-
-            $textOnly = $style->assemble($structured, $textContext);
-            $post = $this->createPostFromGenerated($workspace, $textOnly, $socialAccount);
 
             $imageExpected = $this->expectedImageCount($isCarousel, $slideCount, $socialAccount);
 
@@ -180,6 +206,7 @@ class StreamPostCreation implements ShouldBeUnique, ShouldQueue
                 'apply_brand_visuals' => $this->applyBrandVisuals,
                 'reference_media_ids' => $this->referenceMediaIds,
                 'use_brand_references' => $this->useBrandReferences,
+                'language_code' => $this->languageCode,
                 'social_account_id' => $socialAccount?->id,
                 'image_expected' => $imageExpected,
                 'image_done' => 0,
@@ -201,7 +228,7 @@ class StreamPostCreation implements ShouldBeUnique, ShouldQueue
             if ($imageExpected === 0) {
                 $generation->update(['status' => GenerationStatus::Ready]);
 
-                $this->notifyReady($workspace, $post);
+                $this->notifyReady($workspace, $post, $brand);
 
                 return;
             }
@@ -213,21 +240,27 @@ class StreamPostCreation implements ShouldBeUnique, ShouldQueue
                 applyBrandVisuals: $this->applyBrandVisuals,
                 referenceMediaIds: $this->referenceMediaIds,
                 useBrandReferences: $this->useBrandReferences,
+                languageCode: $this->languageCode,
             );
         } catch (\Throwable $e) {
-            $generation->update([
-                'status' => GenerationStatus::FailedText,
-                'error_phase' => 'text',
-                'error' => $e->getMessage(),
-            ]);
+            // FailedText is terminal and would short-circuit a retry's handle().
+            // Only write it on the final attempt; otherwise leave the row
+            // non-terminal so the queued retry re-runs. failed() writes the
+            // terminal status + fires the event after the last attempt.
+            if ($this->attempts() >= $this->tries) {
+                $generation->update([
+                    'status' => GenerationStatus::FailedText,
+                    'error_phase' => 'text',
+                    'error' => GenerationFailure::fromThrowable($e, GenerationFailure::Text)->message($brand->languageCode),
+                ]);
+            }
 
             Log::error('StreamPostCreation failed', [
                 'creation_id' => $this->creationId,
                 'phase' => 'text',
+                'attempt' => $this->attempts(),
                 'error' => $e->getMessage(),
             ]);
-
-            PostCreationReady::dispatch($this->userId, $this->creationId, $generation->post_id, $e->getMessage());
 
             throw $e;
         }
@@ -388,7 +421,7 @@ class StreamPostCreation implements ShouldBeUnique, ShouldQueue
         return $post;
     }
 
-    private function notifyReady(Workspace $workspace, Post $post): void
+    private function notifyReady(Workspace $workspace, Post $post, ResolvedBrand $brand): void
     {
         PostCreationReady::dispatch(
             userId: $this->userId,
@@ -403,8 +436,8 @@ class StreamPostCreation implements ShouldBeUnique, ShouldQueue
             workspaceId: $workspace->id,
             type: NotificationType::PostReady,
             channel: NotificationChannel::InApp,
-            title: trans('notifications.post_ready.title', [], $workspace->content_language),
-            body: trans('notifications.post_ready.body', [], $workspace->content_language),
+            title: trans('notifications.post_ready.title', [], $brand->languageCode),
+            body: trans('notifications.post_ready.body', [], $brand->languageCode),
             data: ['post_id' => $post->id],
         );
     }
@@ -412,7 +445,16 @@ class StreamPostCreation implements ShouldBeUnique, ShouldQueue
     private function aspectRatioFor(ContentType $type): ?string
     {
         $dims = $type->aiImageDimensions();
-        $ratio = data_get($dims, 'width') / data_get($dims, 'height');
+        $width = (int) data_get($dims, 'width');
+        $height = (int) data_get($dims, 'height');
+
+        // A zero/missing height would throw a DivisionByZeroError mid-generation
+        // (after text was created) — treat it as "no known ratio" instead.
+        if ($width <= 0 || $height <= 0) {
+            return null;
+        }
+
+        $ratio = $width / $height;
 
         return match (true) {
             abs($ratio - 1.0) < 0.01 => '1:1',

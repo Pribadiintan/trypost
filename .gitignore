@@ -25,6 +25,7 @@ Homestead.yaml
 npm-debug.log
 yarn-error.log
 /auth.json
+/.codex
 /.fleet
 /.idea
 /.nova
@@ -34,3 +35,9 @@ yarn-error.log
 !/docs/
 !/docs/deployment.md
 /.superpowers/
+
+# WorkBuddy AI working notes (local only)
+/.workbuddy-ai/
+
+# Kiro Crew agent environment (local only)
+/.kiro/

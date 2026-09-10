@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import { useHttp } from '@inertiajs/vue3';
 import { IconEye, IconEyeOff } from '@tabler/icons-vue';
-import { ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 
+import ImagePreviewDialog from '@/components/ImagePreviewDialog.vue';
 import PreviewTab from '@/components/posts/editor/PreviewTab.vue';
+import { MediaType } from '@/lib/mediaType';
 import { chatPreview } from '@/routes/app/posts';
 import type { MediaItem } from '@/types/media';
 
@@ -38,19 +40,31 @@ interface ChatPostPreviewData {
 
 const props = defineProps<{
     postId: string;
+    /** Reserve N skeleton tiles while the media loads (avoids layout shift). */
+    expectedMedia?: number;
 }>();
 
 const open = ref(false);
 const loading = ref(false);
 const failed = ref(false);
 const data = ref<ChatPostPreviewData | null>(null);
+const lightbox = ref<InstanceType<typeof ImagePreviewDialog> | null>(null);
 
 const http = useHttp<Record<string, never>, ChatPostPreviewData>({});
 
-const toggle = async (): Promise<void> => {
-    open.value = !open.value;
+const skeletonCount = computed<number>(() =>
+    Math.min(4, Math.max(1, props.expectedMedia ?? 1)),
+);
 
-    if (!open.value || data.value !== null || loading.value) {
+const mediaItems = computed<MediaItem[]>(() => data.value?.media ?? []);
+const hasThumbnails = computed<boolean>(() => mediaItems.value.length > 0);
+
+const mediaTypeOf = (item: MediaItem): MediaType =>
+    (item.type as MediaType | undefined) ?? MediaType.Image;
+
+/** Eagerly load the post's media so generated images show without expanding. */
+const fetchData = async (): Promise<void> => {
+    if (data.value !== null || loading.value) {
         return;
     }
 
@@ -65,10 +79,77 @@ const toggle = async (): Promise<void> => {
         loading.value = false;
     }
 };
+
+const openLightbox = (index: number): void => {
+    const collection = mediaItems.value.map((item) => ({
+        url: item.url,
+        type: mediaTypeOf(item),
+        altText: item.meta?.alt_text ?? undefined,
+    }));
+
+    lightbox.value?.openCollection(collection, index);
+};
+
+const toggle = (): void => {
+    open.value = !open.value;
+    void fetchData();
+};
+
+onMounted(() => {
+    // Thumbnails are the primary artifact of a generation, so load them up
+    // front rather than waiting for the user to expand the phone preview.
+    void fetchData();
+});
 </script>
 
 <template>
     <div data-testid="chat-post-preview">
+        <!-- IMG-2: skeleton tiles reserve space while media loads (no CLS). -->
+        <div
+            v-if="loading && !hasThumbnails"
+            class="mb-2 flex gap-1.5"
+            data-testid="chat-post-preview-thumbs-skeleton"
+        >
+            <div
+                v-for="n in skeletonCount"
+                :key="n"
+                class="size-16 shrink-0 animate-pulse rounded-lg bg-accent"
+            />
+        </div>
+
+        <!-- IMG-1: generated images shown inline; click opens the lightbox. -->
+        <div
+            v-else-if="hasThumbnails"
+            class="mb-2 flex flex-wrap gap-1.5"
+            data-testid="chat-post-preview-thumbs"
+        >
+            <button
+                v-for="(item, index) in mediaItems"
+                :key="item.id"
+                type="button"
+                class="group relative size-16 shrink-0 overflow-hidden rounded-lg border border-foreground/15 bg-accent transition hover:ring-2 hover:ring-primary"
+                :aria-label="$t('chat.post_generation.view_image')"
+                data-testid="chat-post-preview-thumb"
+                @click="openLightbox(index)"
+            >
+                <video
+                    v-if="mediaTypeOf(item) === 'video'"
+                    :src="item.url"
+                    class="size-full object-cover"
+                    muted
+                    playsinline
+                    preload="metadata"
+                />
+                <img
+                    v-else
+                    :src="item.url"
+                    :alt="item.meta?.alt_text ?? ''"
+                    class="size-full object-cover transition-transform group-hover:scale-105"
+                    loading="lazy"
+                />
+            </button>
+        </div>
+
         <button
             type="button"
             class="inline-flex items-center gap-1 text-xs font-semibold text-primary hover:underline"
@@ -118,5 +199,7 @@ const toggle = async (): Promise<void> => {
                 />
             </div>
         </div>
+
+        <ImagePreviewDialog ref="lightbox" />
     </div>
 </template>

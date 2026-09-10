@@ -23,8 +23,10 @@ return [
     'groups' => [
         'posts' => 'المنشورات',
         'workspace' => 'مساحة العمل',
+        'others' => 'أخرى',
     ],
     'analytics' => 'التحليلات',
+    'repurposes' => 'Repurpose',
     'onboarding' => 'البدء',
     'onboarding_hint' => 'أكمل الإعداد',
     'chat' => 'محادثة',
@@ -43,4 +45,9 @@ return [
     'mark_as_read' => 'تعليم كمقروء',
     'archive_all' => 'أرشفة الكل',
     'no_notifications' => 'لا توجد إشعارات',
+    'support' => [
+        'docs' => 'التوثيق',
+        'referral' => 'اربح عمولة إحالة 30%',
+        'discord' => 'مجتمع Discord',
+    ],
 ];

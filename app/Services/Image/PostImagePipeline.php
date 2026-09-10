@@ -11,6 +11,7 @@ use App\Models\SocialAccount;
 use App\Models\Workspace;
 use App\Support\ResolvedBrand;
 use Illuminate\Support\Facades\Storage;
+use Laravel\Ai\Files\Image;
 
 class PostImagePipeline
 {
@@ -24,10 +25,10 @@ class PostImagePipeline
      * when the generator renders nothing.
      *
      * @param  array<string, mixed>  $structured
-     * @param  array<int, string|\Laravel\Ai\Files\Image>  $referenceImages
+     * @param  array<int, string|Image>  $referenceImages
      * @return array<int, array<string, mixed>>
      */
-    public function forSingle(Workspace $workspace, SocialAccount $account, array $structured, ?ContentType $contentType, bool $applyBrandVisuals = true, ?ResolvedBrand $brand = null, array $referenceImages = []): array
+    public function forSingle(Workspace $workspace, SocialAccount $account, array $structured, ?ContentType $contentType, bool $applyBrandVisuals = true, ?ResolvedBrand $brand = null, array $referenceImages = [], array $referenceKinds = []): array
     {
         ['width' => $width, 'height' => $height] = $this->dimensionsForContentType($contentType);
 
@@ -42,6 +43,7 @@ class PostImagePipeline
             applyBrandVisuals: $applyBrandVisuals,
             brand: $brand,
             referenceImages: $referenceImages,
+            referenceKinds: $referenceKinds,
         );
 
         if (! $rendered) {
@@ -52,20 +54,35 @@ class PostImagePipeline
     }
 
     /**
-     * Render one AI image per slide in the structured carousel output. Slides
-     * that render nothing are skipped.
+     * Render one AI image per slide in the structured carousel output, keyed by
+     * slide index. Slides that render nothing are omitted (leaving a gap at
+     * that index), so the caller can tell which slides still need work.
+     *
+     * Pass $existingSlideMedia (index => media-item) to resume a partially
+     * rendered carousel: any slide already present is reused verbatim — it is
+     * NOT re-rendered and NOT re-billed. This is what makes a retry idempotent
+     * and stops the double-billing that a full re-render would cause.
      *
      * @param  array<string, mixed>  $structured
-     * @param  array<int, string|\Laravel\Ai\Files\Image>  $referenceImages
-     * @return array<int, array<string, mixed>>
+     * @param  array<int, string|Image>  $referenceImages
+     * @param  array<int, array<string, mixed>>  $existingSlideMedia
+     * @return array<int, array<string, mixed>> index => media-item
      */
-    public function forCarousel(Workspace $workspace, SocialAccount $account, array $structured, ?ContentType $contentType, bool $applyBrandVisuals = true, ?ResolvedBrand $brand = null, array $referenceImages = []): array
+    public function forCarousel(Workspace $workspace, SocialAccount $account, array $structured, ?ContentType $contentType, bool $applyBrandVisuals = true, ?ResolvedBrand $brand = null, array $referenceImages = [], array $referenceKinds = [], array $existingSlideMedia = []): array
     {
         ['width' => $width, 'height' => $height] = $this->dimensionsForContentType($contentType);
 
         $media = [];
 
-        foreach (data_get($structured, 'slides', []) as $slide) {
+        foreach (array_values(data_get($structured, 'slides', [])) as $index => $slide) {
+            // Reuse an already-rendered slide as-is: no render call, no billing.
+            $existing = $existingSlideMedia[$index] ?? null;
+            if (is_array($existing) && $existing !== []) {
+                $media[$index] = $existing;
+
+                continue;
+            }
+
             $rendered = $this->generator->render(
                 workspace: $workspace,
                 socialAccount: $account,
@@ -77,10 +94,11 @@ class PostImagePipeline
                 applyBrandVisuals: $applyBrandVisuals,
                 brand: $brand,
                 referenceImages: $referenceImages,
+                referenceKinds: $referenceKinds,
             );
 
             if ($rendered) {
-                $media[] = $this->buildAiMediaItem($workspace, $rendered);
+                $media[$index] = $this->buildAiMediaItem($workspace, $rendered);
             }
         }
 
@@ -95,10 +113,10 @@ class PostImagePipeline
      * (tweet_card_image); null produces the solid brand-color background (tweet_card).
      *
      * @param  array<int, string>|null  $imageKeywords
-     * @param  array<int, string|\Laravel\Ai\Files\Image>  $referenceImages
+     * @param  array<int, string|Image>  $referenceImages
      * @return array<int, array<string, mixed>>
      */
-    public function forTweetCard(Workspace $workspace, SocialAccount $account, string $tweetText, ?array $imageKeywords = null, ?ResolvedBrand $brand = null, array $referenceImages = []): array
+    public function forTweetCard(Workspace $workspace, SocialAccount $account, string $tweetText, ?array $imageKeywords = null, ?ResolvedBrand $brand = null, array $referenceImages = [], array $referenceKinds = []): array
     {
         $rendered = $this->generator->renderTweetCard(
             workspace: $workspace,
@@ -107,6 +125,7 @@ class PostImagePipeline
             imageKeywords: $imageKeywords,
             brand: $brand,
             referenceImages: $referenceImages,
+            referenceKinds: $referenceKinds,
         );
 
         if (! $rendered) {
@@ -124,10 +143,10 @@ class PostImagePipeline
      * or an array with keys `tweet_text` and optionally `image_keywords` (image bg).
      *
      * @param  array<int, string|array<string, mixed>>  $slides
-     * @param  array<int, string|\Laravel\Ai\Files\Image>  $referenceImages
+     * @param  array<int, string|Image>  $referenceImages
      * @return array<int, array<string, mixed>>
      */
-    public function forTweetCardCarousel(Workspace $workspace, SocialAccount $account, array $slides, ?ResolvedBrand $brand = null, array $referenceImages = []): array
+    public function forTweetCardCarousel(Workspace $workspace, SocialAccount $account, array $slides, ?ResolvedBrand $brand = null, array $referenceImages = [], array $referenceKinds = []): array
     {
         $media = [];
 
@@ -147,6 +166,7 @@ class PostImagePipeline
                 imageKeywords: $imageKeywords,
                 brand: $brand,
                 referenceImages: $referenceImages,
+                referenceKinds: $referenceKinds,
             );
 
             if ($rendered) {

@@ -17,6 +17,7 @@ use Intervention\Image\Encoders\WebpEncoder;
 use Intervention\Image\ImageManager;
 use Intervention\Image\Interfaces\ImageInterface;
 use Intervention\Image\Typography\FontFactory;
+use Laravel\Ai\Files\Image;
 
 class TemplateImageGenerator
 {
@@ -60,6 +61,7 @@ class TemplateImageGenerator
         bool $applyBrandVisuals = true,
         ?ResolvedBrand $brand = null,
         array $referenceImages = [],
+        array $referenceKinds = [],
     ): ?array {
         $this->width = $width;
         $this->height = $height;
@@ -94,9 +96,16 @@ class TemplateImageGenerator
         }
 
         if (! is_string($imageData) || $imageData === '') {
-            $resolvedReferences = $referenceImages !== []
-                ? $referenceImages
-                : $workspace->getMedia('brand_references')->pluck('path')->all();
+            $resolvedReferences = $referenceImages;
+            $resolvedReferenceKinds = $referenceKinds;
+
+            if ($resolvedReferences === []) {
+                $refMedia = $workspace->getMedia('brand_references')->get();
+                $resolvedReferences = $refMedia->pluck('path')->all();
+                $resolvedReferenceKinds = $refMedia
+                    ->map(fn ($item) => (string) (data_get($item->meta, 'kind') ?? 'other'))
+                    ->all();
+            }
 
             $generated = $this->aiImage->generate(
                 keywords: $imageKeywords,
@@ -117,6 +126,7 @@ class TemplateImageGenerator
                     'accent' => $brand->accentFont,
                 ],
                 referenceImages: $resolvedReferences,
+                referenceKinds: $resolvedReferenceKinds,
             );
 
             if ($generated === null) {
@@ -662,6 +672,7 @@ class TemplateImageGenerator
         ?array $imageKeywords = null,
         ?ResolvedBrand $brand = null,
         array $referenceImages = [],
+        array $referenceKinds = [],
     ): ?array {
         $this->width = self::DEFAULT_WIDTH;
         $this->height = self::DEFAULT_HEIGHT;
@@ -681,7 +692,7 @@ class TemplateImageGenerator
         $useImageBackground = $imageKeywords !== null && $imageKeywords !== [];
 
         if ($useImageBackground) {
-            $canvas = $this->applyTweetCardImageBackground($manager, $canvas, $core, $workspace, $imageKeywords, $brand, $referenceImages);
+            $canvas = $this->applyTweetCardImageBackground($manager, $canvas, $core, $workspace, $imageKeywords, $brand, $referenceImages, $referenceKinds);
             $core = $canvas->core()->native();
         } else {
             $pageBg = imagecolorallocate($core, $pr, $pg, $pb);
@@ -736,7 +747,7 @@ class TemplateImageGenerator
      * Falls back to a solid brand-color fill when the AI client returns null.
      *
      * @param  array<int, string>  $imageKeywords
-     * @param  array<int, string|\Laravel\Ai\Files\Image>  $referenceImages
+     * @param  array<int, string|Image>  $referenceImages
      */
     private function applyTweetCardImageBackground(
         ImageManager $manager,
@@ -746,6 +757,7 @@ class TemplateImageGenerator
         array $imageKeywords,
         ResolvedBrand $brand,
         array $referenceImages = [],
+        array $referenceKinds = [],
     ): ImageInterface {
         $rawStyle = $workspace->image_style;
         $imageStyle = match (true) {
@@ -754,9 +766,16 @@ class TemplateImageGenerator
             default => ImageStyle::DEFAULT,
         };
 
-        $resolvedReferences = $referenceImages !== []
-            ? $referenceImages
-            : $workspace->getMedia('brand_references')->pluck('path')->all();
+        $resolvedReferences = $referenceImages;
+        $resolvedReferenceKinds = $referenceKinds;
+
+        if ($resolvedReferences === []) {
+            $refMedia = $workspace->getMedia('brand_references')->get();
+            $resolvedReferences = $refMedia->pluck('path')->all();
+            $resolvedReferenceKinds = $refMedia
+                ->map(fn ($item) => (string) (data_get($item->meta, 'kind') ?? 'other'))
+                ->all();
+        }
 
         $generated = $this->aiImage->generate(
             keywords: $imageKeywords,
@@ -777,6 +796,7 @@ class TemplateImageGenerator
                 'accent' => $brand->accentFont,
             ],
             referenceImages: $resolvedReferences,
+            referenceKinds: $resolvedReferenceKinds,
         );
 
         if ($generated === null) {

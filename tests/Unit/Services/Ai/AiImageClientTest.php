@@ -5,6 +5,8 @@ declare(strict_types=1);
 use App\Enums\Workspace\ImageStyle;
 use App\Services\Ai\AiImageClient;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Storage;
 use Laravel\Ai\Image;
 use Laravel\Ai\Prompts\ImagePrompt;
 use Laravel\Ai\Responses\Data\Meta;
@@ -247,14 +249,121 @@ test('generate returns null instead of throwing when the provider responds with 
     expect($client->generate(['x'], ImageStyle::Cinematic))->toBeNull();
 });
 
-test('generate uses high resolution 2K sizes when BytePlus Seedream is configured', function (string $orientation, string $expectedSize) {
-    config()->set('ai.providers.openai.models.image.default', 'seedream-4-5-251128');
-    Image::fake();
+test('generate retries a transient failure and succeeds on a later attempt', function () {
+    config()->set('ai.image.max_attempts', 3);
+    config()->set('ai.image.retry_delay_ms', 0);
+
+    $bytes = base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==');
+    $attempts = 0;
+
+    // Mirrors the prod fault: the first calls throw (BytePlus timeout / 5xx /
+    // body the SDK can't parse -> TypeError), then the provider recovers.
+    Image::fake(function () use (&$attempts, $bytes) {
+        $attempts++;
+
+        if ($attempts < 3) {
+            throw new RuntimeException('cURL error 28: Operation timed out');
+        }
+
+        return base64_encode($bytes);
+    });
 
     $client = new AiImageClient;
-    $client->generate(['x'], ImageStyle::Cinematic, orientation: $orientation);
+    $result = $client->generate(['kitchen'], ImageStyle::Cinematic);
 
-    Image::assertGenerated(fn (ImagePrompt $prompt) => $prompt->size === $expectedSize);
+    expect($attempts)->toBe(3)
+        ->and($result)->not->toBeNull()
+        ->and($result['bytes'])->toBe($bytes);
+});
+
+test('generate returns null after exhausting every retry attempt', function () {
+    config()->set('ai.image.max_attempts', 3);
+    config()->set('ai.image.retry_delay_ms', 0);
+
+    $attempts = 0;
+    Image::fake(function () use (&$attempts) {
+        $attempts++;
+        throw new RuntimeException('cURL error 28: Operation timed out');
+    });
+
+    $client = new AiImageClient;
+    $result = $client->generate(['x'], ImageStyle::Cinematic);
+
+    expect($result)->toBeNull()
+        ->and($attempts)->toBe(3);
+});
+
+test('generate does not retry when max_attempts is 1', function () {
+    config()->set('ai.image.max_attempts', 1);
+    config()->set('ai.image.retry_delay_ms', 0);
+
+    $attempts = 0;
+    Image::fake(function () use (&$attempts) {
+        $attempts++;
+        throw new RuntimeException('boom');
+    });
+
+    $client = new AiImageClient;
+    $result = $client->generate(['x'], ImageStyle::Cinematic);
+
+    expect($result)->toBeNull()
+        ->and($attempts)->toBe(1);
+});
+
+test('generate returns null when the provider keeps responding with no image', function () {
+    config()->set('ai.image.max_attempts', 3);
+    config()->set('ai.image.retry_delay_ms', 0);
+
+    $attempts = 0;
+    Image::fake(function () use (&$attempts) {
+        $attempts++;
+
+        return new ImageResponse(
+            new Collection,
+            new Usage,
+            new Meta('openai', 'gpt-image-2'),
+        );
+    });
+
+    $client = new AiImageClient;
+    $result = $client->generate(['x'], ImageStyle::Cinematic);
+
+    // An empty ImageResponse throws when the SDK casts it to bytes, so it is
+    // indistinguishable from a transient fault and is retried; the important
+    // guarantee is that the caller still gets null to fall back on.
+    expect($result)->toBeNull()
+        ->and($attempts)->toBe(3);
+});
+
+test('generate uses the seedream custom client with correct size when provider is seedream', function (string $orientation, string $expectedSize) {
+    config()->set('ai.default_for_images', 'seedream');
+    config()->set('ai.providers.seedream.url', 'https://ark.example.com/api/v3');
+    config()->set('ai.providers.seedream.key', 'ark-test');
+    config()->set('ai.providers.seedream.models.image.default', 'seedream-4-5-251128');
+
+    $bytes = base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==');
+
+    Http::fake([
+        '*/images/generations' => Http::response([
+            'model' => 'seedream-4-5-251128',
+            'data' => [['b64_json' => base64_encode($bytes)]],
+            'usage' => ['generated_images' => 1],
+        ], 200),
+    ]);
+
+    $client = new AiImageClient;
+    $result = $client->generate(['office desk'], ImageStyle::Cinematic, orientation: $orientation);
+
+    expect($result)->not->toBeNull()
+        ->and($result['bytes'])->toBe($bytes)
+        ->and($result['provider'])->toBe('seedream')
+        ->and($result['model'])->toBe('seedream-4-5-251128');
+
+    Http::assertSent(fn ($request) => $request['size'] === $expectedSize
+        && $request['response_format'] === 'b64_json'
+        && $request['sequential_image_generation'] === 'disabled'
+        && $request['watermark'] === false
+        && ! isset($request['image'])); // pure text-to-image: no image array
 })->with([
     'square' => ['square', '2048x2048'],
     'portrait' => ['portrait', '1664x2496'],
@@ -262,8 +371,8 @@ test('generate uses high resolution 2K sizes when BytePlus Seedream is configure
 ]);
 
 test('generate attaches reference images and adds subject consistency prompt instructions', function () {
-    \Illuminate\Support\Facades\Storage::fake();
-    \Illuminate\Support\Facades\Storage::put('medias/sara_reference.jpg', 'fake-image-data');
+    Storage::fake();
+    Storage::put('medias/sara_reference.jpg', 'fake-image-data');
 
     Image::fake();
 
@@ -278,7 +387,149 @@ test('generate attaches reference images and adds subject consistency prompt ins
         return count($prompt->attachments) === 1
             && $prompt->attachments[0]->path === 'medias/sara_reference.jpg'
             && $prompt->contains('SUBJECT & PERSONA CONSISTENCY')
-            && $prompt->contains('Maintain faithful visual consistency with the subject');
+            && $prompt->contains("keep the person's identity");
     });
 });
 
+test('a logo reference is prompted as a logo, not as a face to preserve', function () {
+    Storage::fake();
+    Storage::put('medias/logo.png', 'fake-image-data');
+
+    Image::fake();
+
+    $client = new AiImageClient;
+    $client->generate(
+        keywords: ['office desk'],
+        style: ImageStyle::Cinematic,
+        referenceImages: ['medias/logo.png'],
+        referenceKinds: ['logo'],
+    );
+
+    Image::assertGenerated(fn (ImagePrompt $prompt) => $prompt->contains('LOGO FIDELITY')
+        && ! $prompt->contains('SUBJECT & PERSONA CONSISTENCY'));
+});
+
+test('a style reference is prompted as a style guide, not a subject to copy', function () {
+    Storage::fake();
+    Storage::put('medias/moodboard.jpg', 'fake-image-data');
+
+    Image::fake();
+
+    $client = new AiImageClient;
+    $client->generate(
+        keywords: ['office desk'],
+        style: ImageStyle::Cinematic,
+        referenceImages: ['medias/moodboard.jpg'],
+        referenceKinds: ['style'],
+    );
+
+    Image::assertGenerated(fn (ImagePrompt $prompt) => $prompt->contains('STYLE MATCH')
+        && ! $prompt->contains('SUBJECT & PERSONA CONSISTENCY'));
+});
+
+test('references with no kind default to the person treatment (backwards compatible)', function () {
+    Storage::fake();
+    Storage::put('medias/ref.jpg', 'fake-image-data');
+
+    Image::fake();
+
+    $client = new AiImageClient;
+    $client->generate(
+        keywords: ['office desk'],
+        style: ImageStyle::Cinematic,
+        referenceImages: ['medias/ref.jpg'],
+    );
+
+    Image::assertGenerated(fn (ImagePrompt $prompt) => $prompt->contains('SUBJECT & PERSONA CONSISTENCY'));
+});
+
+test('seedream image-to-image sends reference photos as a base64 data-URI image array', function () {
+    config()->set('ai.default_for_images', 'seedream');
+    config()->set('ai.providers.seedream.url', 'https://ark.example.com/api/v3');
+    config()->set('ai.providers.seedream.key', 'ark-test');
+    config()->set('ai.providers.seedream.models.image.default', 'seedream-4-5-251128');
+
+    Storage::fake();
+    Storage::put('medias/ref.jpg', 'fake-image-bytes');
+
+    $bytes = base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==');
+
+    Http::fake([
+        '*/images/generations' => Http::response([
+            'data' => [['b64_json' => base64_encode($bytes)]],
+        ], 200),
+    ]);
+
+    $client = new AiImageClient;
+    $result = $client->generate(
+        keywords: ['office desk'],
+        style: ImageStyle::Cinematic,
+        referenceImages: ['medias/ref.jpg'],
+    );
+
+    expect($result)->not->toBeNull();
+
+    Http::assertSent(function ($request) {
+        return is_array($request['image'] ?? null)
+            && count($request['image']) === 1
+            && str_starts_with($request['image'][0], 'data:image/jpeg;base64,');
+    });
+});
+
+test('seedream passes a public reference URL through unchanged', function () {
+    config()->set('ai.default_for_images', 'seedream');
+    config()->set('ai.providers.seedream.url', 'https://ark.example.com/api/v3');
+    config()->set('ai.providers.seedream.key', 'ark-test');
+    config()->set('ai.providers.seedream.models.image.default', 'seedream-4-5-251128');
+
+    $bytes = base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==');
+
+    Http::fake([
+        '*/images/generations' => Http::response([
+            'data' => [['b64_json' => base64_encode($bytes)]],
+        ], 200),
+    ]);
+
+    $client = new AiImageClient;
+    $client->generate(
+        keywords: ['office desk'],
+        style: ImageStyle::Cinematic,
+        referenceImages: ['https://cdn.example.com/brand/ref.png'],
+    );
+
+    Http::assertSent(fn ($request) => ($request['image'] ?? []) === ['https://cdn.example.com/brand/ref.png']);
+});
+
+test('seedream returns null (no throw) when the response carries no image', function () {
+    config()->set('ai.default_for_images', 'seedream');
+    config()->set('ai.image.retry_delay_ms', 0);
+    config()->set('ai.providers.seedream.url', 'https://ark.example.com/api/v3');
+    config()->set('ai.providers.seedream.key', 'ark-test');
+    config()->set('ai.providers.seedream.models.image.default', 'seedream-4-5-251128');
+
+    Http::fake([
+        '*/images/generations' => Http::response(['data' => []], 200),
+    ]);
+
+    $client = new AiImageClient;
+
+    expect($client->generate(['x'], ImageStyle::Cinematic))->toBeNull();
+});
+
+test('seedream retries a transient 5xx and returns null after exhausting attempts', function () {
+    config()->set('ai.default_for_images', 'seedream');
+    config()->set('ai.image.max_attempts', 3);
+    config()->set('ai.image.retry_delay_ms', 0);
+    config()->set('ai.providers.seedream.url', 'https://ark.example.com/api/v3');
+    config()->set('ai.providers.seedream.key', 'ark-test');
+    config()->set('ai.providers.seedream.models.image.default', 'seedream-4-5-251128');
+
+    Http::fake([
+        '*/images/generations' => Http::response('', 500),
+    ]);
+
+    $client = new AiImageClient;
+
+    expect($client->generate(['x'], ImageStyle::Cinematic))->toBeNull();
+    Http::assertSentCount(3);
+});

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { trans } from 'laravel-vue-i18n';
-import { watch } from 'vue';
+import { computed, watch } from 'vue';
 import { toast } from 'vue-sonner';
 
 import InputError from '@/components/InputError.vue';
@@ -21,6 +21,7 @@ import {
     useAiMediaRegeneration,
     type RegenerationPayload,
 } from '@/composables/useAiMediaRegeneration';
+import { isImage } from '@/lib/mediaType';
 import type { MediaItem } from '@/types/media';
 
 const props = defineProps<{
@@ -74,6 +75,34 @@ watch(open, (isOpen) => {
         }
     }
 });
+
+// IMG-5: show the image being edited so the user writes the instruction with
+// the source in view, not blind.
+const sourceImageUrl = computed<string | null>(() =>
+    props.mediaItem && isImage(props.mediaItem) ? props.mediaItem.url : null,
+);
+
+// Quick-edit chips: common image-to-image instructions that seed the textarea.
+// Modes that touch the visual only (image_only / both) benefit; text_only edits
+// caption overlays, so the chips stay hidden there.
+const QUICK_EDIT_KEYS = [
+    'brighten',
+    'remove_background',
+    'night',
+    'warmer',
+    'sharpen',
+] as const;
+
+const showQuickEdits = computed(
+    () => mode.value !== 'text_only' && !isBusy.value,
+);
+
+const applyQuickEdit = (key: string): void => {
+    const phrase = trans(`posts.ai.image_regenerate.quick_edits.${key}`);
+    instruction.value = instruction.value.trim()
+        ? `${instruction.value.trim()} ${phrase}`
+        : phrase;
+};
 </script>
 
 <template>
@@ -94,6 +123,18 @@ watch(open, (isOpen) => {
             </DialogHeader>
 
             <div class="space-y-4">
+                <div
+                    v-if="sourceImageUrl"
+                    class="flex justify-center"
+                    data-testid="ai-image-source-preview"
+                >
+                    <img
+                        :src="sourceImageUrl"
+                        :alt="$t('posts.ai.image_regenerate.source_alt')"
+                        class="max-h-48 rounded-lg border border-border object-contain"
+                    />
+                </div>
+
                 <FieldSet class="gap-2">
                     <FieldLegend variant="label">{{
                         $t('posts.ai.image_regenerate.mode_label')
@@ -146,6 +187,23 @@ watch(open, (isOpen) => {
                     <Label for="ai-image-instruction">{{
                         $t('posts.ai.image_regenerate.instruction_label')
                     }}</Label>
+                    <div
+                        v-if="showQuickEdits"
+                        class="flex flex-wrap gap-1.5"
+                        data-testid="ai-image-quick-edits"
+                    >
+                        <Button
+                            v-for="key in QUICK_EDIT_KEYS"
+                            :key="key"
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            class="h-7 rounded-full px-2.5 text-xs font-medium"
+                            @click="applyQuickEdit(key)"
+                        >
+                            {{ $t(`posts.ai.image_regenerate.quick_edits.${key}`) }}
+                        </Button>
+                    </div>
                     <Textarea
                         id="ai-image-instruction"
                         v-model="instruction"

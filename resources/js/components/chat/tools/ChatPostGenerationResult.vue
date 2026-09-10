@@ -17,6 +17,7 @@ import {
 } from '@/composables/echo/usePostCreation';
 import date from '@/date';
 import { edit as editPost } from '@/routes/app/posts';
+import { status as creationStatus } from '@/routes/app/posts/ai';
 import type { ChatPost, ChatPostGeneration } from '@/types/chat';
 
 const props = defineProps<{
@@ -79,6 +80,15 @@ const liveDraftPostId = ref<string | null>(null);
 const detached = ref(false);
 
 let elapsedTimer: ReturnType<typeof setInterval> | null = null;
+let pollTimer: ReturnType<typeof setInterval> | null = null;
+
+/**
+ * How often to poll the generation status as a fallback when the WebSocket
+ * broadcast does not arrive (Reverb down, channel-auth refused, or the event
+ * fired before the subscription resolved). The broadcast stays the fast path;
+ * this is the safety net so the card resolves in-session without a page reload.
+ */
+const POLL_INTERVAL_MS = 4000;
 
 /**
  * The post the server already resolved from `creation_id` — present only when
@@ -226,16 +236,79 @@ const stopElapsed = (): void => {
     }
 };
 
+const stopPolling = (): void => {
+    if (pollTimer !== null) {
+        clearInterval(pollTimer);
+        pollTimer = null;
+    }
+};
+
 const fail = (message: string | null): void => {
     failed.value = true;
     failureMessage.value = message;
     stopElapsed();
+    stopPolling();
+};
+
+/** Mark the post ready via the given id, mirroring the broadcast fast path. */
+const resolveReady = (postId: string): void => {
+    broadcastPostId.value = postId;
+    stopElapsed();
+    stopPolling();
+};
+
+/**
+ * Fallback: ask the server for the generation's status by creation_id. Used
+ * both once on mount (catch-up for an event that fired before we subscribed)
+ * and on an interval while waiting (in case the broadcast never arrives). The
+ * broadcast, if it comes, resolves first and cancels this via stopPolling.
+ */
+const pollStatus = async (): Promise<void> => {
+    const creationId = props.data?.creation_id;
+
+    if (!creationId || readyPostId.value !== null || showFailed.value) {
+        return;
+    }
+
+    try {
+        const response = await fetch(creationStatus.url({ creationId }), {
+            headers: { Accept: 'application/json' },
+            credentials: 'same-origin',
+        });
+
+        if (!response.ok) {
+            return;
+        }
+
+        const body = (await response.json()) as {
+            status?: string;
+            post_id?: string | null;
+            error?: string | null;
+        };
+
+        if (
+            (body.status === 'ready' || body.status === 'image_running') &&
+            body.post_id
+        ) {
+            liveDraftPostId.value = body.post_id;
+        }
+
+        if (body.status === 'ready' && body.post_id) {
+            resolveReady(body.post_id);
+        } else if (
+            body.status === 'failed_text' ||
+            body.status === 'failed_image'
+        ) {
+            fail(body.error ?? null);
+        }
+    } catch {
+        // Network hiccup — the next tick (or the broadcast) will catch up.
+    }
 };
 
 const { watchCreation } = usePostCreation({
     onReady: (postId: string): void => {
-        broadcastPostId.value = postId;
-        stopElapsed();
+        resolveReady(postId);
     },
     onProgress: (progress): void => {
         if (progress.phase) {
@@ -312,9 +385,20 @@ onMounted(() => {
     }, 1000);
 
     watchCreation(channel);
+
+    // Fallback net for the broadcast: an immediate catch-up (the event may have
+    // fired before we subscribed) plus a poll while waiting. resolveReady from
+    // either path cancels this.
+    void pollStatus();
+    pollTimer = setInterval(() => {
+        void pollStatus();
+    }, POLL_INTERVAL_MS);
 });
 
-onBeforeUnmount(stopElapsed);
+onBeforeUnmount(() => {
+    stopElapsed();
+    stopPolling();
+});
 </script>
 
 <template>
@@ -347,7 +431,7 @@ onBeforeUnmount(stopElapsed);
                 </Link>
             </div>
 
-            <ChatPostPreview :post-id="readyPostId" />
+            <ChatPostPreview :post-id="readyPostId" :expected-media="imageExpected" />
         </div>
 
         <div

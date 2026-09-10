@@ -23,8 +23,10 @@ return [
     'groups' => [
         'posts' => '帖子',
         'workspace' => '工作区',
+        'others' => '其他',
     ],
     'analytics' => '分析',
+    'repurposes' => 'Repurpose',
     'onboarding' => '开始使用',
     'onboarding_hint' => '完成设置',
     'chat' => '聊天',
@@ -43,4 +45,9 @@ return [
     'mark_as_read' => '标为已读',
     'archive_all' => '全部归档',
     'no_notifications' => '暂无通知',
+    'support' => [
+        'docs' => '文档',
+        'referral' => '赚取 30% 推荐奖励',
+        'discord' => 'Discord 社区',
+    ],
 ];

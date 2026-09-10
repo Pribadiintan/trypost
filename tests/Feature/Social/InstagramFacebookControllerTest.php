@@ -22,6 +22,36 @@ beforeEach(function () {
     $this->workspace->members()->attach($this->user->id, ['role' => Role::Member->value]);
 });
 
+test('instagram-facebook authorize url reopens the page selection', function () {
+    $response = $this->actingAs($this->user)->get(route('app.social.instagram-facebook.connect'));
+
+    expect(urldecode((string) $response->headers->get('Location')))
+        ->toStartWith('https://www.facebook.com/')
+        ->toContain('auth_type=rerequest');
+});
+
+test('instagram-facebook connect redirects to oauth provider', function () {
+    $driverMock = Mockery::mock();
+    $driverMock->shouldReceive('usingGraphVersion')->andReturnSelf();
+    $driverMock->shouldReceive('setScopes')->andReturnSelf();
+    $driverMock->shouldReceive('redirectUrl')->andReturnSelf();
+    $driverMock->shouldReceive('reRequest')->once()->andReturnSelf();
+    $driverMock->shouldReceive('redirect')->andReturn(Mockery::mock([
+        'getTargetUrl' => 'https://www.facebook.com/v25.0/dialog/oauth?test=1',
+    ]));
+
+    Socialite::shouldReceive('driver')
+        ->with('facebook')
+        ->andReturn($driverMock);
+
+    $response = $this->actingAs($this->user)
+        ->get(route('app.social.instagram-facebook.connect'));
+
+    $response->assertRedirect('https://www.facebook.com/v25.0/dialog/oauth?test=1');
+
+    expect(session('social_connect_workspace'))->toBe($this->workspace->id);
+});
+
 test('instagram-facebook callback follows accounts pagination and shows picker', function () {
     session([
         'social_connect_workspace' => $this->workspace->id,

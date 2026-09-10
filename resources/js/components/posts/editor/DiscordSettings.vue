@@ -12,6 +12,7 @@ import {
     channels as channelsRoute,
     mentions as mentionsRoute,
 } from '@/actions/App/Http/Controllers/App/DiscordController';
+import HexColorInput from '@/components/HexColorInput.vue';
 import InputError from '@/components/InputError.vue';
 import SearchableSelect from '@/components/SearchableSelect.vue';
 import { Avatar } from '@/components/ui/avatar';
@@ -52,6 +53,8 @@ interface EmbedDraft {
     color?: string;
 }
 
+const DISCORD_BLURPLE = '#5865f2';
+
 const props = withDefaults(
     defineProps<{
         socialAccount: SocialAccount | null;
@@ -68,7 +71,6 @@ const open = ref(false);
 const updateMeta = (patch: Record<string, any>) =>
     emit('update:meta', { ...props.meta, ...patch });
 
-// --- Channel picker (live fetch) ---------------------------------------------
 const channels = ref<DiscordChannel[]>([]);
 const channelsLoading = ref(false);
 const channelsHttp = useHttp<
@@ -102,8 +104,6 @@ const channelId = computed({
     set: (value: string) => updateMeta({ channel_id: value || null }),
 });
 
-// Keep a saved channel selectable even before the live list loads (or if the
-// lookup is unavailable), so editing a post never visually "loses" its channel.
 const channelOptions = computed<DiscordChannel[]>(() => {
     if (
         channelId.value &&
@@ -125,8 +125,6 @@ const channelSelectOptions = computed(() =>
     })),
 );
 
-// Persist the channel NAME alongside the id (display-only, for the preview) and
-// keep it fresh as the live list loads or the channel is renamed.
 watch(
     [channelId, channels],
     () => {
@@ -152,7 +150,6 @@ const channelError = computed<string | undefined>(() => {
     )?.[1];
 });
 
-// --- Mentions (autocomplete chips) -------------------------------------------
 const mentionQuery = ref('');
 const mentionResults = ref<MentionTarget[]>([]);
 const mentionsHttp = useHttp<
@@ -212,10 +209,6 @@ const removeMention = (token: string) =>
         mentions: mentions.value.filter((mention) => mention.token !== token),
     });
 
-// --- Embeds (repeater) -------------------------------------------------------
-// Derived straight from meta (like channel/mentions) so it never diverges from
-// the persisted/auto-saved state. Inputs are controlled (one-way :value + emit),
-// so index keys are safe — Vue patches each reused row to the correct values.
 const embeds = computed<EmbedDraft[]>(() =>
     Array.isArray(props.meta?.embeds)
         ? (props.meta!.embeds as EmbedDraft[])
@@ -294,7 +287,6 @@ const updateEmbed = (index: number, patch: Partial<EmbedDraft>) =>
                 </div>
             </div>
 
-            <!-- Channel -->
             <div class="space-y-2">
                 <p
                     class="text-[11px] font-black tracking-widest text-foreground/60 uppercase"
@@ -319,7 +311,6 @@ const updateEmbed = (index: number, patch: Partial<EmbedDraft>) =>
                 <InputError :message="channelError" />
             </div>
 
-            <!-- Mentions -->
             <div class="space-y-2">
                 <p
                     class="text-[11px] font-black tracking-widest text-foreground/60 uppercase"
@@ -369,7 +360,6 @@ const updateEmbed = (index: number, patch: Partial<EmbedDraft>) =>
                 </div>
             </div>
 
-            <!-- Embeds -->
             <div class="space-y-2">
                 <div class="flex items-center justify-between">
                     <p
@@ -447,22 +437,21 @@ const updateEmbed = (index: number, patch: Partial<EmbedDraft>) =>
                             updateEmbed(index, { image: String($event) })
                         "
                     />
-                    <div class="flex items-center gap-2">
-                        <input
-                            type="color"
-                            :value="embed.color || '#5865F2'"
+                    <div class="space-y-1">
+                        <p class="text-xs font-medium text-foreground/60">
+                            {{ $t('posts.form.discord.embed_color') }}
+                        </p>
+                        <HexColorInput
+                            :model-value="embed.color || DISCORD_BLURPLE"
                             :disabled="disabled"
-                            class="h-8 w-12 cursor-pointer rounded border-2 border-foreground/30 disabled:opacity-50"
-                            @input="
-                                updateEmbed(index, {
-                                    color: ($event.target as HTMLInputElement)
-                                        .value,
-                                })
+                            :placeholder="DISCORD_BLURPLE"
+                            @update:model-value="
+                                (value) =>
+                                    updateEmbed(index, {
+                                        color: value ?? undefined,
+                                    })
                             "
                         />
-                        <span class="text-xs font-medium text-foreground/60">{{
-                            $t('posts.form.discord.embed_color')
-                        }}</span>
                     </div>
                 </div>
             </div>
