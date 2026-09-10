@@ -52,6 +52,13 @@ return [
     'clear' => 'Kosongkan',
     'close' => 'Tutup',
     'loading_more' => 'Memuatkan lagi...',
+
+    'pagination' => [
+        'label' => 'Penomboran halaman',
+        'previous' => 'Halaman sebelumnya',
+        'next' => 'Halaman seterusnya',
+        'go_to_page' => 'Pergi ke halaman :page',
+    ],
     'actions' => [
         'copy' => 'Salin',
         'copied' => 'Disalin',

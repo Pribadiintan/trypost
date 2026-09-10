@@ -75,7 +75,9 @@ class PostController extends Controller
 
         return Inertia::render('posts/Index', [
             'workspace' => $workspace,
-            'posts' => Inertia::scroll(fn () => $query->latest($orderColumn)->paginate(config('app.pagination.default'))),
+            'posts' => $query->latest($orderColumn)
+                ->paginate(config('app.pagination.default'))
+                ->withQueryString(),
             'currentStatus' => $status,
             'labels' => $workspace->labels()->orderBy('name')->get(['id', 'name', 'color']),
             'filters' => [

@@ -55,6 +55,35 @@ test('posts index shows posts for current workspace', function () {
     );
 });
 
+test('posts index paginates with numbered pages', function () {
+    $perPage = config('app.pagination.default');
+
+    Post::factory()->count($perPage + 3)->create([
+        'workspace_id' => $this->workspace->id,
+        'user_id' => $this->user->id,
+    ]);
+
+    $firstPage = $this->actingAs($this->user)->get(route('app.posts.index'));
+
+    $firstPage->assertOk();
+    $firstPage->assertInertia(fn ($page) => $page
+        ->has('posts.data', $perPage)
+        ->where('posts.current_page', 1)
+        ->where('posts.last_page', 2)
+        ->where('posts.per_page', $perPage)
+        ->where('posts.total', $perPage + 3)
+    );
+
+    $secondPage = $this->actingAs($this->user)
+        ->get(route('app.posts.index', ['page' => 2]));
+
+    $secondPage->assertOk();
+    $secondPage->assertInertia(fn ($page) => $page
+        ->has('posts.data', 3)
+        ->where('posts.current_page', 2)
+    );
+});
+
 test('draft posts expose their creation date and are ordered by it', function () {
     $olderDraft = Post::factory()->create([
         'workspace_id' => $this->workspace->id,

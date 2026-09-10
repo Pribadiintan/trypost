@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Head, InfiniteScroll, router } from '@inertiajs/vue3';
+import { Head, router } from '@inertiajs/vue3';
 import {
     IconCopy,
     IconCopyPlus,
@@ -33,13 +33,13 @@ import {
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
+import { Pagination } from '@/components/ui/pagination';
 import {
     Table,
     TableBody,
     TableCell,
     TableHead,
     TableHeader,
-    TableLoadMore,
     TableRow,
 } from '@/components/ui/table';
 import {
@@ -96,11 +96,12 @@ interface Post {
     labels: Label[];
 }
 
-interface ScrollPosts {
+interface PaginatedPosts {
     data: Post[];
-    meta: {
-        hasNextPage: boolean;
-    };
+    current_page: number;
+    last_page: number;
+    per_page: number;
+    total: number;
 }
 
 interface Workspace {
@@ -110,7 +111,7 @@ interface Workspace {
 
 interface Props {
     workspace: Workspace;
-    posts: ScrollPosts;
+    posts: PaginatedPosts;
     currentStatus: string | null;
     labels: Label[];
     filters: {
@@ -148,6 +149,28 @@ const search = debounce(buildFilterUrl, 300);
 
 watch(searchQuery, () => search());
 watch(selectedLabelIds, () => buildFilterUrl(), { deep: true });
+
+const goToPage = (page: number): void => {
+    const url = props.currentStatus
+        ? postsIndex.url(props.currentStatus)
+        : postsIndex.url();
+
+    router.get(
+        url,
+        {
+            search: searchQuery.value || undefined,
+            labels: selectedLabelIds.value.length
+                ? selectedLabelIds.value
+                : undefined,
+            page: page > 1 ? page : undefined,
+        },
+        {
+            preserveState: true,
+            preserveScroll: true,
+            only: ['posts'],
+        },
+    );
+};
 
 const pageTitle = computed(() => {
     if (props.currentStatus) {
@@ -314,27 +337,20 @@ useWorkspaceEcho(
             />
 
             <div v-else>
-                <InfiniteScroll
-                    data="posts"
-                    items-element="#posts-body"
-                    preserve-url
-                >
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead>{{
-                                    $t('posts.table.post')
-                                }}</TableHead>
-                                <TableHead>{{
-                                    $t('posts.table.status')
-                                }}</TableHead>
-                                <TableHead>{{ dateColumnLabel }}</TableHead>
-                                <TableHead class="text-right">{{
-                                    $t('posts.table.actions')
-                                }}</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody id="posts-body">
+                <Table>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead>{{ $t('posts.table.post') }}</TableHead>
+                            <TableHead>{{
+                                $t('posts.table.status')
+                            }}</TableHead>
+                            <TableHead>{{ dateColumnLabel }}</TableHead>
+                            <TableHead class="text-right">{{
+                                $t('posts.table.actions')
+                            }}</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody id="posts-body">
                             <TableRow
                                 v-for="post in posts.data"
                                 :key="post.id"
@@ -536,13 +552,16 @@ useWorkspaceEcho(
                                     </DropdownMenu>
                                 </TableCell>
                             </TableRow>
-                        </TableBody>
-                    </Table>
+                    </TableBody>
+                </Table>
 
-                    <template #next="{ loading }">
-                        <TableLoadMore v-if="loading" />
-                    </template>
-                </InfiniteScroll>
+                <div class="mt-4 flex justify-center">
+                    <Pagination
+                        :current-page="posts.current_page"
+                        :last-page="posts.last_page"
+                        @change="goToPage"
+                    />
+                </div>
             </div>
         </div>
     </AppLayout>
