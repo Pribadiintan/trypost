@@ -10,14 +10,6 @@ use App\Ai\Agents\PostContentStreamer;
 use App\Ai\Agents\PostImageRegenerator;
 use Laravel\Ai\Attributes\Timeout;
 
-/**
- * Every text-generation agent must declare an explicit #[Timeout]. Without one
- * the Laravel AI SDK falls back to the HTTP client's 60s default, which was the
- * root cause of `cURL error 28: Operation timed out after 60002ms` against slow
- * DeepSeek responses in production. PostCaptionRegenerator shipped without the
- * attribute and its regenerate-caption turn silently failed at 60s; this guards
- * every agent on that path so the gap cannot reopen.
- */
 function timeoutSeconds(string $agentClass): ?int
 {
     $attributes = (new ReflectionClass($agentClass))->getAttributes(Timeout::class);

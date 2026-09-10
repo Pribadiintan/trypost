@@ -7,7 +7,6 @@ import { Button } from '@/components/ui/button';
 const props = defineProps<{
     currentPage: number;
     lastPage: number;
-    /** How many page numbers to show around the current page. */
     siblingCount?: number;
 }>();
 
@@ -19,18 +18,11 @@ const DOTS = '...' as const;
 
 type PageItem = number | typeof DOTS;
 
-/**
- * Build a windowed page list: always show the first and last page, a window of
- * `siblingCount` pages either side of the current one, and collapse the gaps
- * into an ellipsis. Mirrors the classic numbered pager so long lists never
- * render hundreds of buttons.
- */
 const pages = computed<PageItem[]>(() => {
     const total = props.lastPage;
     const current = props.currentPage;
     const siblings = props.siblingCount ?? 1;
 
-    // First + last + current + 2 siblings + 2 dots.
     const maxVisible = siblings * 2 + 5;
 
     if (total <= maxVisible) {

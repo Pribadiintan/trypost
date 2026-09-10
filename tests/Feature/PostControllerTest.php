@@ -56,7 +56,7 @@ test('posts index shows posts for current workspace', function () {
 });
 
 test('posts index paginates with numbered pages', function () {
-    $perPage = config('app.pagination.default');
+    $perPage = 10;
 
     Post::factory()->count($perPage + 3)->create([
         'workspace_id' => $this->workspace->id,
