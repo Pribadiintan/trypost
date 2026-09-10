@@ -4,13 +4,16 @@ declare(strict_types=1);
 
 namespace App\Ai\Agents;
 
+use App\Ai\Agents\Concerns\AiTimeouts;
 use App\Models\Workspace;
 use App\Support\ResolvedBrand;
 use Laravel\Ai\Attributes\Temperature;
+use Laravel\Ai\Attributes\Timeout;
 use Laravel\Ai\Contracts\Agent;
 use Laravel\Ai\Promptable;
 
 #[Temperature(0.7)]
+#[Timeout(AiTimeouts::TEXT_SECONDS)]
 class PostCaptionRegenerator implements Agent
 {
     use Promptable;
