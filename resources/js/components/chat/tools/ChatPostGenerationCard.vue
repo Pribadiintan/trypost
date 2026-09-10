@@ -5,6 +5,7 @@ import { computed, ref, useId, watch } from 'vue';
 
 import ChatAssistantMessage from '@/components/chat/ChatAssistantMessage.vue';
 import ChatPostGenerationChoice from '@/components/chat/tools/ChatPostGenerationChoice.vue';
+import BrandReferencePicker from '@/components/posts/create/BrandReferencePicker.vue';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import {
@@ -14,7 +15,6 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
-import { Switch } from '@/components/ui/switch';
 import {
     getPlatformLabel,
     getPlatformLogo,
@@ -26,6 +26,7 @@ import type {
     ChatPostGenerationLanguage,
     ChatPostGenerationStyle,
 } from '@/types/chat';
+import type { MediaItem } from '@/types/media';
 
 const props = withDefaults(
     defineProps<{
@@ -44,7 +45,7 @@ const props = withDefaults(
 );
 
 const emit = defineEmits<{
-    submit: [string];
+    submit: [text: string, referenceMediaIds?: string[]];
 }>();
 
 /**
@@ -214,14 +215,45 @@ const languages = computed<ChatPostGenerationLanguage[]>(
 
 const selectedLanguageCode = ref<string | null>(null);
 
-const brandReferencesOverride = ref<boolean | null>(null);
+/**
+ * The brand reference photos the workspace has, mapped to the shape
+ * BrandReferencePicker (and the lightbox) consume. Empty when the workspace has
+ * none — the references step then never shows.
+ */
+const referenceItems = computed<MediaItem[]>(() =>
+    (props.data?.brand_references ?? []).map(
+        (ref): MediaItem => ({
+            id: ref.id,
+            url: ref.url,
+            // The catalog sends the same label/kind string values MediaItem
+            // uses; cast the metadata bag whole so the picker's kind badge works.
+            meta: {
+                label: ref.label ?? undefined,
+                kind: ref.kind ?? undefined,
+            } as MediaItem['meta'],
+        }),
+    ),
+);
 
-const useBrandReferences = computed<boolean>({
-    get: () => brandReferencesOverride.value ?? true,
-    set: (value: boolean) => {
-        brandReferencesOverride.value = value;
+// Every reference is selected by default (matches the old "on" behaviour); the
+// user deselects the ones they do not want. An empty selection means "no
+// references" — the same as the old toggle turned off.
+const selectedReferenceIds = ref<string[]>([]);
+
+// Seed / re-seed the default selection (all) whenever the reference set arrives.
+watch(
+    referenceItems,
+    (items) => {
+        if (selectedReferenceIds.value.length === 0) {
+            selectedReferenceIds.value = items.map((item) => item.id);
+        }
     },
-});
+    { immediate: true },
+);
+
+const useBrandReferences = computed<boolean>(
+    () => selectedReferenceIds.value.length > 0,
+);
 
 const selectedLanguage = computed(
     () =>
@@ -879,8 +911,20 @@ const submit = (): void => {
 
     const text = sentence.value;
 
+    // Only carry the picked ids when the references step actually applied and
+    // the user kept a subset (not all, not none) — a full/empty selection is
+    // already expressed by use_brand_references in the sentence, so sending
+    // every id would be redundant. A partial pick is the case the sentence
+    // cannot express, so it travels as structured data.
+    const referenceMediaIds =
+        referencesStepVisible.value &&
+        selectedReferenceIds.value.length > 0 &&
+        selectedReferenceIds.value.length < referenceItems.value.length
+            ? [...selectedReferenceIds.value]
+            : undefined;
+
     submitted.value = true;
-    emit('submit', text);
+    emit('submit', text, referenceMediaIds);
 };
 </script>
 
@@ -1201,7 +1245,7 @@ const submit = (): void => {
 
                 <div
                     v-if="referencesStepVisible"
-                    class="flex items-center justify-between gap-3 border-t border-foreground/15 pt-3"
+                    class="space-y-2 border-t border-foreground/15 pt-3"
                     data-testid="chat-post-generation-references-step"
                     dusk="chat-post-generation-references-step"
                 >
@@ -1217,11 +1261,12 @@ const submit = (): void => {
                         </p>
                     </div>
 
-                    <Switch
+                    <BrandReferencePicker
                         :id="referencesId"
-                        v-model="useBrandReferences"
-                        data-testid="chat-post-generation-references-toggle"
-                        dusk="chat-post-generation-references-toggle"
+                        v-model:selected-ids="selectedReferenceIds"
+                        :references="referenceItems"
+                        :can-manage="false"
+                        data-testid="chat-post-generation-references-picker"
                     />
                 </div>
 

@@ -6,6 +6,7 @@ namespace App\Services\Ai;
 
 use App\Ai\Templates\AiContentTemplate;
 use App\Ai\Templates\AiTemplateRegistry;
+use App\Enums\Media\BrandReferenceKind;
 use App\Enums\PostPlatform\ContentType;
 use App\Enums\User\Locale;
 use App\Enums\Workspace\ContentLanguage;
@@ -48,6 +49,7 @@ final class PostGenerationCatalog
      *     connected_platforms: list<string>,
      *     content_language: ?string,
      *     languages: list<array{language_code: string, label: string, swatch: list<string>}>,
+     *     brand_references: list<array{id: string, url: string, label: ?string, kind: ?string}>,
      *     brand_reference_count: int,
      * }
      */
@@ -61,6 +63,8 @@ final class PostGenerationCatalog
             $accountsByPlatform = $workspace->socialAccounts()->active()->get()
                 ->groupBy(fn (SocialAccount $account): string => $account->platform->value);
 
+            $references = self::buildReferences($workspace);
+
             return [
                 'formats' => self::buildFormats($accountsByPlatform, $locale),
                 'styles' => self::buildStyles($locale),
@@ -68,7 +72,8 @@ final class PostGenerationCatalog
                 'connected_platforms' => $accountsByPlatform->keys()->all(),
                 'content_language' => $workspace->content_language,
                 'languages' => self::buildLanguages($workspace),
-                'brand_reference_count' => $workspace->getMedia('brand_references')->count(),
+                'brand_references' => $references,
+                'brand_reference_count' => count($references),
             ];
         });
     }
@@ -235,6 +240,28 @@ final class PostGenerationCatalog
         }
 
         return $languages;
+    }
+
+    /**
+     * The brand reference photos the chat card can offer as a picker, capped at
+     * the model's reference limit. Shape mirrors what BrandReferencePicker and
+     * ImagePreviewDialog consume on the frontend.
+     *
+     * @return list<array{id: string, url: string, label: ?string, kind: ?string}>
+     */
+    private static function buildReferences(Workspace $workspace): array
+    {
+        return $workspace->getMedia('brand_references')
+            ->get()
+            ->take(BrandReferenceKind::MAX_REFERENCES)
+            ->map(fn ($media): array => [
+                'id' => (string) $media->id,
+                'url' => $media->url,
+                'label' => data_get($media->meta, 'label'),
+                'kind' => data_get($media->meta, 'kind'),
+            ])
+            ->values()
+            ->all();
     }
 
     /**

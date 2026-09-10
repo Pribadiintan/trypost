@@ -125,6 +125,7 @@ class GeneratePostTool extends WorkspaceWriteTool
             applyBrandVisuals: $request->boolean('apply_brand_visuals', true),
             useBrandReferences: $request->boolean('use_brand_references', true),
             languageCode: $languageCode,
+            referenceMediaIds: $this->selectedReferenceMediaIds(),
             labelIds: $labelIds,
         );
 
@@ -418,5 +419,40 @@ class GeneratePostTool extends WorkspaceWriteTool
         $channel = (new PostCreationReady($this->user->id, $creationId))->broadcastOn();
 
         return Str::after($channel->name, 'private-');
+    }
+
+    /**
+     * Reference-photo ids the user picked in the chat generation card. These
+     * arrive as a STRUCTURED field on the chat HTTP request, not through the
+     * model's tool arguments — passing UUIDs through the prompt is unreliable,
+     * so the frontend sends them out-of-band and the tool reads them here. Only
+     * ids that really belong to this workspace's brand_references survive, so a
+     * spoofed or stale id is silently dropped. An empty result leaves
+     * generation on its default (all references when use_brand_references).
+     *
+     * @return array<int, string>
+     */
+    private function selectedReferenceMediaIds(): array
+    {
+        $raw = request()->input('reference_media_ids');
+
+        if (! is_array($raw) || $raw === []) {
+            return [];
+        }
+
+        $requested = array_values(array_unique(array_filter(
+            array_map(fn ($id): string => (string) $id, $raw),
+            fn (string $id): bool => $id !== '',
+        )));
+
+        if ($requested === []) {
+            return [];
+        }
+
+        return $this->workspace->getMedia('brand_references')
+            ->whereIn('id', $requested)
+            ->pluck('id')
+            ->map(fn ($id): string => (string) $id)
+            ->all();
     }
 }

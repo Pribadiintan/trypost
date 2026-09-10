@@ -246,7 +246,7 @@ useWorkspaceEcho<PostPlatformStatusPayload>(
     },
 );
 
-const send = (text: string): void => {
+const send = (text: string, referenceMediaIds?: string[]): void => {
     const trimmed = text.trim();
 
     if (trimmed === '' || isBusy.value) {
@@ -262,12 +262,18 @@ const send = (text: string): void => {
     }
 
     draft.value = '';
-    sendMessage({ text: trimmed });
+    sendMessage({
+        text: trimmed,
+        ...(referenceMediaIds && referenceMediaIds.length > 0
+            ? { metadata: { reference_media_ids: referenceMediaIds } }
+            : {}),
+    });
 };
 
 const submitDraft = (): void => send(draft.value);
 
-const ask = (prompt: string): void => send(prompt);
+const ask = (prompt: string, referenceMediaIds?: string[]): void =>
+    send(prompt, referenceMediaIds);
 
 /**
  * Abort the in-flight turn and release its server-side claim immediately.

@@ -96,6 +96,35 @@ const latestMessageText = (messages: UIMessage[]): string => {
 };
 
 /**
+ * Structured fields the latest user message carries out-of-band in its
+ * metadata — currently the brand-reference photo ids picked in the generation
+ * card. They travel here rather than in the prompt text because the tool needs
+ * exact ids, which the model cannot reliably transcribe from prose.
+ */
+const latestMessageExtras = (
+    messages: UIMessage[],
+): { reference_media_ids?: string[] } => {
+    for (let index = messages.length - 1; index >= 0; index--) {
+        const message = messages[index];
+
+        if (message?.role === 'user') {
+            const meta = message.metadata as
+                | { reference_media_ids?: unknown }
+                | undefined;
+            const ids = meta?.reference_media_ids;
+
+            if (Array.isArray(ids) && ids.length > 0) {
+                return { reference_media_ids: ids.map((id) => String(id)) };
+            }
+
+            return {};
+        }
+    }
+
+    return {};
+};
+
+/**
  * Tool part states that end a step's need to wait: the call produced output,
  * was denied, or carries an approval decision ready to be submitted. Mirrors
  * the SDK's own auto-send guard, so a resume fires only once every approval
@@ -291,6 +320,7 @@ export const useConversationChat = (
                 body: {
                     message: latestMessageText(messages),
                     timezone: browserTimezone(),
+                    ...latestMessageExtras(messages),
                 },
                 headers: requestHeaders(),
             };

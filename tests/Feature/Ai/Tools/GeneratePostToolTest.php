@@ -12,6 +12,7 @@ use App\Models\BrandVariant;
 use App\Models\SocialAccount;
 use App\Models\Workspace;
 use App\Support\AiPromptRules;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Str;
 use Laravel\Ai\Tools\Request;
@@ -50,6 +51,37 @@ function generatePostPayload(array $overrides = []): array
 
 it('is named generate_post', function (): void {
     expect($this->tool->name())->toBe('generate_post');
+});
+
+it('passes only workspace-owned reference_media_ids from the http request to the job', function (): void {
+    $mine = $this->workspace->addMedia(UploadedFile::fake()->image('ref-a.jpg'), 'brand_references');
+    $alsoMine = $this->workspace->addMedia(UploadedFile::fake()->image('ref-b.jpg'), 'brand_references');
+
+    // An id from another workspace must be dropped, not trusted.
+    $otherWorkspace = Workspace::factory()->create();
+    $foreign = $otherWorkspace->addMedia(UploadedFile::fake()->image('ref-x.jpg'), 'brand_references');
+
+    // The card sends the picked ids out-of-band on the chat HTTP request.
+    request()->merge([
+        'reference_media_ids' => [(string) $mine->id, (string) $foreign->id],
+    ]);
+
+    $this->tool->handle(new Request(generatePostPayload()));
+
+    Bus::assertDispatched(StreamPostCreation::class, function (StreamPostCreation $job) use ($mine, $foreign, $alsoMine): bool {
+        return in_array((string) $mine->id, $job->referenceMediaIds, true)
+            && ! in_array((string) $foreign->id, $job->referenceMediaIds, true)
+            && ! in_array((string) $alsoMine->id, $job->referenceMediaIds, true);
+    });
+});
+
+it('leaves reference_media_ids empty when the request carries none', function (): void {
+    $this->tool->handle(new Request(generatePostPayload()));
+
+    Bus::assertDispatched(
+        StreamPostCreation::class,
+        fn (StreamPostCreation $job): bool => $job->referenceMediaIds === [],
+    );
 });
 
 it('dispatches the generation job and returns immediately', function (): void {

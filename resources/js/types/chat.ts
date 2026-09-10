@@ -376,6 +376,13 @@ export interface ChatPostGeneration {
 }
 
 /** Mirrors `App\Ai\Tools\Post\StartPostGenerationTool`'s payload. */
+export interface ChatGenerationReference {
+    id: string;
+    url: string;
+    label?: string | null;
+    kind?: string | null;
+}
+
 export interface ChatPostGenerationCatalog {
     formats: ChatPostGenerationFormat[];
     styles: ChatPostGenerationStyle[];
@@ -392,6 +399,8 @@ export interface ChatPostGenerationCatalog {
      */
     content_language?: string | null;
     languages?: ChatPostGenerationLanguage[];
+    /** Brand reference photos the user can pick from in the generation card. */
+    brand_references?: ChatGenerationReference[];
     brand_reference_count?: number;
     /**
      * The locale every string in this payload was resolved in — the language
