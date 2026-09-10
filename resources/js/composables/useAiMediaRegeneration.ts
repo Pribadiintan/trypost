@@ -8,6 +8,7 @@ import { subscribePrivateChannel } from '@/composables/echo/subscribePrivateChan
 import { extractErrorMessage } from '@/lib/httpError';
 import { regenerateMedia as regeneratePostAiMedia } from '@/routes/app/posts/ai';
 import type { MediaItem } from '@/types/media';
+import { uuid } from '@/utils/uuid';
 
 export interface RegenerationPayload {
     media: MediaItem;
@@ -172,7 +173,7 @@ export const useAiMediaRegeneration = (
         canContinueInBackground.value = false;
         status.value = 'starting';
 
-        const regenerationId = crypto.randomUUID();
+        const regenerationId = uuid();
         const channel = aiMediaRegenerationChannel(
             String(page.props.auth.user.id),
             regenerationId,

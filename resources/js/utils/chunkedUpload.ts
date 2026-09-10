@@ -1,3 +1,5 @@
+import { uuid } from './uuid';
+
 interface ChunkedUploadOptions {
     file: File;
     url: string;
@@ -44,7 +46,7 @@ export const uploadChunked = async (
             ?.content ?? '';
     const totalSize = file.size;
     const totalChunks = Math.ceil(totalSize / chunkSize);
-    const uploadId = crypto.randomUUID();
+    const uploadId = uuid();
     let uploadedBytes = 0;
 
     try {
