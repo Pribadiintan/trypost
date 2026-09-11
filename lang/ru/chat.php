@@ -11,6 +11,22 @@ return [
     'stop' => 'Остановить',
     'retry' => 'Попробовать снова',
     'suggestions_label' => 'Попробуйте спросить про',
+
+    'attachment' => [
+        'attach' => 'Прикрепить CSV',
+        'remove' => 'Удалить вложение',
+        'default_prompt' => 'Импортируйте эти брифы в черновики.',
+        'errors' => [
+            'file_too_large' => 'Этот файл слишком большой. Прикрепите CSV размером менее 1 МБ.',
+            'read_failed' => 'Не удалось прочитать этот файл. Попробуйте еще раз.',
+        ],
+    ],
+
+    'brief_import' => [
+        'created' => 'Создано :count черновиков из ваших брифов.',
+        'failed' => 'Не удалось преобразовать :count брифов в черновики.',
+        'view_drafts' => 'Посмотреть черновики с меткой :label',
+    ],
     'suggestions' => [
         'posts' => 'Недавние посты',
         'metrics' => 'Метрики постов',
@@ -62,6 +78,7 @@ return [
         'get_post' => 'Информация о посте',
         'get_post_metrics' => 'Метрики поста',
         'create_post' => 'Создать пост',
+        'create_posts_from_briefs' => 'Импорт брифов',
         'update_post' => 'Обновить пост',
         'schedule_post' => 'Запланировать пост',
         'publish_post' => 'Опубликовать пост',
@@ -95,6 +112,7 @@ return [
         'get_post' => 'Загрузка деталей публикации…',
         'get_post_metrics' => 'Загрузка метрик…',
         'create_post' => 'Создание публикации…',
+        'create_posts_from_briefs' => 'Импорт брифов…',
         'update_post' => 'Обновление публикации…',
         'delete_post' => 'Удаление публикации…',
         'generate_post' => 'Генерация публикации…',
@@ -114,6 +132,8 @@ return [
         'create_brand_variant' => 'Создание варианта бренда…',
         'update_brand_variant' => 'Обновление варианта бренда…',
         'delete_brand_variant' => 'Удаление варианта бренда…',
+        'delete_brand_reference_photo' => 'Удаление референс-фото…',
+        'add_brand_reference_from_url' => 'Добавление референс-фото…',
         'list_assets' => 'Получение медиафайлов…',
         'get_asset' => 'Загрузка медиафайла…',
         'attach_existing_asset' => 'Прикрепление медиафайла…',

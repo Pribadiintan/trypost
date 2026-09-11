@@ -11,6 +11,22 @@ return [
     'stop' => 'Stopp',
     'retry' => 'Erneut versuchen',
     'suggestions_label' => 'Frag zum Beispiel nach',
+
+    'attachment' => [
+        'attach' => 'CSV anhängen',
+        'remove' => 'Anhang entfernen',
+        'default_prompt' => 'Importiere diese Content-Briefings als Entwürfe.',
+        'errors' => [
+            'file_too_large' => 'Diese Datei ist zu groß. Hänge eine CSV unter 1 MB an.',
+            'read_failed' => 'Datei konnte nicht gelesen werden. Versuche es erneut.',
+        ],
+    ],
+
+    'brief_import' => [
+        'created' => ':count Entwürfe aus deinen Briefings erstellt.',
+        'failed' => ':count Briefings konnten nicht in Entwürfe umgewandelt werden.',
+        'view_drafts' => 'Entwürfe mit dem Label :label ansehen',
+    ],
     'suggestions' => [
         'posts' => 'Aktuelle Posts',
         'metrics' => 'Post-Kennzahlen',
@@ -62,6 +78,7 @@ return [
         'get_post' => 'Post-Details',
         'get_post_metrics' => 'Post-Kennzahlen',
         'create_post' => 'Post erstellen',
+        'create_posts_from_briefs' => 'Briefings importieren',
         'update_post' => 'Post aktualisieren',
         'schedule_post' => 'Post planen',
         'publish_post' => 'Post veröffentlichen',
@@ -95,6 +112,7 @@ return [
         'get_post' => 'Beitragsdetails werden geladen…',
         'get_post_metrics' => 'Metriken werden geladen…',
         'create_post' => 'Beitrag wird erstellt…',
+        'create_posts_from_briefs' => 'Briefings werden importiert…',
         'update_post' => 'Beitrag wird aktualisiert…',
         'delete_post' => 'Beitrag wird gelöscht…',
         'generate_post' => 'Beitrag wird generiert…',
@@ -114,6 +132,8 @@ return [
         'create_brand_variant' => 'Markenvariante wird erstellt…',
         'update_brand_variant' => 'Markenvariante wird aktualisiert…',
         'delete_brand_variant' => 'Markenvariante wird gelöscht…',
+        'delete_brand_reference_photo' => 'Referenzfoto wird gelöscht…',
+        'add_brand_reference_from_url' => 'Referenzfoto wird hinzugefügt…',
         'list_assets' => 'Assets werden abgerufen…',
         'get_asset' => 'Asset wird geladen…',
         'attach_existing_asset' => 'Asset wird angehängt…',

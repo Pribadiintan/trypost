@@ -20,6 +20,7 @@ use App\Ai\Tools\Label\CreateLabelTool;
 use App\Ai\Tools\Label\DeleteLabelTool;
 use App\Ai\Tools\Label\ListLabelsTool;
 use App\Ai\Tools\Label\UpdateLabelTool;
+use App\Ai\Tools\Post\CreatePostsFromBriefsTool;
 use App\Ai\Tools\Post\CreatePostTool;
 use App\Ai\Tools\Post\DeletePostTool;
 use App\Ai\Tools\Post\GeneratePostTool;
@@ -150,6 +151,7 @@ class WorkspaceConversationAgent implements Agent, Conversational, HasTools
             new GeneratePostTool($this->workspace, $this->user),
             new RetryPostImagesTool($this->workspace, $this->user),
             new CreatePostTool($this->workspace, $this->user),
+            new CreatePostsFromBriefsTool($this->workspace, $this->user),
             new UpdatePostTool($this->workspace, $this->user),
             new SchedulePostTool($this->workspace, $this->user),
             new PublishPostTool($this->workspace, $this->user),

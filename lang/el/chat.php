@@ -11,6 +11,22 @@ return [
     'stop' => 'Διακοπή',
     'retry' => 'Προσπάθησε ξανά',
     'suggestions_label' => 'Δοκιμάστε να ρωτήσετε για',
+
+    'attachment' => [
+        'attach' => 'Επισύναψη CSV',
+        'remove' => 'Αφαίρεση συνημμένου',
+        'default_prompt' => 'Εισαγωγή αυτών των brief σε πρόχειρα.',
+        'errors' => [
+            'file_too_large' => 'Αυτό το αρχείο είναι πολύ μεγάλο. Επισυνάψτε ένα αρχείο CSV κάτω από 1 MB.',
+            'read_failed' => 'Δεν ήταν δυνατή η ανάγνωση αυτού του αρχείου. Δοκιμάστε ξανά.',
+        ],
+    ],
+
+    'brief_import' => [
+        'created' => 'Δημιουργήθηκαν :count πρόχειρα από τα brief σας.',
+        'failed' => 'Δεν ήταν δυνατή η μετατροπή :count brief σε πρόχειρα.',
+        'view_drafts' => 'Προβολή πρόχειρων με ετικέτα :label',
+    ],
     'suggestions' => [
         'posts' => 'Πρόσφατες αναρτήσεις',
         'metrics' => 'Μετρήσεις αναρτήσεων',
@@ -62,6 +78,7 @@ return [
         'get_post' => 'Λεπτομέρειες ανάρτησης',
         'get_post_metrics' => 'Μετρήσεις ανάρτησης',
         'create_post' => 'Δημιουργία ανάρτησης',
+        'create_posts_from_briefs' => 'Εισαγωγή brief',
         'update_post' => 'Ενημέρωση ανάρτησης',
         'schedule_post' => 'Προγραμματισμός ανάρτησης',
         'publish_post' => 'Δημοσίευση ανάρτησης',
@@ -95,6 +112,7 @@ return [
         'get_post' => 'Φόρτωση λεπτομερειών ανάρτησης…',
         'get_post_metrics' => 'Φόρτωση μετρήσεων…',
         'create_post' => 'Δημιουργία ανάρτησης…',
+        'create_posts_from_briefs' => 'Εισαγωγή brief…',
         'update_post' => 'Ενημέρωση ανάρτησης…',
         'delete_post' => 'Διαγραφή ανάρτησης…',
         'generate_post' => 'Δημιουργία ανάρτησης…',
@@ -114,6 +132,8 @@ return [
         'create_brand_variant' => 'Δημιουργία παραλλαγής επωνυμίας…',
         'update_brand_variant' => 'Ενημέρωση παραλλαγής επωνυμίας…',
         'delete_brand_variant' => 'Διαγραφή παραλλαγής επωνυμίας…',
+        'delete_brand_reference_photo' => 'Διαγραφή φωτογραφίας αναφοράς…',
+        'add_brand_reference_from_url' => 'Προσθήκη φωτογραφίας αναφοράς…',
         'list_assets' => 'Ανάκτηση στοιχείων…',
         'get_asset' => 'Φόρτωση στοιχείου…',
         'attach_existing_asset' => 'Επισύναψη στοιχείου…',

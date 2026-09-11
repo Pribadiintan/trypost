@@ -11,6 +11,22 @@ return [
     'stop' => '停止',
     'retry' => 'もう一度試す',
     'suggestions_label' => '例えば',
+
+    'attachment' => [
+        'attach' => 'CSVを添付',
+        'remove' => '添付を削除',
+        'default_prompt' => 'これらの構成案を下書きとしてインポートしてください。',
+        'errors' => [
+            'file_too_large' => 'ファイルが大きすぎます。1MB未満のCSVを添付してください。',
+            'read_failed' => 'ファイルを読み込めませんでした。もう一度お試しください。',
+        ],
+    ],
+
+    'brief_import' => [
+        'created' => '構成案から :count 件の下書きを作成しました。',
+        'failed' => ':count 件の構成案を下書きに変換できませんでした。',
+        'view_drafts' => ':label ラベルの下書きを表示',
+    ],
     'suggestions' => [
         'posts' => '最近の投稿',
         'metrics' => '投稿の指標',
@@ -62,6 +78,7 @@ return [
         'get_post' => '投稿の詳細',
         'get_post_metrics' => '投稿の指標',
         'create_post' => '投稿を作成',
+        'create_posts_from_briefs' => '構成案をインポート',
         'update_post' => '投稿を更新',
         'schedule_post' => '投稿を予約',
         'publish_post' => '投稿を公開',
@@ -95,6 +112,7 @@ return [
         'get_post' => '投稿の詳細を読み込み中…',
         'get_post_metrics' => '指標を読み込み中…',
         'create_post' => '投稿を作成中…',
+        'create_posts_from_briefs' => '構成案をインポート中…',
         'update_post' => '投稿を更新中…',
         'delete_post' => '投稿を削除中…',
         'generate_post' => '投稿を生成中…',
@@ -114,6 +132,8 @@ return [
         'create_brand_variant' => 'ブランドバリアントを作成中…',
         'update_brand_variant' => 'ブランドバリアントを更新中…',
         'delete_brand_variant' => 'ブランドバリアントを削除中…',
+        'delete_brand_reference_photo' => 'リファレンス写真を削除中…',
+        'add_brand_reference_from_url' => 'リファレンス写真を追加中…',
         'list_assets' => 'アセットを取得中…',
         'get_asset' => 'アセットを読み込み中…',
         'attach_existing_asset' => 'アセットを添付中…',

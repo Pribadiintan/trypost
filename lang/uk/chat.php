@@ -11,6 +11,22 @@ return [
     'stop' => 'Зупинити',
     'retry' => 'Спробувати ще раз',
     'suggestions_label' => 'Спробуйте запитати про',
+
+    'attachment' => [
+        'attach' => 'Прикріпити CSV',
+        'remove' => 'Видалити вкладення',
+        'default_prompt' => 'Імпортуйте ці брифи у чернетки.',
+        'errors' => [
+            'file_too_large' => 'Цей файл занадто великий. Прикріпіть CSV розміром менше 1 МБ.',
+            'read_failed' => 'Не вдалося прочитати цей файл. Спробуйте ще раз.',
+        ],
+    ],
+
+    'brief_import' => [
+        'created' => 'Створено :count чернеток з ваших брифів.',
+        'failed' => 'Не вдалося перетворити :count брифів у чернетки.',
+        'view_drafts' => 'Переглянути чернетки з міткою :label',
+    ],
     'suggestions' => [
         'posts' => 'Нещодавні пости',
         'metrics' => 'Метрики постів',
@@ -62,6 +78,7 @@ return [
         'get_post' => 'Деталі поста',
         'get_post_metrics' => 'Метрики поста',
         'create_post' => 'Створити пост',
+        'create_posts_from_briefs' => 'Імпорт брифів',
         'update_post' => 'Оновити пост',
         'schedule_post' => 'Запланувати пост',
         'publish_post' => 'Опублікувати пост',
@@ -95,6 +112,7 @@ return [
         'get_post' => 'Завантаження деталей допису…',
         'get_post_metrics' => 'Завантаження метрик…',
         'create_post' => 'Створення допису…',
+        'create_posts_from_briefs' => 'Імпорт брифів…',
         'update_post' => 'Оновлення допису…',
         'delete_post' => 'Видалення допису…',
         'generate_post' => 'Генерація допису…',
@@ -114,6 +132,8 @@ return [
         'create_brand_variant' => 'Створення варіанту бренду…',
         'update_brand_variant' => 'Оновлення варіанту бренду…',
         'delete_brand_variant' => 'Видалення варіанту бренду…',
+        'delete_brand_reference_photo' => 'Видалення референс-фото…',
+        'add_brand_reference_from_url' => 'Додавання референс-фото…',
         'list_assets' => 'Отримання медіафайлів…',
         'get_asset' => 'Завантаження медіафайлу…',
         'attach_existing_asset' => 'Прикріплення медіафайлу…',

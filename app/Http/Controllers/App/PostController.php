@@ -35,6 +35,8 @@ use Inertia\Response;
 
 class PostController extends Controller
 {
+    private const POSTS_PER_PAGE = 10;
+
     public function index(Request $request, ?string $status = null): Response|RedirectResponse
     {
         $workspace = $request->user()->currentWorkspace;
@@ -75,7 +77,9 @@ class PostController extends Controller
 
         return Inertia::render('posts/Index', [
             'workspace' => $workspace,
-            'posts' => Inertia::scroll(fn () => $query->latest($orderColumn)->paginate(config('app.pagination.default'))),
+            'posts' => $query->latest($orderColumn)
+                ->paginate(self::POSTS_PER_PAGE)
+                ->withQueryString(),
             'currentStatus' => $status,
             'labels' => $workspace->labels()->orderBy('name')->get(['id', 'name', 'color']),
             'filters' => [

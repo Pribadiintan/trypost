@@ -5,6 +5,7 @@ import ChatAssetList from '@/components/chat/tools/ChatAssetList.vue';
 import ChatBrandCard from '@/components/chat/tools/ChatBrandCard.vue';
 import ChatBrandReferenceCard from '@/components/chat/tools/ChatBrandReferenceCard.vue';
 import ChatBrandVariantCard from '@/components/chat/tools/ChatBrandVariantCard.vue';
+import ChatBriefImportResult from '@/components/chat/tools/ChatBriefImportResult.vue';
 import ChatLabelCard from '@/components/chat/tools/ChatLabelCard.vue';
 import ChatLabelList from '@/components/chat/tools/ChatLabelList.vue';
 import ChatPostCard from '@/components/chat/tools/ChatPostCard.vue';
@@ -40,6 +41,10 @@ export const toolComponents: Record<string, ToolComponentEntry> = {
     get_post: { component: ChatPostCard, kind: 'display' },
     get_post_metrics: { component: ChatPostMetrics, kind: 'display' },
     create_post: { component: ChatPostCard, kind: 'display' },
+    create_posts_from_briefs: {
+        component: ChatBriefImportResult,
+        kind: 'display',
+    },
     update_post: { component: ChatPostCard, kind: 'display' },
     schedule_post: { component: ChatPostCard, kind: 'display' },
     publish_post: { component: ChatPostCard, kind: 'display' },
